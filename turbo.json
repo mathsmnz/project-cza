@@ -1,11 +1,24 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
+  "globalEnv": ["VITE_API_URL", "NEXT_PUBLIC_API_URL"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "dist/**", "!.next/cache/**"]
+    },
+    "terminal-cza#build": {
+      "outputs": [".next/**", "!.next/cache/**"]
+    },
+    "editor-cza#build": {
+      "outputs": ["dist/**"]
+    },
+    "sistema-cza#build": {
+      "outputs": ["dist/**"]
+    },
+    "api-cza#build": {
+      "outputs": ["dist/**"]
     },
     "lint": {
       "dependsOn": ["^lint"]
