@@ -1,7 +1,18 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
-  "globalEnv": ["VITE_API_URL", "NEXT_PUBLIC_API_URL"],
+  "globalEnv": [
+    "VITE_API_URL",
+    "NEXT_PUBLIC_API_URL",
+    "DB_NAME",
+    "PORT",
+    "MONGO_URI",
+    "NODE_ENV",
+    "JWT_ACCESS_SECRET",
+    "JWT_REFRESH_SECRET",
+    "JWT_ACCESS_EXPIRES",
+    "JWT_REFRESH_EXPIRES"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
