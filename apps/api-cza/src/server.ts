@@ -76,7 +76,7 @@ const startServer = async () => {
     const projectCount = await Project.countDocuments();
 
     // Fetch File stats using an aggregation pipeline
-    const filesCollection = mongoose.connection.db.collection('fs.files');
+    const filesCollection = conn.connection.db.collection('fs.files');
     const fileStatsArr = await filesCollection.aggregate([
       {
         $group: {
