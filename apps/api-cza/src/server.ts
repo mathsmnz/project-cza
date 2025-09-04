@@ -26,18 +26,29 @@ const readPackageJson = () => {
 const PORT = process.env.PORT || 4001;
 const BASE_MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/";
 const DB_NAME = process.env.DB_NAME || "default-db";
-const MONGO_URI = BASE_MONGO_URI + DB_NAME;
+
+let MONGO_URI = "";
+
+if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
+    MONGO_URI = BASE_MONGO_URI + DB_NAME;
+} else {
+    MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/";
+}
+
+const clientOptions = {
+  serverApi: { version: "1", strict: true, deprecationErrors: true },
+};
 
 const server = http.createServer(app);
 
 // Helper function to format bytes into a readable string
 const formatBytes = (bytes: number, decimals = 2): string => {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return "0 Bytes";
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
 };
 
 const startServer = async () => {
@@ -76,17 +87,19 @@ const startServer = async () => {
     const projectCount = await Project.countDocuments();
 
     // Fetch File stats using an aggregation pipeline
-    const filesCollection = conn.connection.db.collection('fs.files');
-    const fileStatsArr = await filesCollection.aggregate([
-      {
-        $group: {
-          _id: null,
-          totalFiles: { $sum: 1 },
-          totalSizeInBytes: { $sum: '$length' }
-        }
-      }
-    ]).toArray();
-    
+    const filesCollection = conn.connection.db.collection("fs.files");
+    const fileStatsArr = await filesCollection
+      .aggregate([
+        {
+          $group: {
+            _id: null,
+            totalFiles: { $sum: 1 },
+            totalSizeInBytes: { $sum: "$length" },
+          },
+        },
+      ])
+      .toArray();
+
     const fileStats = fileStatsArr[0] || { totalFiles: 0, totalSizeInBytes: 0 };
 
     // Display the stats
@@ -94,11 +107,15 @@ const startServer = async () => {
     console.log(`  - 🧑‍💻 Total Users:    ${userCount}`);
     console.log(`  - 🏗️ Total Projects: ${projectCount}`);
     console.log(`  - 📁 Total Files:    ${fileStats.totalFiles}`);
-    console.log(`  - 💾 Total Size:     ${formatBytes(fileStats.totalSizeInBytes)}`);
+    console.log(
+      `  - 💾 Total Size:     ${formatBytes(fileStats.totalSizeInBytes)}`
+    );
     console.log("--------------------\n");
 
     server.listen(PORT, () => {
-      console.log(`✅ Server is ready and listening on http://localhost:${PORT}`);
+      console.log(
+        `✅ Server is ready and listening on http://localhost:${PORT}`
+      );
     });
   } catch (err) {
     console.error("🔴 Server startup failed:", err);
