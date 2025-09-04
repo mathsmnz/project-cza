@@ -58,7 +58,8 @@
               </li>
             </ul>
           </div>
-          <button @click="addCombo" class="w-full rounded-lg p-4 bg-black text-white hover:bg-slate-900 mt-4" :class="{ 'hidden': selectedGroup === null }">Adicionar
+          <button @click="addCombo" class="w-full rounded-lg p-4 bg-black text-white hover:bg-slate-900 mt-4"
+            :class="{ 'hidden': selectedGroup === null }">Adicionar
             Opção</button>
         </div>
       </div>
@@ -181,7 +182,7 @@ export default {
       link.href = URL.createObjectURL(blob);
       link.download = 'options.json';
       link.click();
-       showToast('Ação completada com sucesso!', 'success');
+      showToast('Ação completada com sucesso!', 'success');
     };
 
     const renameFile = (id) => {

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User API Tester</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .form-input bg-gray-400 text-white rounded p-2 { @apply w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500; }
+        .btn { @apply w-full px-4 py-2 font-semibold text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800; }
+        .btn-primary { @apply bg-blue-600 hover:bg-blue-700; }
+        .btn-secondary { @apply bg-indigo-600 hover:bg-indigo-700; }
+        .btn-danger { @apply bg-red-600 hover:bg-red-700; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-white">User API Endpoint Tester</h1>
+            <p class="text-gray-400 mt-2">A simple interface to test your user authentication routes.</p>
+        </header>
+
+        <div class="mb-8 p-4 bg-gray-800 rounded-lg shadow-md">
+            <label for="api-base-url" class="block text-sm font-medium text-gray-300 mb-2">API Base URL</label>
+            <input type="text" id="api-base-url" class="form-input bg-gray-400 text-white rounded p-2" value="http://localhost:3000/api/users">
+        </div>
+        
+        <div class="mb-8 p-4 bg-gray-800 rounded-lg shadow-md">
+            <h3 class="text-lg font-semibold mb-3">Stored State</h3>
+            <div class="space-y-2">
+                <div>
+                    <label class="text-sm font-medium text-gray-400">Current User ID:</label>
+                    <p id="user-id-display" class="text-xs text-cyan-400 break-all bg-gray-700 p-2 rounded">- Not logged in -</p>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-400">Access Token:</label>
+                    <p id="access-token-display" class="text-xs text-green-400 break-all bg-gray-700 p-2 rounded">- Not set -</p>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-400">Refresh Token Cookie:</label>
+                    <p id="refresh-token-display" class="text-xs text-yellow-400 break-all bg-gray-700 p-2 rounded">- Browser managed (httpOnly) -</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-xl font-bold mb-4">1. Public Registration</h2>
+                <form id="register-form" class="space-y-4">
+                    <input type="text" id="reg-username" class="form-input bg-gray-400 text-white rounded p-2" placeholder="Username" required>
+                    <input type="email" id="reg-email" class="form-input bg-gray-400 text-white rounded p-2" placeholder="Email" required>
+                    <input type="password" id="reg-password" class="form-input bg-gray-400 text-white rounded p-2" placeholder="Password" required>
+                    <button type="submit" class="btn btn-primary">Register as FinalUser</button>
+                </form>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-xl font-bold mb-4">2. Login User</h2>
+                <form id="login-form" class="space-y-4">
+                    <input type="email" id="login-email" class="form-input bg-gray-400 text-white rounded p-2" placeholder="Email" required value="admin@example.com">
+                    <input type="password" id="login-password" class="form-input bg-gray-400 text-white rounded p-2" placeholder="Password" required value="PasswordAdmin123!">
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-xl font-bold mb-4">3. Refresh Access Token</h2>
+                <p class="text-sm text-gray-400 mb-4">Uses the httpOnly cookie sent by the browser.</p>
+                <button id="refresh-token-btn" class="btn btn-secondary">Get New Access Token</button>
+            </div>
+            
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-xl font-bold mb-4">4. Get My Profile</h2>
+                <p class="text-sm text-gray-400 mb-4">A protected route for any logged-in user.</p>
+                <button id="get-profile-btn" class="btn btn-secondary">Fetch Profile</button>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-xl font-bold mb-4">5. Admin: Get All Users</h2>
+                <p class="text-sm text-gray-400 mb-4">An admin-only protected route.</p>
+                <button id="get-all-users-btn" class="btn btn-secondary">Fetch All Users</button>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-xl font-bold mb-4">6. Admin: Create User</h2>
+                <form id="admin-create-form" class="space-y-4">
+                    <input type="text" id="admin-username" class="form-input bg-gray-400 text-white rounded p-2" placeholder="Username" required>
+                    <input type="email" id="admin-email" class="form-input bg-gray-400 text-white rounded p-2" placeholder="Email" required>
+                    <input type="password" id="admin-password" class="form-input bg-gray-400 text-white rounded p-2" placeholder="Password" required>
+                    <select id="admin-role" class="form-input bg-gray-400 text-white rounded p-2" required>
+                        <option value="">-- Select Role --</option>
+                        <option value="finalUser">finalUser</option>
+                        <option value="editor">editor</option>
+                        <option value="admin">admin</option>
+                    </select>
+                    <button type="submit" class="btn btn-danger">Create User (as Admin)</button>
+                </form>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-xl font-bold mb-4">7. Admin: Reset Password</h2>
+                <form id="reset-password-form" class="space-y-4">
+                    <input type="text" id="reset-user-id" class="form-input bg-gray-400 text-white rounded p-2" placeholder="User ID to reset" required>
+                    <input type="password" id="reset-new-password" class="form-input bg-gray-400 text-white rounded p-2" placeholder="New Password" required>
+                    <button type="submit" class="btn btn-danger">Reset Password</button>
+                </form>
+            </div>
+            
+             <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-xl font-bold mb-4">8. Seed Database</h2>
+                <p class="text-sm text-gray-400 mb-4">Populates DB with admin, editor, and finalUser.</p>
+                <button id="seed-users-btn" class="btn btn-danger">Seed Users</button>
+            </div>
+        </div>
+
+        <div class="mt-10 bg-gray-800 p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-bold mb-4">API Response</h2>
+            <pre id="api-response" class="bg-black text-sm p-4 rounded-md overflow-x-auto whitespace-pre-wrap">No requests made yet.</pre>
+        </div>
+    </div>
+
+    <script>
+        // --- Helper variables and functions ---
+        const getBaseUrl = () => document.getElementById('api-base-url').value;
+        const responseEl = document.getElementById('api-response');
+        const accessTokenDisplay = document.getElementById('access-token-display');
+        const refreshTokenDisplay = document.getElementById('refresh-token-display');
+        const userIdDisplay = document.getElementById('user-id-display');
+        
+        let accessToken = null;
+
+        const updateResponse = (data, status) => {
+            responseEl.textContent = JSON.stringify(data, null, 2);
+            responseEl.classList.toggle('text-red-400', status >= 400);
+            responseEl.classList.toggle('text-green-400', status < 400);
+        };
+
+        const updateTokenDisplays = (user = null) => {
+            accessTokenDisplay.textContent = accessToken || '- Not set -';
+            if (user && user.id) {
+                userIdDisplay.textContent = user.id;
+                document.getElementById('reset-user-id').value = user.id;
+            } else if (user === null) {
+                userIdDisplay.textContent = '- Not logged in -';
+            }
+        };
+
+        const handleFetch = async (endpoint, options = {}) => {
+            try {
+                options.credentials = 'include'; 
+                if (accessToken) {
+                    options.headers = { ...options.headers, 'Authorization': `Bearer ${accessToken}` };
+                }
+                const res = await fetch(`${getBaseUrl()}${endpoint}`, options);
+                const data = await res.json();
+                updateResponse(data, res.status);
+                return { data, status: res.status };
+            } catch (error) {
+                updateResponse({ message: 'Network error or API is down', error: error.message }, 500);
+                return { error };
+            }
+        };
+
+        // --- Event Listeners ---
+
+        // 1. Public Register User
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('reg-username').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            await handleFetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password }),
+            });
+        });
+
+        // 2. Login User
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const { data, status } = await handleFetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'origin' },
+                body: JSON.stringify({ email, password }),
+            });
+            if (status === 200 && data.accessToken) {
+                accessToken = data.accessToken;
+                refreshTokenDisplay.textContent = '✅ Cookie received by browser';
+                updateTokenDisplays(data.user);
+            }
+        });
+        
+        // 3. Refresh Token
+        document.getElementById('refresh-token-btn').addEventListener('click', async () => {
+            const { data, status } = await handleFetch('/refresh-token', {
+                method: 'POST'
+            });
+            if (status === 200 && data.accessToken) {
+                accessToken = data.accessToken;
+                updateTokenDisplays();
+                refreshTokenDisplay.textContent = '✅ Cookie used and rotated successfully';
+            }
+        });
+
+        // 4. Get Profile
+        document.getElementById('get-profile-btn').addEventListener('click', async () => {
+            if (!accessToken) return updateResponse({ message: 'Access token is not set. Please log in.' }, 401);
+            await handleFetch('/profile');
+        });
+
+        // 5. Get All Users (Admin)
+        document.getElementById('get-all-users-btn').addEventListener('click', async () => {
+            if (!accessToken) return updateResponse({ message: 'Access token is not set. Please log in as an admin.' }, 401);
+            await handleFetch('/');
+        });
+
+        // 6. Admin Create User
+        document.getElementById('admin-create-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!accessToken) return updateResponse({ message: 'Access token is not set. Please log in as an admin.' }, 401);
+            const username = document.getElementById('admin-username').value;
+            const email = document.getElementById('admin-email').value;
+            const password = document.getElementById('admin-password').value;
+            const role = document.getElementById('admin-role').value;
+            
+            // ### THIS IS THE UPDATED LINE ###
+            await handleFetch('/registerWithRole', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password, role }),
+            });
+        });
+        
+        // 7. Admin Reset Password
+        document.getElementById('reset-password-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!accessToken) return updateResponse({ message: 'Access token is not set. Please log in as an admin.' }, 401);
+            const userId = document.getElementById('reset-user-id').value;
+            const newPassword = document.getElementById('reset-new-password').value;
+            await handleFetch(`/${userId}/reset-password`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ newPassword: newPassword }),
+            });
+        });
+
+        // 8. Seed Users
+        document.getElementById('seed-users-btn').addEventListener('click', async () => {
+             await handleFetch('/seed', { method: 'POST' });
+        });
+    </script>
+</body>
+</html>
