@@ -9,7 +9,7 @@ export interface TelemetryData {
   formSubmissions: number;
   finalSelection: string[];
   formResets: number;
-  elapsedTime: number; // This is a getter, but will be a number when exposed/serialized
+  elapsedTime: number;
 }
 
 export const useTelemetryStore: () => {

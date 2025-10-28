@@ -22,20 +22,20 @@
 
           <!-- Descrição completa -->
           <p class="text-xl text-gray-600 leading-relaxed">
-            Uma proposta de sistema de co-design para a edição <br>
+            Uma proposta de sistema de co-design para a edição <br class="hidden md:inline-block">
             e visualização dos arquivos IFC de projetos BIM
           </p>
           <br>
 
           <!-- Botão para iniciar -->
-          <a href="/opcoes" class="bg-black text-white rounded-full py-4 px-12 inline-block hover:bg-gray-900 ">
+          <router-link to="/dashboard" class="bg-black text-white rounded-full py-4 px-12 inline-block hover:bg-gray-900 ">
             Começar
-          </a>
+          </router-link>
           <br><br>
 
           <!-- Rodapé com informações de desenvolvimento -->
           <p class="text-sm text-gray-500">
-            Msmenezes Dev. / GEGRADI / UFPel / 2024
+            Msmenezes Dev. / GEGRADI / UFPel / 2025
           </p>
         </div>
       </div>

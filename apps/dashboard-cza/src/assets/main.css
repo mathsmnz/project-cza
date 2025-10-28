@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+@theme {
+  --font-inter: 'Inter', 'sans-serif';
+  --font-spartan: 'League Spartan', 'sans-serif';
+  --font-montserrat: 'Montserrat', 'sans-serif';
+}
