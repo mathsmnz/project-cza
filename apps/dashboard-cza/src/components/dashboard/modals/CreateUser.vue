@@ -87,7 +87,7 @@ const copyLink = () => {
                   required
                   :disabled="!!hasLink"
                   placeholder="email@exemplo.com"
-                  class="block w-full border-gray-300  shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  class="block w-full border-gray-300  border py-2 px-3 focus:outline-none focus:ring-2 focus:ring-black sm:text-sm"
                 />
               </div>
               <div>
@@ -96,7 +96,7 @@ const copyLink = () => {
                   id="role"
                   v-model="formData.role"
                   :disabled="!!hasLink"
-                  class="block w-full border-gray-300  shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  class="block w-full border-gray-300  border py-2 px-3 focus:outline-none focus:ring-2 focus:ring-black sm:text-sm"
                 >
                   <option>USER</option>
                   <option>EDITOR</option>
@@ -115,7 +115,7 @@ const copyLink = () => {
                 v-model="formData.projectIds"
                 multiple
                 :disabled="!!hasLink"
-                class="block w-full h-32 border-gray-300  shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                class="block w-full h-32 border-gray-300  border py-2 px-3 focus:outline-none focus:ring-2 focus:ring-black sm:text-sm"
               >
                 <option v-for="project in availableProjects" :key="project.id" :value="project.id">
                   {{ project.name }}
@@ -132,12 +132,12 @@ const copyLink = () => {
                   type="text"
                   readonly
                   :value="generatedLink"
-                  class="block w-full bg-gray-100 border-gray-300  shadow-sm py-2 px-3 sm:text-sm"
+                  class="block w-full bg-gray-100 border-gray-300  border py-2 px-3 sm:text-sm"
                 />
                 <button
                   @click="copyLink"
                   type="button"
-                  class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium  shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none"
+                  class="inline-flex items-center px-4 py-2 border-transparent text-sm font-medium  border text-white bg-black hover:bg-gray-900 focus:outline-none"
                 >
                   <span v-if="!isCopied">Copiar</span>
                   <span v-else>Copiado!</span>
@@ -160,7 +160,7 @@ const copyLink = () => {
               v-if="!hasLink"
               type="submit"
               :disabled="isLoading"
-              class="bg-indigo-600 text-white  py-2 px-4 hover:bg-indigo-700 focus:outline-none font-semibold flex items-center"
+              class="bg-black text-white  py-2 px-4 hover:bg-gray-900 focus:outline-none font-semibold flex items-center"
             >
               <svg v-if="isLoading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

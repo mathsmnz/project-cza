@@ -42,7 +42,6 @@ const activeTab = ref('All Projects')
 
 <template>
   <div>
-    <h2 class="text-3xl font-bold text-gray-800 mb-2">Projects</h2>
     <div class="border-b border-gray-300 mb-6">
       <nav class="flex space-x-6 -mb-px">
         <a

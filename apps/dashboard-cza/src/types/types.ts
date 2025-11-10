@@ -203,7 +203,7 @@ export interface PasswordResetRequest {
   token: string
 
   /** The new password to set for the user account. */
-  newPassword: string
+  password: string
 }
 
 /**
@@ -224,4 +224,15 @@ export interface PasswordRecoveryResponse {
 
   /** Whether the operation was successful (e.g., link sent, password reset). */
   status: 'PENDING' | 'USED' | 'EXPIRED' | 'REVOKED';
+}
+
+/**
+ * Represents a response returned by the password recovery validation endpoint
+ *
+ * It provides information about the validity of a request, along with its
+ * associated details.
+ * */
+export interface TokenValidationResponse{
+  valid: boolean;
+  recovery: PasswordRecoveryRequest;
 }

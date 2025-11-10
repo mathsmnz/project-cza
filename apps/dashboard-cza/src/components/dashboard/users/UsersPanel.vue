@@ -141,7 +141,6 @@ const activeTab = ref('All Users')
 
 <template>
   <div>
-    <h2 class="text-3xl font-bold text-gray-800 mb-2">Users</h2>
     <div class="border-b border-b-gray-300 mb-6">
       <nav class="flex space-x-6 -mb-px">
         <a

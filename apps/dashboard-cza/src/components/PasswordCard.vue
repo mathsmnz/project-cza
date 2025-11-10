@@ -1,29 +1,78 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
 import { onMounted, ref } from 'vue'
-import { fetchAllPasswordRecoveries } from '@/api/axios.ts'
+import { fetchRecoveryToken, resetPassword } from '@/api/axios.ts'
+import type { PasswordResetRequest, TokenValidationResponse } from '@/types/types.ts'
 
 const route = useRoute()
 const router = useRouter()
 
-const props = defineProps<{ token: string }>()
-
+// Form state
 const isLoading = ref(false)
 const error = ref<string | null>(null)
+const successMessage = ref<string | null>(null)
 const passwordMismatch = ref(false)
 
 const formData = ref({
-  email: 'teste@mail.com',
+  token: '',
+  email: '',
   password: '',
   confirmPassword: '',
 })
 
-onMounted(() => {
-  const token = route.query.token as string | undefined
-  if(token){
-    fetchAllPasswordRecoveries()
-  }else{
-    error.value = 'Link de convite inválido ou ausente.'
+const handleResetPassword = async (token: string) => {
+  error.value = null
+  successMessage.value = null
+  passwordMismatch.value = false
+
+  if (formData.value.password !== formData.value.confirmPassword) {
+    passwordMismatch.value = true
+    error.value = 'As senhas não coincidem.'
+    return
+  }
+
+  isLoading.value = true
+  try {
+    const request: PasswordResetRequest = {
+      token,
+      password: formData.value.password,
+    }
+
+    await resetPassword(request)
+    successMessage.value = 'Senha redefinida com sucesso! Redirecionando...'
+
+    // Delay navigation a bit for UX
+    setTimeout(() => router.push('/login'), 2000)
+  } catch (err: any) {
+    console.error(err)
+    error.value = 'Falha ao redefinir senha. O link pode estar expirado ou inválido.'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(async () => {
+  isLoading.value = true
+  try {
+    const token = (route.query.token as string) || ''
+    if (!token) {
+      error.value = 'Token ausente no link de recuperação.'
+      return
+    }
+
+    const response: TokenValidationResponse = await fetchRecoveryToken(token)
+
+    if (!response.valid || !response.recovery) {
+      error.value = 'Este link de recuperação é inválido ou expirou.'
+      return
+    }
+
+    formData.value.token = token
+    formData.value.email = response.recovery.email
+  } catch (err) {
+    console.error(err)
+    error.value = 'Erro ao validar o token. Tente novamente mais tarde.'
+  } finally {
     isLoading.value = false
   }
 })
@@ -31,20 +80,30 @@ onMounted(() => {
 
 <template>
   <div class="flex items-center justify-center min-h-screen bg-gray-100 p-4 font-montserrat">
-    <div class="bg-white outline-2 w-full max-w-md">
+    <div class="bg-white w-full max-w-md outline-2 shadow-md overflow-hidden">
       <div class="p-6 border-b border-gray-200 text-center">
-        <h1 class="text-2xl font-bold text-gray-800">Recupere sua Senha</h1>
+        <h1 class="text-2xl font-bold text-gray-800">Redefinir Senha</h1>
         <p v-if="formData.email" class="mt-1 text-sm text-gray-600">
-          Você solicitou para que sua senha fosse redefinida
+          Olá, <span class="font-semibold">{{ formData.email }}</span> — escolha sua nova senha abaixo.
         </p>
-        <p v-else-if="!isLoading && error" class="mt-1 text-sm text-red-600">
-          {{ error }}
-        </p>
-        <p v-else-if="isLoading" class="mt-1 text-sm text-gray-500">Verificando token...</p>
+        <p v-else-if="isLoading" class="mt-1 text-sm text-gray-500">Verificando link de recuperação...</p>
+        <p v-else-if="error" class="mt-1 text-sm text-red-600">{{ error }}</p>
       </div>
 
-      <form autocomplete="on" method="post" class="p-6 space-y-5">
-        <!-- Hidden duplicate field to help Chrome recognize the user -->
+      <!-- Success message -->
+      <div v-if="successMessage" class="p-6 bg-green-50 text-green-700 text-center">
+        {{ successMessage }}
+      </div>
+
+      <!-- Form -->
+      <form
+        v-if="!successMessage && formData.email && !isLoading"
+        autocomplete="on"
+        method="post"
+        class="p-6 space-y-5"
+        @submit.prevent="handleResetPassword(formData.token)"
+      >
+        <!-- Hidden email to help Chrome autofill -->
         <input
           type="text"
           name="username"
@@ -55,7 +114,7 @@ onMounted(() => {
           aria-hidden="true"
         />
 
-        <!-- Visible readonly email -->
+        <!-- Email (readonly) -->
         <div>
           <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
           <input
@@ -63,7 +122,7 @@ onMounted(() => {
             type="email"
             :value="formData.email"
             readonly
-            class="block w-full border-gray-300 border py-2 px-3 bg-gray-100 sm:text-sm cursor-not-allowed"
+            class="block w-full border-gray-300 border py-2 px-3 bg-gray-100 sm:text-sm cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-black"
           />
         </div>
 
@@ -80,10 +139,10 @@ onMounted(() => {
             v-model="formData.password"
             required
             minlength="8"
-            class="block w-full border-gray-300 border py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            class="block w-full border-gray-300 border py-2 px-3 focus:outline-none focus:ring-2 focus:ring-black sm:text-sm"
             placeholder="Mínimo 8 caracteres"
           />
-          <p id="passwordHelp" class="mt-1 text-xs text-gray-500">
+          <p class="mt-1 text-xs text-gray-500">
             A senha deve conter no mínimo 8 caracteres.
           </p>
         </div>
@@ -101,11 +160,14 @@ onMounted(() => {
             v-model="formData.confirmPassword"
             required
             :class="[
-              'block w-full border-gray-300 border py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm',
-              { 'border-red-500 focus:ring-red-500 focus:border-red-500': passwordMismatch },
+              'block w-full border py-2 px-3 focus:outline-none focus:ring-2 focus:ring-black sm:text-sm',
+              passwordMismatch ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'
             ]"
             placeholder="Repita a nova senha"
           />
+          <p v-if="passwordMismatch" class="text-xs text-red-500 mt-1">
+            As senhas não coincidem.
+          </p>
         </div>
 
         <!-- Submit button -->
@@ -113,7 +175,7 @@ onMounted(() => {
           <button
             type="submit"
             :disabled="isLoading"
-            class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-full bg-black hover:bg-gray-900 text-white font-semibold py-2 transition duration-200"
           >
             <span>{{ isLoading ? 'Salvando...' : 'Redefinir senha' }}</span>
           </button>
@@ -123,4 +185,9 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+/* Optional: refine background & transitions */
+input {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+</style>

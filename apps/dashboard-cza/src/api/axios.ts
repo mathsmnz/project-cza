@@ -9,6 +9,7 @@ import type {
   PasswordResetRequest,
   PlatformStats,
   Project,
+  TokenValidationResponse,
   UpdateUserRequest,
   UserCreationRequest,
   UserResponse,
@@ -365,6 +366,38 @@ export const requestPasswordRecovery = async (
 }
 
 /**
+ * Validates a password recovery token and, if valid, returns the associated recovery details.
+ *
+ * @param token - The recovery token to validate.
+ * @returns A Promise resolving with {@link TokenValidationResponse}, containing
+ *          both a validity flag and the recovery entity (if valid).
+ *
+ * @example
+ * ```ts
+ * const { valid, recovery } = await fetchRecoveryToken('abc123');
+ * if (valid && recovery) {
+ *   console.log(`Token for ${recovery.email} expires at ${recovery.expiryDate}`);
+ * }
+ * ```
+ *
+ * @throws Logs and rethrows an error if the API request fails.
+ */
+export const fetchRecoveryToken = async (
+  token: string
+): Promise<TokenValidationResponse> => {
+  try {
+    const response = await api.get<TokenValidationResponse>(
+      `/api/recovery/v1/token`,
+      { params: { token } }
+    );
+    return response.data;
+  } catch (err) {
+    console.error('Failed to fetch recovery token:', err);
+    throw err;
+  }
+};
+
+/**
  * Validates whether a given password recovery token is still valid.
  *
  * @param {string} token - The recovery token to validate.
@@ -415,7 +448,7 @@ export const resetPassword = async (
 ): Promise<PasswordRecoveryResponse> => {
   try {
     const response = await api.post<PasswordRecoveryResponse>(
-      '/api/users/v1/recovery/reset',
+      '/api/recovery/v1/reset',
       request
     )
     return response.data

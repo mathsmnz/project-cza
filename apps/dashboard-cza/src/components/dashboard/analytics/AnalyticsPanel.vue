@@ -91,10 +91,6 @@ onMounted(fetchTelemetryData)
 
 <template>
   <div class="flex-grow">
-    <!-- Page Header -->
-    <div class="mb-6">
-      <h2 class="text-3xl font-bold text-gray-800 mb-2">Overview</h2>
-    </div>
 
     <!-- Loading State -->
     <div v-if="isLoading" class="text-center p-12">

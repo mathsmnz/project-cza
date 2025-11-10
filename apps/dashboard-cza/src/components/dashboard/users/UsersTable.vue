@@ -1,12 +1,44 @@
-<script setup lang="ts">
-import type { Project, UserResponse } from '@/types/types.ts'
-import { ref } from 'vue'
+<script lang="ts" setup>
+import type { UserResponse } from '@/types/types.ts'
+import { computed, ref } from 'vue'
 
 const { users } = defineProps<{ users: UserResponse[] }>()
 const emit = defineEmits<{
-  (e: 'edit', project: UserResponse): void
+  (e: 'edit', user: UserResponse): void
   (e: 'delete', id: number): void
+  (e: 'selectionChange', selectedIds: number[]): void
 }>()
+
+// Selection state
+const selectedUsers = ref<Set<number>>(new Set())
+const selectAll = ref(false)
+
+// Computed property for "select all" state
+const isAllSelected = computed(() => users.length > 0 && selectedUsers.value.size === users.length)
+
+const isSomeSelected = computed(
+  () => selectedUsers.value.size > 0 && selectedUsers.value.size < users.length,
+)
+
+// Toggle individual user selection
+const toggleUser = (userId: number) => {
+  if (selectedUsers.value.has(userId)) {
+    selectedUsers.value.delete(userId)
+  } else {
+    selectedUsers.value.add(userId)
+  }
+  emit('selectionChange', Array.from(selectedUsers.value))
+}
+
+// Toggle all users
+const toggleAll = () => {
+  if (isAllSelected.value) {
+    selectedUsers.value.clear()
+  } else {
+    users.forEach((user) => selectedUsers.value.add(user.id))
+  }
+  emit('selectionChange', Array.from(selectedUsers.value))
+}
 
 // Utility to choose Tailwind classes per role
 const roleClass = (role: string) => {
@@ -22,78 +54,124 @@ const roleClass = (role: string) => {
 </script>
 
 <template>
-  <div class="overflow-x-auto">
+  <div class="overflow-x-auto border border-gray-300">
     <table class="w-full text-sm text-left text-gray-600">
-      <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+      <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-300">
         <tr>
-          <th class="p-4">
+          <th class="p-4 w-12">
             <input
+              :checked="isAllSelected"
+              :indeterminate="isSomeSelected"
+              aria-label="Select all users"
+              class="w-4 h-4 text-blue-600 bg-gray-200 border-gray-400 focus:ring-2 focus:ring-blue-500 cursor-pointer"
               type="checkbox"
-              class="w-4 h-4 text-black bg-gray-100 border-gray-300 focus:ring-black"
+              @change="toggleAll"
             />
           </th>
-          <th class="py-3 px-6">ID</th>
-          <th class="py-3 px-6">Username</th>
-          <th class="py-3 px-6">Name</th>
-          <th class="py-3 px-6">Email</th>
-          <th class="py-3 px-6">Role</th>
-          <th class="py-3 px-6 text-right">Actions</th>
+          <th class="py-3 px-6 font-semibold">ID</th>
+          <th class="py-3 px-6 font-semibold">Username</th>
+          <th class="py-3 px-6 font-semibold">Name</th>
+          <th class="py-3 px-6 font-semibold">Email</th>
+          <th class="py-3 px-6 font-semibold">Role</th>
+          <th class="py-3 px-6 text-right font-semibold">Actions</th>
         </tr>
       </thead>
       <tbody v-if="users.length">
-        <tr v-for="user in users" :key="user.id" class="border-b hover:bg-gray-50">
+        <tr
+          v-for="user in users"
+          :key="user.id"
+          :class="{ 'bg-blue-50': selectedUsers.has(user.id) }"
+          class="bg-gray-100 border-b border-gray-300 hover:bg-gray-100 transition-colors"
+        >
           <td class="p-4">
             <input
+              :aria-label="`Select ${user.username}`"
+              :checked="selectedUsers.has(user.id)"
+              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-2 focus:ring-blue-500 cursor-pointer"
               type="checkbox"
-              class="w-4 h-4 text-black bg-gray-100 border-gray-300 focus:ring-black"
+              @change="toggleUser(user.id)"
             />
           </td>
-          <td class="py-4 px-6">{{ user.id }}</td>
-          <td class="py-4 px-6">{{ user.username }}</td>
-          <td class="py-4 px-6">{{ user.name + ' ' + user.lastName }}</td>
+          <td class="py-4 px-6 font-medium text-gray-900">{{ user.id }}</td>
+          <td class="py-4 px-6 font-medium text-gray-900">{{ user.username }}</td>
+          <td class="py-4 px-6">{{ user.name }} {{ user.lastName }}</td>
           <td class="py-4 px-6">{{ user.email }}</td>
           <td class="py-4 px-6">
-            <!-- Role badge -->
-            <span class="px-2 py-1 text-xs font-medium capitalize" :class="roleClass(user.role)">
+            <span
+              :class="roleClass(user.role)"
+              class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium capitalize"
+            >
               {{ user.role }}
             </span>
           </td>
-          <td class="py-4 px-6 text-right">
-            <div class="flex justify-end items-center space-x-2">
-              <button class="text-gray-500 hover:text-black" @click="emit('edit', user)">
-                <!-- edit icon -->
+          <td class="py-4 px-6">
+            <div class="flex justify-end items-center gap-1">
+              <!-- Edit User -->
+              <button
+                aria-label="Edit user"
+                class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                title="Edit user"
+                @click="emit('edit', user)"
+              >
                 <svg
-                  xmlns="http://www.w3.org/2000/svg"
                   class="h-5 w-5"
-                  viewBox="0 0 20 20"
                   fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
                     d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"
-                  ></path>
+                  />
                   <path
-                    fill-rule="evenodd"
-                    d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"
                     clip-rule="evenodd"
-                  ></path>
+                    d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"
+                    fill-rule="evenodd"
+                  />
                 </svg>
               </button>
 
-              <button class="text-gray-500 hover:text-red-600" @click="emit('delete', user.id)">
-                <!-- trash icon -->
+              <!-- Delete User -->
+              <button
+                aria-label="Delete user"
+                class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                title="Delete user"
+                @click="emit('delete', user.id)"
+              >
                 <svg
-                  xmlns="http://www.w3.org/2000/svg"
                   class="h-5 w-5"
-                  viewBox="0 0 20 20"
                   fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
-                    fill-rule="evenodd"
-                    d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
                     clip-rule="evenodd"
-                  ></path>
+                    d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                    fill-rule="evenodd"
+                  />
                 </svg>
               </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+      <tbody v-else>
+        <tr>
+          <td class="py-12 text-center text-gray-500" colspan="7">
+            <div class="flex flex-col items-center gap-2">
+              <svg
+                class="w-12 h-12 text-gray-300"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                />
+              </svg>
+              <p class="text-sm font-medium">No users found</p>
             </div>
           </td>
         </tr>
@@ -103,8 +181,13 @@ const roleClass = (role: string) => {
 </template>
 
 <style scoped>
-/* optional subtle hover for clarity */
-tr:hover td {
-  transition: background 0.15s ease;
+/* Indeterminate checkbox state */
+input[type='checkbox']:indeterminate {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10h8'/%3e%3c/svg%3e");
+  background-color: currentColor;
+  border-color: transparent;
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 </style>

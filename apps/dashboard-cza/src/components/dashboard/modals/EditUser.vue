@@ -185,7 +185,7 @@ onMounted(() => {
               </div>
               <!-- Generated Link Section (Conditional) -->
               <div v-else class="space-y-2">
-                <label class="block text-sm font-medium text-green-700">Link de Registro Gerado com Sucesso!</label>
+                <label class="block text-sm font-medium text-green-700">Link de Recuperação Gerado com Sucesso!</label>
                 <div class="flex items-center space-x-2">
                   <input
                     type="text"
@@ -196,7 +196,7 @@ onMounted(() => {
                   <button
                     @click="copyLink"
                     type="button"
-                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium  shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none"
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium  shadow-sm text-white bg-black hover:bg-gray-900 focus:outline-none"
                   >
                     <span v-if="!isCopied">Copiar</span>
                     <span v-else>Copiado!</span>
@@ -221,7 +221,7 @@ onMounted(() => {
             <button
               :disabled="isLoading"
               type="submit"
-              class="bg-indigo-600 text-white py-2 px-4 hover:bg-indigo-700 font-semibold"
+              class="bg-black text-white py-2 px-4 hover:bg-gray-900 font-semibold"
             >
               Salvar Alterações
             </button>

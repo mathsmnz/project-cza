@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref, watch } from 'vue'
+import { nextTick, onMounted, ref, watch, computed } from 'vue'
 import { Chart, registerables } from 'chart.js'
 import type { ChartOptions } from 'chart.js'
 import { fetchPlatformStats } from '@/api/axios.ts'
@@ -18,38 +18,60 @@ interface PlatformStats {
 
 // --- STATE MANAGEMENT ---
 const stats = ref<PlatformStats | null>(null)
+const isLoading = ref(true)
+const error = ref<string | null>(null)
 const diskChartRef = ref<HTMLCanvasElement | null>(null)
 let diskChartInstance: Chart | null = null
 
+// --- COMPUTED PROPERTIES ---
+const diskUsagePercentage = computed(() => {
+  if (!stats.value) return 0
+  return Math.round((stats.value.spaceOnDisk / stats.value.maxSpaceOnDisk) * 100)
+})
+
+const diskUsageColor = computed(() => {
+  const percentage = diskUsagePercentage.value
+  if (percentage >= 90) return 'text-red-600'
+  if (percentage >= 75) return 'text-orange-600'
+  return 'text-blue-600'
+})
+
+const diskUsageBarColor = computed(() => {
+  const percentage = diskUsagePercentage.value
+  if (percentage >= 90) return 'bg-red-500'
+  if (percentage >= 75) return 'bg-orange-500'
+  return 'bg-blue-500'
+})
+
 // --- CHART LOGIC ---
-/**
- * Creates or updates the disk usage doughnut chart.
- */
 function createOrUpdateDiskUsageChart() {
   if (!diskChartRef.value || !stats.value) return
 
   const usedSpace = stats.value.spaceOnDisk
   const freeSpace = stats.value.maxSpaceOnDisk - usedSpace
 
+  const percentage = diskUsagePercentage.value
+  let usedColor = '#2563EB' // blue
+  if (percentage >= 90) usedColor = '#DC2626' // red
+  else if (percentage >= 75) usedColor = '#EA580C' // orange
+
   const data = {
     labels: ['Used Space', 'Free Space'],
     datasets: [
       {
         data: [usedSpace, freeSpace],
-        backgroundColor: ['#2563EB', '#031e50'], // Blue for used, Gray for free
+        backgroundColor: [usedColor, '#E5E7EB'],
         borderColor: '#FFFFFF',
-        borderWidth: 2,
-        hoverOffset: 4,
+        borderWidth: 3,
+        hoverOffset: 8,
       },
     ],
   }
 
-  // If chart already exists, update its data and refresh
   if (diskChartInstance) {
     diskChartInstance.data = data
     diskChartInstance.update()
   } else {
-    // Otherwise, create a new chart instance
     const ctx = diskChartRef.value.getContext('2d') as CanvasRenderingContext2D
     diskChartInstance = new Chart(ctx, {
       type: 'doughnut',
@@ -57,19 +79,16 @@ function createOrUpdateDiskUsageChart() {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '70%',
+        cutout: '75%',
         plugins: {
           legend: {
-            position: 'bottom',
-            labels: {
-              padding: 20,
-              boxWidth: 12,
-              font: {
-                size: 14,
-              },
-            },
+            display: false,
           },
           tooltip: {
+            backgroundColor: '#1F2937',
+            padding: 12,
+            titleFont: { size: 14, weight: '600' },
+            bodyFont: { size: 13 },
             callbacks: {
               label: function (context) {
                 const label = context.label || ''
@@ -81,79 +100,220 @@ function createOrUpdateDiskUsageChart() {
         },
       },
     })
-
   }
 }
 
 // --- LIFECYCLE HOOKS ---
 onMounted(async () => {
   try {
+    isLoading.value = true
     stats.value = await fetchPlatformStats()
+    error.value = null
   } catch (err) {
     console.error('Failed to fetch initial platform stats', err)
+    error.value = 'Failed to load statistics'
+  } finally {
+    isLoading.value = false
   }
 })
 
-// Watch for changes in stats and update the chart accordingly
 watch(stats, async () => {
   if (stats.value) {
-    await nextTick();
+    await nextTick()
     createOrUpdateDiskUsageChart()
   }
 }, { deep: true })
-
 </script>
 
 <template>
   <div class="min-fit">
-
-    <div v-if="stats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-
-      <div class="bg-white border border-gray-200  p-6  outline outline-black-sm flex flex-col justify-between">
-        <h3 class="text-gray-500 font-medium">Total Projects</h3>
-        <p class="text-3xl font-semibold text-gray-900 mt-2">{{ stats.projectCount }}</p>
+    <!-- Loading State -->
+    <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div
+        v-for="i in 3"
+        :key="i"
+        class="bg-white border-2 border-gray-300 p-6 animate-pulse"
+      >
+        <div class="h-4 bg-gray-200 w-24 mb-4"></div>
+        <div class="h-8 bg-gray-200 w-16"></div>
       </div>
-
-      <div class="bg-white border border-gray-200  p-6  outline outline-black-sm flex flex-col justify-between">
-        <h3 class="text-gray-500 font-medium">Registered Users</h3>
-        <p class="text-3xl font-semibold text-gray-900 mt-2">{{ stats.userCount }}</p>
+      <div class="bg-white border-2 border-gray-300 p-6 animate-pulse col-span-1 md:col-span-2 lg:col-span-4">
+        <div class="h-6 bg-gray-200 w-32 mb-4"></div>
+        <div class="h-48 bg-gray-200"></div>
       </div>
+    </div>
 
-      <div class="bg-white border border-gray-200  p-6  outline outline-black-sm flex flex-col justify-between">
-        <h3 class="text-gray-500 font-medium">Total Files</h3>
-        <p class="text-3xl font-semibold text-gray-900 mt-2">{{ stats.fileCount }}</p>
-      </div>
+    <!-- Error State -->
+    <div v-else-if="error" class="bg-red-50 border-2 border-red-500 p-6 text-center">
+      <svg class="w-12 h-12 text-red-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <p class="text-red-800 font-semibold">{{ error }}</p>
+    </div>
 
-      <div class="bg-white border border-gray-200  p-6  outline outline-black-sm col-span-1 md:col-span-2 lg:col-span-4">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Disk Usage</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-          <div class="md:col-span-1 h-48 sm:h-56">
-            <canvas ref="diskChartRef"></canvas>
+    <!-- Stats Display -->
+    <div v-else-if="stats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Projects Card -->
+      <div class="bg-white border border-gray-300 p-6 hover:border-black transition-colors">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Projects</h3>
+          <div class="p-2 bg-blue-100 border border-blue-300">
+            <svg class="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+            </svg>
           </div>
-          <div class="md:col-span-2 text-gray-700 space-y-3">
-            <div class="flex justify-between items-baseline border-b pb-2">
-              <span class="font-medium text-blue-600">Used Space:</span>
-              <span class="font-semibold text-lg">{{ formatBytes(stats.spaceOnDisk) }}</span>
+        </div>
+        <p class="text-4xl font-bold text-gray-900 mt-4">{{ stats.projectCount.toLocaleString() }}</p>
+        <p class="text-xs text-gray-500 mt-2">Total active projects</p>
+      </div>
+
+      <!-- Users Card -->
+      <div class="bg-white border border-gray-300 p-6 hover:border-black transition-colors">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Users</h3>
+          <div class="p-2 bg-green-100 border border-green-300">
+            <svg class="w-5 h-5 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+        </div>
+        <p class="text-4xl font-bold text-gray-900 mt-4">{{ stats.userCount.toLocaleString() }}</p>
+        <p class="text-xs text-gray-500 mt-2">Registered accounts</p>
+      </div>
+
+      <!-- Files Card -->
+      <div class="bg-white border border-gray-300 p-6 hover:border-black transition-colors">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Files</h3>
+          <div class="p-2 bg-purple-100 border border-purple-300">
+            <svg class="w-5 h-5 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+          </div>
+        </div>
+        <p class="text-4xl font-bold text-gray-900 mt-4">{{ stats.fileCount.toLocaleString() }}</p>
+        <p class="text-xs text-gray-500 mt-2">Uploaded files</p>
+      </div>
+
+      <!-- Disk Usage Card -->
+      <div class="bg-white border border-gray-300 p-6 col-span-1 md:col-span-2 lg:col-span-4">
+        <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+          <h3 class="text-xl font-bold text-gray-900">Storage Overview</h3>
+          <span
+            class="px-4 py-1.5 border text-sm font-bold uppercase tracking-wide"
+            :class="[
+              diskUsagePercentage >= 90 ? 'bg-red-100 text-red-800 border-red-500' :
+              diskUsagePercentage >= 75 ? 'bg-orange-100 text-orange-800 border-orange-500' :
+              'bg-blue-100 text-blue-800 border-blue-500'
+            ]"
+          >
+            {{ diskUsagePercentage }}% Used
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+          <!-- Chart Section -->
+          <div class="lg:col-span-1 flex flex-col items-center">
+            <div class="relative h-56 w-56 border border-gray-200 p-4">
+              <canvas ref="diskChartRef"></canvas>
+              <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span class="text-4xl font-bold" :class="diskUsageColor">
+                  {{ diskUsagePercentage }}%
+                </span>
+                <span class="text-sm text-gray-600 font-medium mt-1">USED</span>
+              </div>
             </div>
-            <div class="flex justify-between items-baseline border-b pb-2">
-              <span class="font-medium text-gray-500">Free Space:</span>
-              <span class="font-semibold text-lg">{{ formatBytes(stats.maxSpaceOnDisk - stats.spaceOnDisk) }}</span>
+          </div>
+
+          <!-- Stats Section -->
+          <div class="lg:col-span-2 space-y-4">
+            <!-- Used Space -->
+            <div class="bg-gray-50 border border-gray-300 p-4">
+              <div class="flex justify-between items-baseline mb-3">
+                <span class="text-sm font-bold text-gray-700 uppercase">Used Space</span>
+                <span class="text-xl font-bold" :class="diskUsageColor">
+                  {{ formatBytes(stats.spaceOnDisk) }}
+                </span>
+              </div>
+              <div class="w-full bg-gray-200 border border-gray-300 h-3 overflow-hidden">
+                <div
+                  :class="diskUsageBarColor"
+                  class="h-3 transition-all duration-500"
+                  :style="{ width: diskUsagePercentage + '%' }"
+                ></div>
+              </div>
             </div>
-            <div class="flex justify-between items-baseline pt-2">
-              <span class="font-bold">Total Capacity:</span>
-              <span class="font-bold text-lg text-gray-800">{{ formatBytes(stats.maxSpaceOnDisk) }}</span>
+
+            <!-- Free Space -->
+            <div class="bg-gray-50 border border-gray-300 p-4">
+              <div class="flex justify-between items-baseline mb-2">
+                <span class="text-sm font-bold text-gray-700 uppercase">Free Space</span>
+                <span class="text-xl font-bold text-gray-900">
+                  {{ formatBytes(stats.maxSpaceOnDisk - stats.spaceOnDisk) }}
+                </span>
+              </div>
+              <div class="text-xs text-gray-600 font-medium mt-2">
+                Available for new uploads
+              </div>
+            </div>
+
+            <!-- Total Capacity -->
+            <div class="bg-gray-50 border border-gray-300 p-4">
+              <div class="flex justify-between items-baseline">
+                <span class="text-sm font-bold text-gray-700 uppercase">Total Capacity</span>
+                <span class="text-xl font-bold text-gray-900">
+                  {{ formatBytes(stats.maxSpaceOnDisk) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Warning Alert -->
+        <div
+          v-if="diskUsagePercentage >= 90"
+          class="mt-6 bg-red-50 border-l-4 border-red-600 border-2 border-red-200 p-4"
+        >
+          <div class="flex items-start">
+            <svg class="w-6 h-6 text-red-600 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            <div>
+              <h4 class="text-sm font-bold text-red-900 uppercase">Storage Almost Full</h4>
+              <p class="text-sm text-red-800 mt-1">Your storage is critically low. Please consider upgrading or removing unused files.</p>
+            </div>
+          </div>
+        </div>
+        <div
+          v-else-if="diskUsagePercentage >= 75"
+          class="mt-6 bg-orange-50 border-l-4 border-orange-600 border-2 border-orange-200 p-4"
+        >
+          <div class="flex items-start">
+            <svg class="w-6 h-6 text-orange-600 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            <div>
+              <h4 class="text-sm font-bold text-orange-900 uppercase">Storage Running Low</h4>
+              <p class="text-sm text-orange-800 mt-1">You're using over 75% of your storage. Consider cleaning up old files.</p>
             </div>
           </div>
         </div>
       </div>
-
-    </div>
-    <div v-else class="text-center text-gray-500">
-      Loading platform statistics...
     </div>
   </div>
 </template>
 
 <style scoped>
-/* Scoped styles can be added here if needed, but Tailwind covers most cases. */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
 </style>
