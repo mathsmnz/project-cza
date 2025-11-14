@@ -98,7 +98,7 @@ const props = defineProps({
   mode: {
     type: String,
     default: 'success', // 'success', 'error', 'alert'
-    validator: (value) => ['success', 'error', 'alert'].includes(value),
+    validator: (value: string) => ['success', 'error', 'alert'].includes(value),
   },
   duration: {
     // Timer in milliseconds
@@ -110,7 +110,7 @@ const props = defineProps({
 const emit = defineEmits(['close'])
 
 const showToast = ref(false) // Internal visibility for transition
-let timeoutId = null
+let timeoutId: ReturnType<typeof setTimeout> | null = null
 
 // Dynamically compute toast classes based on mode
 const toastClasses = computed(() => {
@@ -133,21 +133,27 @@ const toastClasses = computed(() => {
 
 // Function to dismiss the toast
 const dismiss = () => {
-  clearTimeout(timeoutId)
+  if (timeoutId !== null) {
+    clearTimeout(timeoutId)
+  }
   showToast.value = false // Trigger fade-out animation
   // Wait for animation to complete before emitting close
   setTimeout(() => {
     emit('close')
   }, 300) // Match transition duration
 }
-
-// Watch the `show` prop from parent
 watch(
   () => props.show,
   (newValue) => {
     if (newValue) {
       showToast.value = true // Trigger fade-in animation
-      clearTimeout(timeoutId) // Clear any existing timer
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId) // Clear any existing timer
+      }
+      showToast.value = true // Trigger fade-in animation
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId) // Clear any existing timer
+      }
       if (props.duration > 0) {
         // Only set timer if duration is positive
         timeoutId = setTimeout(() => {
@@ -162,7 +168,9 @@ watch(
 
 // Clean up timer when component is unmounted
 onUnmounted(() => {
-  clearTimeout(timeoutId)
+  if (timeoutId !== null) {
+    clearTimeout(timeoutId)
+  }
 })
 </script>
 

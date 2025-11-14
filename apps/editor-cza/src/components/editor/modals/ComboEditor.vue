@@ -14,7 +14,7 @@
         class="relative bg-white rounded-lg shadow-2xl w-full max-w-lg m-4 transform transition-all duration-300 ease-out flex flex-col max-h-[90vh]"
       >
         <!-- Header -->
-        <div class="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+        <div class="flex items-center justify-between p-4 border-b border-gray-200 shrink-0">
           <h2 class="text-xl font-bold text-gray-800">Editar Opção (Combo)</h2>
           <button
             type="button"
@@ -89,7 +89,7 @@
 
         <!-- Footer Actions -->
         <div
-          class="flex justify-end space-x-4 p-4 bg-gray-50 border-t border-gray-200 flex-shrink-0"
+          class="flex justify-end space-x-4 p-4 bg-gray-50 border-t border-gray-200 shrink-0"
         >
           <button
             type="button"
@@ -134,8 +134,8 @@ export default {
       // Update the reactive comboData object
       comboData.compat = compatString.value
         .split(',')
-        .map((item) => item.trim())
-        .filter((item) => item)
+        .map((item: string) => item.trim())
+        .filter((item: string) => item)
 
       // Emit updated combo data
       emit('save', { ...comboData })

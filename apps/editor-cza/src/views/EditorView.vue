@@ -230,7 +230,7 @@
       :duration="toastState.duration"
       @close="hideToast"
     />
-    <IfcEditor v-if="showViewer" :project-id="currentProject.id" :ifc-file="currentFile" @close="showViewer = false" />
+    <IfcEditor v-if="showViewer" :project-id="currentProject?.id ?? null" :ifc-file="currentFile" @close="showViewer = false" />
   </div>
 </template>
 

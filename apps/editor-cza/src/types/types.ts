@@ -251,7 +251,7 @@ export interface Group {
 }
 
 export interface Selection {
-  id: string | number
+  id: string
   label: string
   description: string
   relatedCombos: string[]

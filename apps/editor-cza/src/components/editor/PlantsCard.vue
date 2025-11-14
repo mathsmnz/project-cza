@@ -19,7 +19,7 @@ const emit = defineEmits<{
     <div class="p-4 border-b-2 border-black bg-gray-50">
       <h2 class="text-lg font-bold text-gray-900 uppercase">Plants</h2>
     </div>
-    <div class="flex-grow p-4 space-y-2 overflow-y-auto min-h-[300px]">
+    <div class="grow p-4 space-y-2 overflow-y-auto min-h-[300px]">
       <!-- Empty State -->
       <div v-if="selections.length === 0" class="text-center text-gray-500 py-12">
         <svg
@@ -46,7 +46,7 @@ const emit = defineEmits<{
         class="group p-3 border-2 border-gray-300 hover:border-black flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 transition-colors"
       >
         <span class="font-semibold text-gray-900">{{ selection.label }}</span>
-        <div class="flex items-center gap-2 flex-shrink-0">
+        <div class="flex items-center gap-2 shrink-0">
           <button
             @click="emit('editIfc', selection.id)"
             title="Associate Plant"

@@ -3,7 +3,7 @@
     <!-- Overlay -->
     <transition name="fade">
       <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity duration-300"
-           @click="$emit('cancel')"></div>
+           @click="$emit('cancel', undefined)"></div>
     </transition>
 
     <!-- Modal Content -->
@@ -11,9 +11,9 @@
       <div
         class="relative bg-white rounded-lg shadow-2xl w-full max-w-lg m-4 transform transition-all duration-300 ease-out flex flex-col max-h-[90vh]">
         <!-- Header -->
-        <div class="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+        <div class="flex items-center justify-between p-4 border-b border-gray-200 shrink-0">
           <h2 class="text-xl font-bold text-gray-800">Editar Planta</h2>
-          <button type="button" @click="$emit('cancel')"
+          <button type="button" @click="$emit('cancel', undefined)"
                   class="text-gray-400 hover:text-gray-600 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor">
@@ -97,7 +97,7 @@
 
         <!-- Footer Actions -->
         <div class="flex justify-end space-x-4 p-4 bg-gray-50 border-t border-gray-200 flex-shrink-0">
-          <button type="button" @click="$emit('cancel')"
+          <button type="button" @click="$emit('cancel', undefined)"
                   class="bg-white text-gray-700 rounded-md py-2 px-4 hover:bg-gray-100 focus:outline-none border border-gray-300 font-semibold">
             Cancelar
           </button>
@@ -111,67 +111,70 @@
   </div>
 </template>
 
-<script lang="ts">
-import { ref, reactive, watch } from "vue";
+<script setup lang="ts">
+import type { Combo } from "@/types/types.ts";
+import { ref, reactive, watch, onMounted } from "vue";
 
-export default {
-    props: {
-        selection: {
-            type: Object,
-            required: true,
-        },
-        availableCombos: {
-            type: Array,
-            required: true,
-        },
+// Define props
+const props = defineProps<{
+    selection: {
+        id: string;
+        label: string;
+        description: string;
+        relatedCombos: string[];
+        relatedGroups: string[];
+        groupIds?: string[];
+        comboIds?: string[];
+    };
+    availableCombos: any[];
+}>();
+
+// Define emits
+const emit = defineEmits<{
+    (e: "save", data: any): void;
+    (e: "cancel", data?: any): void;
+}>();
+
+// Reactive data for the modal form
+const plantData = reactive({
+    id: props.selection.id || "",
+    label: props.selection.label || "",
+    description: props.selection.description || "",
+    relatedCombos: props.selection.relatedCombos || [],
+    relatedGroups: props.selection.relatedGroups || [],
+});
+
+// State for selected groups and combos
+const selectedGroups = ref([...(props.selection.groupIds || [])]);
+const selectedCombos = ref([...(props.selection.comboIds || [])]);
+
+// Watch props to update selected values
+watch(
+    () => [props.selection.relatedGroups, props.selection.relatedCombos],
+    ([newGroups, newCombos]) => {
+        selectedGroups.value = newGroups || [];
+        selectedCombos.value = newCombos || [];
     },
-    setup(props, { emit }) {
-        // Reactive data for the modal form
-        const plantData = reactive({
-            id: props.selection.id || "",
-            label: props.selection.label || "",
-            description: props.selection.description || "",
-            relatedCombos: props.selection.relatedCombos || [],
-            relatedGroups: props.selection.relatedGroups || [], // Ensure relatedGroups are populated
-        });
+    { immediate: true }
+);
 
-        // State for selected groups and combos (use arrays for reactivity)
-        const selectedGroups = ref([...props.selection.groupIds || []]);
-        const selectedCombos = ref([...props.selection.comboIds || []]);
+// Save method
+const saveChanges = () => {
+    plantData.relatedCombos = selectedCombos.value;
+    plantData.relatedGroups = selectedGroups.value;
 
-        // Watch for changes in the plant's relatedGroups and relatedCombos to update selectedGroups and selectedCombos
-        watch([() => props.selection.relatedGroups, () => props.selection.relatedCombos], ([newGroups, newCombos]) => {
-            // Initialize the selectedGroups based on relatedGroups
-            selectedGroups.value = newGroups || [];
+    emit("save", { ...plantData });
+};
 
-            // Initialize the selectedCombos based on relatedCombos
-            selectedCombos.value = newCombos || [];
-        }, { immediate: true });
+onMounted(() => {
+    console.log("Available Combos:", props.availableCombos);
+});
 
-        // Save changes method
-        const saveChanges = () => {
-            plantData.relatedCombos = selectedCombos.value;
-            plantData.relatedGroups = selectedGroups.value;
-
-            emit("save", {
-                ...plantData
-            });
-        };
-
-        // Method to copy plant ID to clipboard
-        const copyToClipboard = () => {
-            navigator.clipboard.writeText(plantData.id).then(() => {
-                alert("ID copiado para a área de transferência!");
-            });
-        };
-
-        return {
-            plantData,
-            selectedGroups,
-            selectedCombos,
-            saveChanges,
-            copyToClipboard,
-        };
-    },
+// Copy to clipboard
+const copyToClipboard = () => {
+    navigator.clipboard.writeText(plantData.id).then(() => {
+        alert("ID copiado para a área de transferência!");
+    });
 };
 </script>
+

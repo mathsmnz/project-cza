@@ -92,6 +92,10 @@ async function captureImage() {
   await new Promise(resolve => setTimeout(resolve, 300))
 
   // Capture screenshot
+  if (!props.ifcFile) {
+    console.warn('No IFC file provided to capture.');
+    return;
+  }
   const file = await captureView(props.ifcFile)
   console.log(file)
 
