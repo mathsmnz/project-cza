@@ -189,11 +189,24 @@ export function useEditorModel() {
 
         if (intersects.length > 0) {
           const intersect = intersects[0]
+          if (!intersect) {
+            // safety fallback if somehow undefined, clear state and exit
+            if (highlightedFaceIndex !== -1 && originalFaceMaterial) {
+              ;(cube.material as THREE.Material[])[highlightedFaceIndex] = originalFaceMaterial
+              highlightedFaceIndex = -1
+              originalFaceMaterial = null
+            }
+            marker.visible = false
+            faceState.isIntersecting = false
+            faceState.faceIndex = -1
+            renderer.render(scene, camera)
+            return
+          }
+
           const faceIndex = intersect.faceIndex ?? -1
 
           faceState.isIntersecting = true
-          // @ts-expect-error the field will be generated during runtime
-          faceState.faceIndex = intersects[0].faceIndex
+          faceState.faceIndex = faceIndex
 
           if (faceIndex !== -1) {
             const materialIndex = Math.floor(faceIndex / 2)
@@ -204,7 +217,8 @@ export function useEditorModel() {
               }
 
               highlightedFaceIndex = materialIndex
-              originalFaceMaterial = (cube.material as THREE.Material[])[materialIndex]
+              // Ensure we never assign `undefined` to originalFaceMaterial (it must be Material | null)
+              originalFaceMaterial = ((cube.material as THREE.Material[])[materialIndex]) ?? null
               ;(cube.material as THREE.Material[])[materialIndex] = highlightMaterial
             }
 
@@ -575,6 +589,7 @@ export function useEditorModel() {
     if (!fragments.groups.size) return
 
     const group = Array.from(fragments.groups.values())[0]
+    if (!group) return
     const data = fragments.export(group)
     const baseName = modelName.split('.')[0] || 'model'
 
@@ -590,8 +605,8 @@ export function useEditorModel() {
     if (properties) {
       download(new Blob([JSON.stringify(properties)]), `${baseName}.json`)
     }
-
-    download(new Blob([data]), `${baseName}.frag`)
+    /*  */
+    download(new Blob([new Uint8Array(data)], { type: 'application/octet-stream' }), `${baseName}.frag`)
   }
 
   async function setupScene(selectedId: string, fileUrl: string, container: HTMLElement) {
@@ -719,8 +734,10 @@ export function useEditorModel() {
       const foundFrag = fragments.list.get(fragID)
       if (!foundFrag || !('mesh' in foundFrag)) continue
       const { mesh } = foundFrag
-      edges.styles.list.base.fragments[fragID] = new Set(modelItems[fragID])
-      edges.styles.list.base.meshes.add(mesh)
+      if (edges.styles.list.base) {
+        edges.styles.list.base.fragments[fragID] = new Set(modelItems[fragID])
+        edges.styles.list.base.meshes.add(mesh)
+      }
     }
 
     const grayFill = new THREE.MeshBasicMaterial({ color: 'gray', side: 2 })
@@ -740,8 +757,10 @@ export function useEditorModel() {
       const foundFrag = frag.list.get(fragID)
       if (!foundFrag) continue
       const { mesh } = foundFrag
-      edges.styles.list.thick.fragments[fragID] = new Set(thickItems[fragID])
-      edges.styles.list.thick.meshes.add(mesh)
+      if (edges.styles.list.thick) {
+        edges.styles.list.thick.fragments[fragID] = new Set(thickItems[fragID])
+        edges.styles.list.thick.meshes.add(mesh)
+      }
     }
 
     edges.styles.create('thin', new Set(), world)
@@ -750,8 +769,10 @@ export function useEditorModel() {
       const foundFrag = frag.list.get(fragID)
       if (!foundFrag) continue
       const { mesh } = foundFrag
-      edges.styles.list.thin.fragments[fragID] = new Set(thinItems[fragID])
-      edges.styles.list.thin.meshes.add(mesh)
+      if (edges.styles.list.thin) {
+        edges.styles.list.thin.fragments[fragID] = new Set(thinItems[fragID])
+        edges.styles.list.thin.meshes.add(mesh)
+      }
     }
 
     await edges.update(true)
@@ -765,7 +786,7 @@ export function useEditorModel() {
 
     let activePlan = plans.currentPlan
     if (!activePlan) {
-      activePlan = plans.list[0]
+      activePlan = plans.list[0] ?? null
       console.warn('Nenhuma planta ativa para captura.')
     }
 
