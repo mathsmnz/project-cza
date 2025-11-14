@@ -63,7 +63,10 @@ const fetchTelemetryData = async () => {
   ]
   // Seleciona a primeira entrada por padrão ao carregar
   if (telemetryEntries.value.length > 0) {
-    selectedEntry.value = telemetryEntries.value[0]
+    const firstEntry = telemetryEntries.value[0]
+    if (firstEntry !== undefined) {
+      selectedEntry.value = firstEntry
+    }
   }
   isLoading.value = false
 }
@@ -94,25 +97,12 @@ onMounted(fetchTelemetryData)
 
     <!-- Loading State -->
     <div v-if="isLoading" class="text-center p-12">
-      <svg
-        class="animate-spin mx-auto h-12 w-12 text-gray-400"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <circle
-          class="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          stroke-width="4"
-        ></circle>
-        <path
-          class="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-        ></path>
+      <svg class="animate-spin mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+        viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+        </path>
       </svg>
       <p class="mt-2 text-sm text-gray-500">Carregando dados de telemetria...</p>
     </div>
@@ -129,18 +119,12 @@ onMounted(fetchTelemetryData)
             Nenhum dado de telemetria encontrado.
           </div>
           <!-- Session List Item -->
-          <div
-            v-else
-            v-for="entry in telemetryEntries"
-            :key="entry.sessionId"
-            @click="selectEntry(entry)"
-            class="p-3 -md cursor-pointer border transition-colors duration-150"
-            :class="{
+          <div v-else v-for="entry in telemetryEntries" :key="entry.sessionId" @click="selectEntry(entry)"
+            class="p-3 -md cursor-pointer border transition-colors duration-150" :class="{
               'bg-gray-50 border-l-4 border-gray-500 text-gray-800 font-medium':
                 entry.sessionId === selectedEntry?.sessionId,
               'border-gray-200 hover:bg-gray-100': entry.sessionId !== selectedEntry?.sessionId,
-            }"
-          >
+            }">
             <p class="text-sm font-medium truncate" :title="entry.sessionId">
               Sessão: ...{{ entry.sessionId.slice(-8) }}
             </p>
@@ -152,10 +136,7 @@ onMounted(fetchTelemetryData)
 
       <!-- Coluna 2: Detalhes da Sessão Selecionada -->
       <div class="md:col-span-2 space-y-6">
-        <div
-          v-if="!selectedEntry"
-          class="bg-white outline outline-black p-6 text-center text-gray-500"
-        >
+        <div v-if="!selectedEntry" class="bg-white outline outline-black p-6 text-center text-gray-500">
           Selecione uma sessão na lista para ver os detalhes.
         </div>
 
@@ -208,17 +189,10 @@ onMounted(fetchTelemetryData)
                 <h3 class="font-semibold text-gray-700">Cliques em Grupos</h3>
               </div>
               <ul class="p-4 space-y-1 text-sm">
-                <li
-                  v-for="(count, group) in selectedEntry.groupSelections"
-                  :key="group"
-                  class="flex justify-between"
-                >
+                <li v-for="(count, group) in selectedEntry.groupSelections" :key="group" class="flex justify-between">
                   <span>{{ group }}:</span> <span class="font-medium">{{ count }}</span>
                 </li>
-                <li
-                  v-if="Object.keys(selectedEntry.groupSelections).length === 0"
-                  class="text-gray-400 italic"
-                >
+                <li v-if="Object.keys(selectedEntry.groupSelections).length === 0" class="text-gray-400 italic">
                   Nenhum
                 </li>
               </ul>
@@ -229,17 +203,10 @@ onMounted(fetchTelemetryData)
                 <h3 class="font-semibold text-gray-700">Cliques em Combos</h3>
               </div>
               <ul class="p-4 space-y-1 text-sm max-h-48 overflow-y-auto">
-                <li
-                  v-for="(count, combo) in selectedEntry.comboSelections"
-                  :key="combo"
-                  class="flex justify-between"
-                >
+                <li v-for="(count, combo) in selectedEntry.comboSelections" :key="combo" class="flex justify-between">
                   <span>{{ combo }}:</span> <span class="font-medium">{{ count }}</span>
                 </li>
-                <li
-                  v-if="Object.keys(selectedEntry.comboSelections).length === 0"
-                  class="text-gray-400 italic"
-                >
+                <li v-if="Object.keys(selectedEntry.comboSelections).length === 0" class="text-gray-400 italic">
                   Nenhum
                 </li>
               </ul>
@@ -266,6 +233,7 @@ onMounted(fetchTelemetryData)
 <style scoped>
 /* Adicione estilos específicos se necessário */
 .font-montserrat {
-  font-family: 'Montserrat', sans-serif; /* Certifique-se que a fonte está carregada */
+  font-family: 'Montserrat', sans-serif;
+  /* Certifique-se que a fonte está carregada */
 }
 </style>

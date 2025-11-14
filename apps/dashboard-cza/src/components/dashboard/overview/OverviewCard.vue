@@ -87,7 +87,7 @@ function createOrUpdateDiskUsageChart() {
           tooltip: {
             backgroundColor: '#1F2937',
             padding: 12,
-            titleFont: { size: 14, weight: '600' },
+            titleFont: { size: 14, weight: 600 },
             bodyFont: { size: 13 },
             callbacks: {
               label: function (context) {

@@ -36,7 +36,11 @@ const toggleAll = () => {
   if (isAllSelected.value) {
     selectedRequests.value.clear()
   } else {
-    requests.forEach((request) => selectedRequests.value.add(request.email))
+    requests.forEach((request) => {
+      if (request.email) {
+        selectedRequests.value.add(request.email)
+      }
+    })
   }
   emit('selectionChange', Array.from(selectedRequests.value))
 }
@@ -114,10 +118,10 @@ const copyLink = async (link: string) => {
           <td class="py-4 px-6">
             <div class="flex items-center gap-2 max-w-xs">
               <span class="truncate text-gray-600 text-xs font-mono">
-                {{ request.recoveryLink }}
+                {{ request.token }}
               </span>
               <button
-                @click="copyLink(request.recoveryLink)"
+                @click="copyLink(request.token)"
                 class="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0"
                 title="Copy link"
                 aria-label="Copy recovery link"
@@ -163,7 +167,7 @@ const copyLink = async (link: string) => {
               <!-- Delete Recovery Request -->
               <button
                 class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                @click="emit('delete', request.recoveryLink)"
+                @click="emit('delete', request.token)"
                 aria-label="Delete recovery request"
                 title="Delete recovery request"
               >

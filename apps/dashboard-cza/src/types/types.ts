@@ -214,7 +214,7 @@ export interface PasswordResetRequest {
  */
 export interface PasswordRecoveryResponse {
   /** Optional email (useful for confirmation responses). */
-  email?: string;
+  email: string;
 
   /** A token to the recovery link. */
   token: string;
