@@ -196,7 +196,7 @@ export const completeRegistration = async (
   request: CompleteRegistrationRequest
 ): Promise<UserResponse> => {
   try {
-    const response = await api.post<UserResponse>(`/api/users/v1/registrations/${token}`, request);
+    const response = await api.post<UserResponse>(`/api/users/v1/registration/${token}`, request);
     return response.data;
   } catch (error) {
     console.error(`Failed to complete registration for token "${token}":`, error);
