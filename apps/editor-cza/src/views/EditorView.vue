@@ -211,7 +211,7 @@ export default {
     })
 
     const checkBasefile = async () => {
-      if (currentProject.value && baseFile.value) {
+      if (currentProject.value) {
         try {
           const fileResult = await downloadProjectFile(currentProject.value?.id, 'base.ifc')
 
