@@ -739,5 +739,54 @@ export const uploadProjectFile = async (
   }
 }
 
+/**
+ * Downloads a specific file belonging to a given project.
+ *
+ * <p>
+ * Behavior:
+ * <ul>
+ *   <li>Fetches the raw file bytes from the backend.</li>
+ *   <li>Returns a Blob so callers can handle saving or previewing the file.</li>
+ *   <li>If the file does not exist, the backend returns 404.</li>
+ * </ul>
+ * </p>
+ *
+ * @param projectId The ID of the project the file belongs to.
+ * @param filename The exact name of the file to retrieve.
+ * @returns A Promise resolving to a Blob containing the downloaded file contents.
+ *
+ * @example
+ * ```ts
+ * const blob = await downloadProjectFile('project123', 'design.pdf')
+ * const url = URL.createObjectURL(blob)
+ * window.open(url)
+ * ```
+ *
+ * @throws If the request fails (e.g., 404, network issues),
+ *         the error is logged and rethrown for higher-level handling.
+ */
+export const downloadProjectFile = async (
+  projectId: string,
+  filename: string,
+): Promise<Blob> => {
+  try {
+    const response = await api.get<Blob>(
+      `/api/files/v1/${projectId}/${encodeURIComponent(filename)}`,
+      {
+        responseType: 'blob', // ensures Axios treats it as a binary file
+      },
+    )
+
+    return response.data
+  } catch (error) {
+    const err = error as AxiosError
+    console.error(
+      `Failed to download file "${filename}" for project ${projectId}:`,
+      err,
+    )
+    throw err
+  }
+}
+
 
 export default api

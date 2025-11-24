@@ -539,49 +539,57 @@ export function useEditorModel() {
   }
 
   // Load IFC model from file input
-  async function loadIFCFile() {
-    const fileInput = document.createElement('input')
-    fileInput.type = 'file'
-    fileInput.accept = '.ifc'
+  async function loadIFCFile(): Promise<ArrayBuffer> {
+    return new Promise((resolve, reject) => {
+      const fileInput = document.createElement('input')
+      fileInput.type = 'file'
+      fileInput.accept = '.ifc'
 
-    fileInput.onchange = async (e) => {
-      const target = e.target as HTMLInputElement | null
-      if (!target?.files?.[0]) {
-        console.error('No file selected.')
-        return
-      }
-
-      const file = target.files[0]
-
-      try {
-        isFileReady.value = false
-        const buffer = new Uint8Array(await file.arrayBuffer())
-
-        if (!world) {
-          console.error('World is not initialized.')
+      fileInput.onchange = async (e) => {
+        const target = e.target as HTMLInputElement | null
+        if (!target?.files?.[0]) {
+          console.error('No file selected.')
+          reject(new Error('No file selected'))
           return
         }
 
-        _cleanupScene()
+        const file = target.files[0]
 
-        const loadedModel = await fragmentIfcLoader.load(buffer)
-        loadedModel.name = file.name
+        try {
+          isFileReady.value = false
 
-        model = loadedModel
-        modelName = file.name
+          const bufferArray = await file.arrayBuffer()
+          const buffer = new Uint8Array(bufferArray)
 
-        world.scene.three.add(model)
-        await _setupBoundingBox(loadedModel)
-        await _planManager()
-        await _setupStyling()
+          if (!world) {
+            reject(new Error('World is not initialized'))
+            return
+          }
 
-        isFileReady.value = true
-      } catch (error) {
-        console.error('Failed to load IFC file:', error)
+          _cleanupScene()
+
+          const loadedModel = await fragmentIfcLoader.load(buffer)
+          loadedModel.name = file.name
+
+          model = loadedModel
+          modelName = file.name
+
+          world.scene.three.add(model)
+          _setupBoundingBox(loadedModel)
+          await _planManager()
+          await _setupStyling()
+
+          isFileReady.value = true
+
+          resolve(bufferArray)
+        } catch (error) {
+          console.error('Failed to load IFC file:', error)
+          reject(error)
+        }
       }
-    }
 
-    fileInput.click()
+      fileInput.click()
+    })
   }
 
   // Save .frag and properties.json

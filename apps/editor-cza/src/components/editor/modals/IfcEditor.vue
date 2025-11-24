@@ -9,11 +9,11 @@
       ></div>
     </transition>
 
-    <transition name="scale-fade w-[900px] h-[600px]" appear>
+    <transition name="scale-fade w-[900px] h-[600px]" appear> </transition>
 
-    </transition>
-
-    <div class="relative bg-white rounded-lg shadow-2xl w-[900px] h-[600px] transform transition-all duration-300 ease-out">
+    <div
+      class="relative bg-white rounded-lg shadow-2xl w-[900px] h-[600px] transform transition-all duration-300 ease-out"
+    >
       <!-- Close button -->
       <button
         @click="handleClose"
@@ -25,16 +25,22 @@
       <!-- Buttons -->
       <div class="absolute bottom-4 right-4 flex gap-2 z-50">
         <button
-          @click="loadFromFile()"
+          @click="loadIfcFile()"
           class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
           Carregar IFC
         </button>
         <button
+          @click="() => uploadIfcFile()"
+          class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          Salvar IFC
+        </button>
+        <button
           @click="() => captureImage()"
           class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
         >
-          Capturar
+          Gerar Imagem
         </button>
       </div>
 
@@ -44,9 +50,8 @@
   </div>
 </template>
 
-
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useEditorController } from '@/editor/editorController.ts'
 import { uploadProjectFile } from '@/api/axios.ts'
 
@@ -60,20 +65,39 @@ const emit = defineEmits<{
 }>()
 
 const viewerContainer = ref<HTMLDivElement | null>(null)
+const loadedIfc = ref<ArrayBuffer | null>(null)
 
-const {
-  plans,
-  setupEditor,
-  loadFromFile,
-  selectPlan,
-  resetPlanView,
-  captureView,
-  disposeEditor
-} = useEditorController(viewerContainer)
+const { plans, setupEditor, loadFromFile, selectPlan, resetPlanView, captureView, disposeEditor } =
+  useEditorController(viewerContainer)
 
-function handleClose(){
-    disposeEditor()
-    emit('close')
+function handleClose() {
+  disposeEditor()
+  emit('close')
+}
+
+async function loadIfcFile() {
+  try{
+    const buffer = await loadFromFile()
+    loadedIfc.value = buffer
+    console.log(buffer)
+  }catch(error){
+    console.log(error)
+  }
+}
+
+async function uploadIfcFile(){
+  console.log("uploadIfcFile()")
+  try{
+    if(loadedIfc.value && props.ifcFile && props.projectId){
+      const blob =  new Blob([loadedIfc.value], { type: 'application/octet-stream' })
+      const file = new File([blob], props.ifcFile, {type: 'application/octet-stream'})
+
+      const response = await uploadProjectFile(file, props.projectId)
+      console.log(response)
+    }
+  }catch(error){
+    console.log(error)
+  }
 }
 
 async function captureImage() {
@@ -89,31 +113,31 @@ async function captureImage() {
   selectPlan(currentPlan)
 
   // Wait for scene to update/render
-  await new Promise(resolve => setTimeout(resolve, 300))
+  await new Promise((resolve) => setTimeout(resolve, 300))
 
   // Capture screenshot
   if (!props.ifcFile) {
-    console.warn('No IFC file provided to capture.');
-    return;
+    console.warn('No IFC file provided to capture.')
+    return
   }
   const file = await captureView(props.ifcFile)
   console.log(file)
 
-  try{
-    if(file && props.projectId){
+  try {
+    if (file && props.projectId) {
       const response = await uploadProjectFile(file, props.projectId)
       console.log(response)
     }
-  }catch(error){
+  } catch (error) {
     console.error(error)
-  }finally {
+  } finally {
     // Reset plan view
     resetPlanView()
   }
 }
 
 onMounted(async () => {
-  await setupEditor("base","/base.ifc")
-})
 
+  await setupEditor('base', '/base.ifc')
+})
 </script>

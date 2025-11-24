@@ -57,6 +57,8 @@ export default {
     }
 
     onMounted(() => {
+      console.log(options)
+
       window.addEventListener('resize', handleResize)
     })
     onBeforeUnmount(() => {

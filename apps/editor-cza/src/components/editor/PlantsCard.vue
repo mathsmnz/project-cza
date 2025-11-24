@@ -4,6 +4,7 @@ import type { Selection } from '@/types/types.ts'
 
 const props = defineProps<{
   selections: Selection[]
+  hasBaseFile: boolean
 }>()
 
 const emit = defineEmits<{
@@ -50,7 +51,12 @@ const emit = defineEmits<{
           <button
             @click="emit('editIfc', selection.id)"
             title="Associate Plant"
-            class="px-3 py-1.5 text-xs font-bold uppercase border-2 border-green-500 text-green-700 bg-green-50 hover:bg-green-100 transition-colors inline-flex items-center"
+            :class="[
+    'px-3 py-1.5 text-xs font-bold uppercase transition-colors inline-flex items-center',
+    hasBaseFile
+      ? 'border-2 border-green-500 text-green-700 bg-green-50 hover:bg-green-100'
+      : 'opacity-50 pointer-events-none border-2 border-gray-500 text-gray-500 bg-gray-100'
+  ]"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

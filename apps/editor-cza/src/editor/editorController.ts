@@ -35,11 +35,23 @@ export function useEditorController(container: Ref<HTMLDivElement | null>) {
   }
 
   /**
+   * Initializes the editor with a default IFC file (e.g., 'base.ifc')
+   */
+  async function setupEditorByBlob(fileName: string, fileUrl: Blob) {
+
+    if (container.value) {
+      console.log("Setting up editor for:", fileName)
+      await setupFragments()
+      await setupScene(fileName, fileUrl, container.value)
+    } else {
+      console.warn('Container element is not available.')
+    }
+  }
+
+  /**
    * Allows selecting and loading a local .IFC file
    */
-  async function loadFromFile() {
-    await loadIFCFile()
-  }
+  const loadFromFile = () => loadIFCFile()
 
   /**
    * Loads an IFC model from a given URL

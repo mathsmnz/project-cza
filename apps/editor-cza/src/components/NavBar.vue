@@ -58,7 +58,6 @@
       </div>
       <!-- Placeholder if user not logged in -->
       <div v-else>
-        {{ isAuthenticated }}
         <RouterLink to="/login" class="text-sm font-medium text-gray-600 hover:text-gray-600"
           >Login</RouterLink
         >

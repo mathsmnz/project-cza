@@ -48,6 +48,26 @@
               Downlaod JSON
             </button>
             <button
+              @click="setBaseFile"
+              class="inline-flex items-center px-4 py-2 border-2 border-black text-sm font-semibold text-white bg-green-800 hover:bg-green-300 hover:text-black transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+                />
+              </svg>
+              Set base file
+            </button>
+            <button
               @click="uploadSelection"
               class="inline-flex items-center px-4 py-2 border-2 border-black text-sm font-semibold text-white bg-black hover:bg-white hover:text-black transition-colors"
             >
@@ -87,119 +107,14 @@
             @add-combo="addCombo"
           />
 
-          <div class="lg:col-span-3 bg-white border-2 border-black flex flex-col">
-            <div class="p-4 border-b-2 border-black bg-gray-50">
-              <h2 class="text-lg font-bold text-gray-900 uppercase">Plants</h2>
-            </div>
-            <div class="flex-grow p-4 space-y-2 overflow-y-auto min-h-[300px]">
-              <div v-if="selections.length === 0" class="text-center text-gray-500 py-12">
-                <svg
-                  class="w-12 h-12 mx-auto mb-3 text-gray-300"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"
-                  />
-                </svg>
-                <p class="font-medium">No plants added</p>
-              </div>
-              <div
-                v-else
-                v-for="(selection, index) in selections"
-                :key="selection.id"
-                class="group p-3 border-2 border-gray-300 hover:border-black flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 transition-colors"
-              >
-                <span class="font-semibold text-gray-900">{{ selection.label }}</span>
-                <div class="flex items-center gap-2 flex-shrink-0">
-                  <button
-                    @click="editIfc(selection.id)"
-                    title="Associate Plant"
-                    class="px-3 py-1.5 text-xs font-bold uppercase border-2 border-green-500 text-green-700 bg-green-50 hover:bg-green-100 transition-colors inline-flex items-center"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="h-4 w-4 mr-1"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                      />
-                    </svg>
-                    Associate
-                  </button>
-                  <button
-                    @click="editSelection(selection)"
-                    title="Edit Plant"
-                    class="p-1.5 text-gray-400 hover:text-gray-600"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"
-                      />
-                      <path
-                        fill-rule="evenodd"
-                        d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"
-                        clip-rule="evenodd"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    @click="deleteSelection(index)"
-                    title="Delete Plant"
-                    class="p-1.5 text-gray-400 hover:text-red-600"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fill-rule="evenodd"
-                        d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                        clip-rule="evenodd"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div class="p-4 border-t-2 border-black bg-gray-50">
-              <button
-                @click="addSelection"
-                class="w-full inline-flex items-center justify-center px-4 py-2 border-2 border-black text-sm font-semibold text-white bg-black hover:bg-white hover:text-black transition-colors"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5 mr-2"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-                Add Plant
-              </button>
-            </div>
-          </div>
+          <plants-card
+            :selections="selections"
+            :hasBaseFile="hasFile"
+            @add-selection="addSelection"
+            @edit-selection="editSelection"
+            @delete-selection="deleteSelection"
+            @edit-ifc="editIfc"
+          />
         </div>
       </div>
     </div>
@@ -230,12 +145,17 @@
       :duration="toastState.duration"
       @close="hideToast"
     />
-    <IfcEditor v-if="showViewer" :project-id="currentProject?.id ?? null" :ifc-file="currentFile" @close="showViewer = false" />
+    <IfcEditor
+      v-if="showViewer"
+      :project-id="currentProject?.id ?? null"
+      :ifc-file="currentFile"
+      @close="showViewer = false"
+    />
   </div>
 </template>
 
 <script lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
 import GroupEditor from '@/components/editor/modals/GroupEditor.vue'
 import ComboEditor from '@/components/editor/modals/ComboEditor.vue'
 import SelectionEditor from '@/components/editor/modals/SelectionEditor.vue'
@@ -247,10 +167,12 @@ import type { Combo, CustomizationSchema, Group, Selection } from '@/types/types
 import { generateUniqueId } from '@/util/util.ts'
 import { useProjectsStore } from '@/stores/projects.ts'
 import { storeToRefs } from 'pinia'
-import { setProjectSelections } from '@/api/axios.ts'
+import { downloadProjectFile, setProjectSelections } from '@/api/axios.ts'
+import PlantsCard from '@/components/editor/PlantsCard.vue'
 
 export default {
   components: {
+    PlantsCard,
     ComboCard,
     GroupsCard,
     GroupEditor,
@@ -274,11 +196,41 @@ export default {
       duration: 3000, // Default duration
     })
 
+    const baseFile = ref<ArrayBuffer | null>(null)
+    const hasFile = ref<boolean>(false)
+
     const projectStore = useProjectsStore()
     const { currentProject, currentProjectCustomization } = storeToRefs(projectStore)
 
     const currentFile = ref<string | null>(null)
     const showViewer = ref(false)
+
+
+    watch(currentProject, async() => {
+      await checkBasefile()
+    })
+
+    const checkBasefile = async () => {
+      if (currentProject) {
+        try {
+          const promise = await downloadProjectFile(currentProject.value?.id, 'base.ifc')
+          if (promise) {
+            console.log(promise)
+            baseFile.value = promise.arrayBuffer
+            hasFile.value = true
+          } else {
+            hasFile.value = false
+          }
+        } catch (e) {
+          console.log('No base file found')
+        }
+      }
+    }
+
+    const setBaseFile = async () => {
+      currentFile.value = 'base.ifc'
+      showViewer.value = true
+    }
 
     const showToast = (message: string, mode = 'success', duration = 3000) => {
       toastState.message = message
@@ -537,6 +489,8 @@ export default {
       console.log('deleted:', deletedSelection)
     }
 
+    const uploadBaseFile = async (): Promise<void> => {}
+
     const uploadSelection = async (): Promise<void> => {
       if (!currentProject.value) {
         console.error('No project selected — cannot upload selections.')
@@ -612,10 +566,12 @@ export default {
       saveSelection,
       currentFile,
       showViewer,
+      hasFile,
       deleteSelection,
       renameFile,
       toastState,
       hideToast,
+      setBaseFile,
     }
   },
 }
