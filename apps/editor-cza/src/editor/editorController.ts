@@ -42,7 +42,7 @@ export function useEditorController(container: Ref<HTMLDivElement | null>) {
     if (container.value) {
       console.log("Setting up editor for:", fileName)
       await setupFragments()
-      await setupScene(fileName, fileUrl, container.value)
+      //await setupScene(fileName, fileUrl, container.value)
     } else {
       console.warn('Container element is not available.')
     }

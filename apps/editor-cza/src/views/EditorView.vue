@@ -211,12 +211,14 @@ export default {
     })
 
     const checkBasefile = async () => {
-      if (currentProject) {
+      if (currentProject.value && baseFile.value) {
         try {
-          const promise = await downloadProjectFile(currentProject.value?.id, 'base.ifc')
-          if (promise) {
-            console.log(promise)
-            baseFile.value = promise.arrayBuffer
+          const fileResult = await downloadProjectFile(currentProject.value?.id, 'base.ifc')
+
+          if (fileResult) {
+            console.log(fileResult)
+
+            baseFile.value = await fileResult.arrayBuffer()
             hasFile.value = true
           } else {
             hasFile.value = false

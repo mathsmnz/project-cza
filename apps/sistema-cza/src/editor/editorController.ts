@@ -10,6 +10,7 @@ export function useEditorController(container: Ref<HTMLDivElement | null>) {
     loadIFCFile,
     saveFile,
     activatePlan,
+    dispose,
     exitPlanView,
     captureScreenshot,
     isFileReady,
@@ -22,12 +23,26 @@ export function useEditorController(container: Ref<HTMLDivElement | null>) {
   /**
    * Initializes the editor with a default IFC file (e.g., 'base.ifc')
    */
-  async function setupEditor(initialIfc: string) {
-  
+  async function setupEditor(fileName: string, fileUrl: string) {
+
     if (container.value) {
-      console.log("Setting up editor for:", initialIfc)
+      console.log("Setting up editor for:", fileName)
       await setupFragments()
-      await setupScene(initialIfc, container.value)
+      await setupScene(fileName, fileUrl, container.value)
+    } else {
+      console.warn('Container element is not available.')
+    }
+  }
+
+  /**
+   * Initializes the editor with a default IFC file (e.g., 'base.ifc')
+   */
+  async function setupEditorByBlob(fileName: string, fileUrl: Blob) {
+
+    if (container.value) {
+      console.log("Setting up editor for:", fileName)
+      await setupFragments()
+      //await setupScene(fileName, fileUrl, container.value)
     } else {
       console.warn('Container element is not available.')
     }
@@ -36,9 +51,7 @@ export function useEditorController(container: Ref<HTMLDivElement | null>) {
   /**
    * Allows selecting and loading a local .IFC file
    */
-  async function loadFromFile() {
-    await loadIFCFile()
-  }
+  const loadFromFile = () => loadIFCFile()
 
   /**
    * Loads an IFC model from a given URL
@@ -46,7 +59,7 @@ export function useEditorController(container: Ref<HTMLDivElement | null>) {
   async function loadFromURL(url: string) {
     const model = await loadIfcModel(url)
     if (model && container.value) {
-      await setupScene(model.name, container.value)
+      await setupScene(model.name, url, container.value)
     }
   }
 
@@ -74,14 +87,23 @@ export function useEditorController(container: Ref<HTMLDivElement | null>) {
   /**
    * Captures a high-resolution screenshot of the model view
    */
-  async function captureView() {
+  async function captureView(fileName: string){
     if (container.value) {
-      await captureScreenshot(container.value)
+      return await captureScreenshot(container.value, fileName)
     } else {
       console.warn('Container element not found for screenshot.')
+      return null
     }
   }
 
+  /**
+   * Disposes editor
+   */
+  async function disposeEditor(){
+    if (container.value) {
+      dispose()
+    }
+  }
   return {
     plans,
     setupEditor,
@@ -91,6 +113,7 @@ export function useEditorController(container: Ref<HTMLDivElement | null>) {
     selectPlan,
     resetPlanView,
     captureView,
+    disposeEditor,
     isEditorReady
   }
 }

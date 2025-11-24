@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+//@ts-nocheck
 import * as WEBIFC from 'web-ifc'
 import * as THREE from 'three'
 import * as OBC from '@thatopen/components'
@@ -189,11 +190,24 @@ export function useEditorModel() {
 
         if (intersects.length > 0) {
           const intersect = intersects[0]
+          if (!intersect) {
+            // safety fallback if somehow undefined, clear state and exit
+            if (highlightedFaceIndex !== -1 && originalFaceMaterial) {
+              ;(cube.material as THREE.Material[])[highlightedFaceIndex] = originalFaceMaterial
+              highlightedFaceIndex = -1
+              originalFaceMaterial = null
+            }
+            marker.visible = false
+            faceState.isIntersecting = false
+            faceState.faceIndex = -1
+            renderer.render(scene, camera)
+            return
+          }
+
           const faceIndex = intersect.faceIndex ?? -1
 
           faceState.isIntersecting = true
-          // @ts-expect-error the field will be generated during runtime
-          faceState.faceIndex = intersects[0].faceIndex
+          faceState.faceIndex = faceIndex
 
           if (faceIndex !== -1) {
             const materialIndex = Math.floor(faceIndex / 2)
@@ -204,7 +218,8 @@ export function useEditorModel() {
               }
 
               highlightedFaceIndex = materialIndex
-              originalFaceMaterial = (cube.material as THREE.Material[])[materialIndex]
+              // Ensure we never assign `undefined` to originalFaceMaterial (it must be Material | null)
+              originalFaceMaterial = ((cube.material as THREE.Material[])[materialIndex]) ?? null
               ;(cube.material as THREE.Material[])[materialIndex] = highlightMaterial
             }
 
@@ -525,49 +540,57 @@ export function useEditorModel() {
   }
 
   // Load IFC model from file input
-  async function loadIFCFile() {
-    const fileInput = document.createElement('input')
-    fileInput.type = 'file'
-    fileInput.accept = '.ifc'
+  async function loadIFCFile(): Promise<ArrayBuffer> {
+    return new Promise((resolve, reject) => {
+      const fileInput = document.createElement('input')
+      fileInput.type = 'file'
+      fileInput.accept = '.ifc'
 
-    fileInput.onchange = async (e) => {
-      const target = e.target as HTMLInputElement | null
-      if (!target?.files?.[0]) {
-        console.error('No file selected.')
-        return
-      }
-
-      const file = target.files[0]
-
-      try {
-        isFileReady.value = false
-        const buffer = new Uint8Array(await file.arrayBuffer())
-
-        if (!world) {
-          console.error('World is not initialized.')
+      fileInput.onchange = async (e) => {
+        const target = e.target as HTMLInputElement | null
+        if (!target?.files?.[0]) {
+          console.error('No file selected.')
+          reject(new Error('No file selected'))
           return
         }
 
-        _cleanupScene()
+        const file = target.files[0]
 
-        const loadedModel = await fragmentIfcLoader.load(buffer)
-        loadedModel.name = file.name
+        try {
+          isFileReady.value = false
 
-        model = loadedModel
-        modelName = file.name
+          const bufferArray = await file.arrayBuffer()
+          const buffer = new Uint8Array(bufferArray)
 
-        world.scene.three.add(model)
-        await _setupBoundingBox(loadedModel)
-        await _planManager()
-        await _setupStyling()
+          if (!world) {
+            reject(new Error('World is not initialized'))
+            return
+          }
 
-        isFileReady.value = true
-      } catch (error) {
-        console.error('Failed to load IFC file:', error)
+          _cleanupScene()
+
+          const loadedModel = await fragmentIfcLoader.load(buffer)
+          loadedModel.name = file.name
+
+          model = loadedModel
+          modelName = file.name
+
+          world.scene.three.add(model)
+          _setupBoundingBox(loadedModel)
+          await _planManager()
+          await _setupStyling()
+
+          isFileReady.value = true
+
+          resolve(bufferArray)
+        } catch (error) {
+          console.error('Failed to load IFC file:', error)
+          reject(error)
+        }
       }
-    }
 
-    fileInput.click()
+      fileInput.click()
+    })
   }
 
   // Save .frag and properties.json
@@ -575,6 +598,7 @@ export function useEditorModel() {
     if (!fragments.groups.size) return
 
     const group = Array.from(fragments.groups.values())[0]
+    if (!group) return
     const data = fragments.export(group)
     const baseName = modelName.split('.')[0] || 'model'
 
@@ -590,18 +614,17 @@ export function useEditorModel() {
     if (properties) {
       download(new Blob([JSON.stringify(properties)]), `${baseName}.json`)
     }
-
-    download(new Blob([data]), `${baseName}.frag`)
+    /*  */
+    download(new Blob([new Uint8Array(data)], { type: 'application/octet-stream' }), `${baseName}.frag`)
   }
 
-  async function setupScene(selectedId: string, container: HTMLElement) {
+  async function setupScene(selectedId: string, fileUrl: string, container: HTMLElement) {
     await _setupWorld(container)
     if (!world) return
 
     setupGrid(world)
 
-    const url = `/ifcs/${selectedId}.ifc`
-    model = await loadIfcModel(url)
+    model = await loadIfcModel(fileUrl)
     world.scene.three.add(model)
     modelName = selectedId
 
@@ -720,8 +743,10 @@ export function useEditorModel() {
       const foundFrag = fragments.list.get(fragID)
       if (!foundFrag || !('mesh' in foundFrag)) continue
       const { mesh } = foundFrag
-      edges.styles.list.base.fragments[fragID] = new Set(modelItems[fragID])
-      edges.styles.list.base.meshes.add(mesh)
+      if (edges.styles.list.base) {
+        edges.styles.list.base.fragments[fragID] = new Set(modelItems[fragID])
+        edges.styles.list.base.meshes.add(mesh)
+      }
     }
 
     const grayFill = new THREE.MeshBasicMaterial({ color: 'gray', side: 2 })
@@ -741,8 +766,10 @@ export function useEditorModel() {
       const foundFrag = frag.list.get(fragID)
       if (!foundFrag) continue
       const { mesh } = foundFrag
-      edges.styles.list.thick.fragments[fragID] = new Set(thickItems[fragID])
-      edges.styles.list.thick.meshes.add(mesh)
+      if (edges.styles.list.thick) {
+        edges.styles.list.thick.fragments[fragID] = new Set(thickItems[fragID])
+        edges.styles.list.thick.meshes.add(mesh)
+      }
     }
 
     edges.styles.create('thin', new Set(), world)
@@ -751,14 +778,16 @@ export function useEditorModel() {
       const foundFrag = frag.list.get(fragID)
       if (!foundFrag) continue
       const { mesh } = foundFrag
-      edges.styles.list.thin.fragments[fragID] = new Set(thinItems[fragID])
-      edges.styles.list.thin.meshes.add(mesh)
+      if (edges.styles.list.thin) {
+        edges.styles.list.thin.fragments[fragID] = new Set(thinItems[fragID])
+        edges.styles.list.thin.meshes.add(mesh)
+      }
     }
 
     await edges.update(true)
   }
 
-  const captureScreenshot = async (container: HTMLElement) => {
+  const captureScreenshot = async (container: HTMLElement, fileName: string) => {
     if (!world || !world.renderer || !container) return
 
     // Hide the grid before capturing
@@ -766,7 +795,7 @@ export function useEditorModel() {
 
     let activePlan = plans.currentPlan
     if (!activePlan) {
-      activePlan = plans.list[0]
+      activePlan = plans.list[0] ?? null
       console.warn('Nenhuma planta ativa para captura.')
     }
 
@@ -808,6 +837,10 @@ export function useEditorModel() {
     // Capture the image at high resolution
     const screenshot = canvas.toDataURL('image/png')
 
+    // Converts to a base64 file for upload
+    const blob = await (await fetch(screenshot)).blob()
+    const file = new File([blob], `${fileName.split('.')[0]}.jpg`)
+
     // Restore original renderer settings
     world.renderer.three.setClearColor(originalClearColor, originalAlpha)
     world.renderer.three.setPixelRatio(originalPixelRatio)
@@ -822,9 +855,11 @@ export function useEditorModel() {
     // Download the image
     const link = document.createElement('a')
     link.href = screenshot
-    const screenshotName = modelName.split('.')[0]
+    const screenshotName = fileName.split('.')[0]
     link.download = `${screenshotName}.png`
     link.click()
+
+    return file
   }
 
   // Função que ajusta o zoom no plano antes da captura
@@ -929,6 +964,10 @@ export function useEditorModel() {
     return components.get(OBC.Grids)
   }
 
+  function dispose(){
+    world.camera.dispose()
+  }
+
   return {
     getPlans: () => reactivePlansList,
     setupScene,
@@ -939,6 +978,7 @@ export function useEditorModel() {
     activatePlan,
     exitPlanView,
     isFileReady,
+    dispose,
     captureScreenshot,
   }
 }

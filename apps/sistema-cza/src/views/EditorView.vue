@@ -21,7 +21,7 @@
         class="w-full text-left bg-green-500 text-white p-2 mt-4 rounded shadow hover:bg-green-600">
         Salvar IFC
       </button>
-      <button @click="captureView"
+      <button @click="captureView(selectionId)"
         class="w-full text-left bg-purple-500 text-white p-2 mt-4 rounded shadow hover:bg-purple-600">
         Capturar Tela
       </button>
@@ -62,6 +62,7 @@ import { useDataStore } from '@/stores/data.js'
 
 
 const store = useDataStore();
+const selectionId = store.getSelectionID()
 
 // 3D container reference
 const viewerContainer = ref<HTMLDivElement | null>(null)
@@ -80,8 +81,9 @@ const {
 
 // Setup scene on mount
 onMounted(() => {
-  const selectionStr = store.getSelectionID()
-  setupEditor(selectionStr)
+  const selectionStr = selectionId
+  console.log('/' + selectionStr + '.ifc')
+  setupEditor(selectionStr, '/ifcs/' + selectionStr + '.ifc')
 })
 
 </script>
