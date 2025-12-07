@@ -57,12 +57,18 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useEditorController } from '@/editor/editorController'
 import { useDataStore } from '@/stores/data.js'
+import { useEditorController } from '@/editor/editorController.ts'
+import { useProjectsStore } from '@/stores/projects.ts'
+import { storeToRefs } from 'pinia'
+import { getProjectFileUrl } from '@/api/axios.ts'
 
 
 const store = useDataStore();
-const selectionId = store.getSelectionID()
+const selectionId = store.getSelectionId
+
+const projectStore = useProjectsStore()
+const { currentProject } = storeToRefs(projectStore)
 
 // 3D container reference
 const viewerContainer = ref<HTMLDivElement | null>(null)
@@ -81,9 +87,14 @@ const {
 
 // Setup scene on mount
 onMounted(() => {
+  if(!currentProject.value) return
   const selectionStr = selectionId
-  console.log('/' + selectionStr + '.ifc')
-  setupEditor(selectionStr, '/ifcs/' + selectionStr + '.ifc')
+  const projectFileUrl = getProjectFileUrl(currentProject.value.id, `${selectionStr}.ifc`)
+  console.log(projectFileUrl)
+  setupEditor({
+    fileName: selectionStr,
+    fileSource: projectFileUrl
+  })
 })
 
 </script>

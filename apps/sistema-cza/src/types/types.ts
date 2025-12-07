@@ -341,6 +341,79 @@ export interface FileResponse {
   createdAt: string
 }
 
+/**
+ * Represents telemetry data collected from a user session.
+ * Mapped from the backend entity TelemetryData.
+ */
+export interface TelemetryData {
+  /** The unique identifier for the telemetry record. */
+  id: number
 
+  /** The identifier for the user who generated the data. */
+  userId: string
+
+  /** The timestamp when the user session began. Stored as UTC ISO string. */
+  sessionStart: string
+
+  /**
+   * A map of group selections and their counts.
+   * Key: Selection ID/Name, Value: Count
+   */
+  groupSelections: Record<string, number>
+
+  /**
+   * A map of combo box selections and their counts.
+   * Key: Selection ID/Name, Value: Count
+   */
+  comboSelections: Record<string, number>
+
+  /** The total number of times the form was submitted. */
+  formSubmissions: number
+
+  /** A list of the final selections made by the user. */
+  finalSelection: string[]
+
+  /** The total number of times the form was reset. */
+  formResets: number
+
+  /** The total time elapsed during the session, typically in milliseconds. */
+  elapsedTime: number
+}
+
+/**
+ * Represents the payload required to create a new telemetry record.
+ * Matches the CreateTelemetryRequest.java DTO.
+ */
+export interface CreateTelemetryRequest {
+  /**
+   * The identifier for the user who generated the data.
+   * @validation @NotBlank
+   */
+  userId: string
+
+  /**
+   * The timestamp when the session started (ISO 8601 string).
+   * @validation @NotNull
+   */
+  sessionStart: string
+
+  /** A map of group selections and their counts. */
+  groupSelections: Record<string, number>
+
+  /** A map of combo box selections and their counts. */
+  comboSelections: Record<string, number>
+
+  /** The total number of times the form was submitted. */
+  formSubmissions: number
+
+  /** A list of the final selections made by the user. */
+  finalSelection: string[]
+
+  /** The total number of times the form was reset. */
+  formResets: number
+
+  /** The total time elapsed during the session, in milliseconds. */
+  elapsedTime: number
+}
 
 

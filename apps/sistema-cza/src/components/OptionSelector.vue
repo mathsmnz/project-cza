@@ -16,9 +16,11 @@
         :key="index"
         class="p-4 border transition-all duration-200 ease-in-out"
         :class="{
-          'bg-indigo-50 border-indigo-300': selectedGroups === option,
-          'bg-white border-black hover:shadow-sm':  selectedGroups.length > 0 && !activeGroups.includes(option.id),
-          'opacity-75 cursor-not-allowed bg-gray-50 border-gray-200':  selectedGroups.length > 0 && !activeGroups.includes(option.id),
+          'bg-indigo-50 border-indigo-300': selectedGroups.includes(option.id),
+          'bg-white border-black hover:shadow-sm':
+            selectedGroups.length > 0 && !activeGroups.includes(option.id),
+          'opacity-75 cursor-not-allowed bg-gray-50 border-gray-200':
+            selectedGroups.length > 0 && !activeGroups.includes(option.id),
         }"
       >
         <!-- Main Option -->
@@ -73,141 +75,122 @@
       >
         Prosseguir
       </button>
-      <button @click="resetForm" class="p-4 bg-black text-white rounded-xl">
-
-        Redefinir
-
-      </button>
+      <button @click="resetForm" class="p-4 bg-black text-white rounded-xl">Redefinir</button>
     </div>
   </div>
 </template>
 
-<script>
-import { ref, watch } from 'vue'
+<script setup lang="ts">
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useRouter } from 'vue-router'
-import { useDataStore } from '@/stores/data'
-import { useTelemetryStore } from '@/stores/telemetryStore'
+import { ref, watch } from 'vue'
+import type { Group, Selection } from '@/types/types'
+import { useTelemetryStore } from '@/stores/telemetry.ts'
 
-export default {
-  props: {
-    optionsData: {
-      type: Array,
-      required: true,
-    },
-    selectionsData: {
-      type: Array,
-      required: true,
-    },
-    modelValue: {
-      type: Array,
-      default: () => [],
-    },
-  },
-  emits: ['update:modelValue'],
-  setup(props, { emit }) {
-    const router = useRouter()
-    const store = useDataStore()
-    const telemetryStore = useTelemetryStore()
+interface Props {
+  optionsData: Group[]
+  selectionsData: Selection[]
+  modelValue?: string[]
+}
 
-    const options = ref(props.optionsData)
-    const selections = ref(props.selectionsData)
-    const selectedGroups = ref([])
-    const selectedCombos = ref([...props.modelValue])
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: () => [],
+})
 
-    const activeGroups = ref([...props.optionsData.map((option) => option.id)])
-    const activeCombos = ref([
+const emit = defineEmits<{
+  'update:modelValue': [value: string[]]
+}>()
+
+const router = useRouter()
+
+const options = ref(props.optionsData)
+const selections = ref(props.selectionsData)
+const selectedGroups = ref<string[]>([])
+const selectedCombos = ref<string[]>([...props.modelValue])
+
+const telemetryStore = useTelemetryStore()
+
+const activeGroups = ref<string[]>([...props.optionsData.map((option) => option.id)])
+const activeCombos = ref<string[]>([
+  ...props.optionsData.flatMap((option) => option.combos.map((combo) => combo.id)),
+])
+
+const updateActiveGroups = () => {
+  if (selectedGroups.value.length === 0) {
+    activeGroups.value = [...props.optionsData.map((option) => option.id)]
+    return
+  }
+
+  const newActiveGroups = new Set(selectedGroups.value)
+
+  selections.value.forEach((selection) => {
+    selection.relatedGroups.forEach((group) => {
+      if (selectedGroups.value.includes(group)) {
+        selection.relatedGroups.forEach((g) => newActiveGroups.add(g))
+      }
+    })
+  })
+
+  activeGroups.value = [...newActiveGroups]
+}
+
+const updateActiveCombos = () => {
+  if (selectedCombos.value.length === 0) {
+    activeCombos.value = [
       ...props.optionsData.flatMap((option) => option.combos.map((combo) => combo.id)),
-    ])
+    ]
+    return
+  }
 
-    const updateActiveGroups = () => {
-      if (selectedGroups.value.length === 0) {
-        activeGroups.value = [...props.optionsData.map((option) => option.id)]
-        return
+  const newActiveCombos = new Set(selectedCombos.value)
+
+  selections.value.forEach((selection) => {
+    selection.relatedCombos.forEach((combo) => {
+      if (selectedCombos.value.includes(combo)) {
+        selection.relatedCombos.forEach((c) => newActiveCombos.add(c))
       }
-
-      const newActiveGroups = new Set(selectedGroups.value)
-
-      selections.value.forEach((selection) => {
-        selection.relatedGroups.forEach((group) => {
-          if (selectedGroups.value.includes(group)) {
-            selection.relatedGroups.forEach((g) => newActiveGroups.add(g))
-          }
-        })
-      })
-
-      activeGroups.value = [...newActiveGroups]
-    }
-
-    const updateActiveCombos = () => {
-      if (selectedCombos.value.length === 0) {
-        activeCombos.value = [
-          ...props.optionsData.flatMap((option) => option.combos.map((combo) => combo.id)),
-        ]
-        return
-      }
-
-      const newActiveCombos = new Set(selectedCombos.value)
-
-      selections.value.forEach((selection) => {
-        selection.relatedCombos.forEach((combo) => {
-          if (selectedCombos.value.includes(combo)) {
-            selection.relatedCombos.forEach((c) => newActiveCombos.add(c))
-          }
-        })
-      })
-
-      activeCombos.value = [...newActiveCombos]
-    }
-
-    // Track group selections
-    watch(selectedGroups, (newGroups) => {
-      newGroups.forEach((groupId) => {
-        telemetryStore.trackGroupSelection(groupId)
-      })
-      updateActiveGroups()
     })
+  })
 
-    // Track combo selections
-    watch(selectedCombos, (newCombos) => {
-      newCombos.forEach((comboId) => {
-        telemetryStore.trackComboSelection(comboId)
-      })
+  activeCombos.value = [...newActiveCombos]
+}
 
-      emit('update:modelValue', newCombos)
-      updateActiveCombos()
-    })
+// Track group selections
+watch(selectedGroups, (newGroups) => {
+  newGroups.forEach((groupId) => {
+    //Track group selections
+    telemetryStore.trackGroupSelection(groupId)
+  })
+  updateActiveGroups()
+})
 
-    const resetForm = () => {
-      selectedGroups.value = []
-      selectedCombos.value = []
-      activeGroups.value = [...props.optionsData.map((option) => option.id)]
-      activeCombos.value = [
-        ...props.optionsData.flatMap((option) => option.combos.map((combo) => combo.id)),
-      ]
+// Track combo selections
+watch(selectedCombos, (newCombos) => {
+  newCombos.forEach((comboId) => {
+    telemetryStore.trackComboSelection(comboId)
+    //Track combo selections
+  })
 
-      store.trackFormReset()
-      console.log('Telemetry (reset):', store.telemetry)
-    }
+  emit('update:modelValue', newCombos)
+  updateActiveCombos()
+})
 
-    const submitForm = () => {
-      telemetryStore.trackFormSubmission()
-      telemetryStore.setFinalSelection(selectedCombos.value)
-      console.log('Formulário enviado!', selectedCombos.value)
-      console.log('Telemetry (submit):', store.telemetry)
-      console.log('Store selectionID:', store.selectionID)
-      router.push('/editor')
-    }
+const resetForm = () => {
+  selectedGroups.value = []
+  selectedCombos.value = []
+  activeGroups.value = [...props.optionsData.map((option) => option.id)]
+  activeCombos.value = [
+    ...props.optionsData.flatMap((option) => option.combos.map((combo) => combo.id)),
+  ]
 
-    return {
-      options,
-      selections,
-      selectedGroups,
-      selectedCombos,
-      activeGroups,
-      activeCombos,
-      resetForm,
-      submitForm,
-    }
-  },
+  telemetryStore.resetStore()
+}
+
+const submitForm = () => {
+  telemetryStore.setFinalSelection(selectedCombos.value)
+  console.log('Formulário enviado!', selectedCombos.value)
+  console.log('Telemetry (submit):')
+  console.log('Store selectionID:')
+  router.push('/editor')
 }
 </script>
