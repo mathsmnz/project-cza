@@ -112,7 +112,6 @@
 </template>
 
 <script setup lang="ts">
-import type { Combo } from "@/types/types.ts";
 import { ref, reactive, watch, onMounted } from "vue";
 
 // Define props

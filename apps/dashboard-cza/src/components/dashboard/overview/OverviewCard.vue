@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref, watch, computed } from 'vue'
 import { Chart, registerables } from 'chart.js'
-import type { ChartOptions } from 'chart.js'
 import { fetchPlatformStats } from '@/api/axios.ts'
 import { formatBytes } from '@/util/util.ts'
 

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type {
   PasswordRecoveryRequest,
-  PasswordRecoveryResponse,
   UserResponse,
 } from '@/types/types.ts'
 import { ref, onMounted } from 'vue'

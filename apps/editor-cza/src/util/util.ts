@@ -1,5 +1,3 @@
-import type { Combo } from '@/types/types.ts'
-
 /**
  * Formats bytes into a human-readable string (KB, MB, GB, etc.).
  * @param bytes - The number of bytes.

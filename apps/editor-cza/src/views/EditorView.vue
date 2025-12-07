@@ -156,7 +156,7 @@
 </template>
 
 <script lang="ts">
-import { onMounted, reactive, ref, watch } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import GroupEditor from '@/components/editor/modals/GroupEditor.vue'
 import ComboEditor from '@/components/editor/modals/ComboEditor.vue'
 import SelectionEditor from '@/components/editor/modals/SelectionEditor.vue'

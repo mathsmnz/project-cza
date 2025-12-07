@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import NavBar from '@/components/NavBar.vue' // Assumindo que você tem uma NavBar
 
-// --- TypeScript Interface based on Firestore structure ---
 interface TelemetryData {
   appId: string
   comboSelections: Record<string, number> // Map<String, Number>
-  elapsedTime: number // Milliseconds?
+  elapsedTime: number
   finalSelection: string[] // Array<String>
   formResets: number
   formSubmissions: number

@@ -83,7 +83,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, defineEmits, defineProps, onUnmounted, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 
 const props = defineProps({
   show: {
