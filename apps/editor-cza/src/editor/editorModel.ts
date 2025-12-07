@@ -9,7 +9,7 @@ import { ref } from 'vue'
 
 const components = new OBC.Components()
 const fragments = components.get(OBC.FragmentsManager)
-const fragmentIfcLoader = components.get(OBC.IfcLoader)
+const ifcLoader = components.get(OBC.IfcLoader)
 const highlighter = components.get(OBCF.Highlighter)
 let culler: OBC.MeshCullerRenderer
 
@@ -218,7 +218,7 @@ export function useEditorModel() {
 
               highlightedFaceIndex = materialIndex
               // Ensure we never assign `undefined` to originalFaceMaterial (it must be Material | null)
-              originalFaceMaterial = ((cube.material as THREE.Material[])[materialIndex]) ?? null
+              originalFaceMaterial = (cube.material as THREE.Material[])[materialIndex] ?? null
               ;(cube.material as THREE.Material[])[materialIndex] = highlightMaterial
             }
 
@@ -510,7 +510,7 @@ export function useEditorModel() {
   }
 
   async function setupFragments() {
-    await fragmentIfcLoader.setup()
+    await ifcLoader.setup()
 
     const excludedCats = [
       WEBIFC.IFCTENDONANCHOR,
@@ -519,10 +519,10 @@ export function useEditorModel() {
     ]
 
     for (const cat of excludedCats) {
-      fragmentIfcLoader.settings.excludedCategories.add(cat)
+      ifcLoader.settings.excludedCategories.add(cat)
     }
 
-    fragmentIfcLoader.settings.webIfc.COORDINATE_TO_ORIGIN = true
+    ifcLoader.settings.webIfc.COORDINATE_TO_ORIGIN = true
   }
 
   async function loadIfcModel(url: string) {
@@ -530,7 +530,7 @@ export function useEditorModel() {
     const data = await file.arrayBuffer()
     const buffer = new Uint8Array(data)
 
-    const loadedModel = await fragmentIfcLoader.load(buffer)
+    const loadedModel = await ifcLoader.load(buffer)
     loadedModel.name = url
 
     _setupBoundingBox(loadedModel)
@@ -568,7 +568,7 @@ export function useEditorModel() {
 
           _cleanupScene()
 
-          const loadedModel = await fragmentIfcLoader.load(buffer)
+          const loadedModel = await ifcLoader.load(buffer)
           loadedModel.name = file.name
 
           model = loadedModel
@@ -614,26 +614,48 @@ export function useEditorModel() {
       download(new Blob([JSON.stringify(properties)]), `${baseName}.json`)
     }
     /*  */
-    download(new Blob([new Uint8Array(data)], { type: 'application/octet-stream' }), `${baseName}.frag`)
+    download(
+      new Blob([new Uint8Array(data)], { type: 'application/octet-stream' }),
+      `${baseName}.frag`,
+    )
   }
 
-  async function setupScene(selectedId: string, fileUrl: string, container: HTMLElement) {
+  interface SceneSetupOptions {
+    selectedId?: string
+    fileUrl?: string
+  }
+
+  async function setupScene(
+    container: HTMLElement,
+    options: SceneSetupOptions = {},
+  ): Promise<void> {
+    const { selectedId, fileUrl } = options
+
     await _setupWorld(container)
     if (!world) return
 
     setupGrid(world)
 
-    model = await loadIfcModel(fileUrl)
-    world.scene.three.add(model)
-    modelName = selectedId
+    // Load IFC model if both ID and URL are provided
+    if (selectedId && fileUrl) {
+      model = await loadIfcModel(fileUrl)
+      world.scene.three.add(model)
+      modelName = selectedId
+    }
+
+    await _initializeCommonFeatures()
+
+    isFileReady.value = true
+  }
+
+  async function _initializeCommonFeatures(): Promise<void> {
+    if (!world) return
 
     highlighter.setup({ world })
     highlighter.zoomToSelection = true
 
     await _planManager()
     await _setupStyling()
-
-    isFileReady.value = true
   }
 
   function _cleanupScene() {
@@ -963,7 +985,7 @@ export function useEditorModel() {
     return components.get(OBC.Grids)
   }
 
-  function dispose(){
+  function dispose() {
     world.camera.dispose()
   }
 

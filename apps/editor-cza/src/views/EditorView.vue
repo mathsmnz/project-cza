@@ -149,6 +149,7 @@
       v-if="showViewer"
       :project-id="currentProject?.id ?? null"
       :ifc-file="currentFile"
+      :has-file="hasFile"
       @close="showViewer = false"
     />
   </div>

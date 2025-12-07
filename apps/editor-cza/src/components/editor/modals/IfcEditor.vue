@@ -58,6 +58,7 @@ import { uploadProjectFile } from '@/api/axios.ts'
 const props = defineProps<{
   ifcFile: string | null
   projectId: string | null
+  hasFile: boolean
 }>()
 
 const emit = defineEmits<{
@@ -76,26 +77,34 @@ function handleClose() {
 }
 
 async function loadIfcFile() {
-  try{
+  try {
     const buffer = await loadFromFile()
     loadedIfc.value = buffer
     console.log(buffer)
-  }catch(error){
+  } catch (error) {
     console.log(error)
   }
 }
 
-async function uploadIfcFile(){
-  console.log("uploadIfcFile()")
-  try{
-    if(loadedIfc.value && props.ifcFile && props.projectId){
-      const blob =  new Blob([loadedIfc.value], { type: 'application/octet-stream' })
-      const file = new File([blob], props.ifcFile, {type: 'application/octet-stream'})
+async function uploadIfcFile() {
+  console.log('uploadIfcFile()')
+  try {
+    if (loadedIfc.value && props.ifcFile && props.projectId) {
+      const blob = new Blob([loadedIfc.value], { type: 'application/octet-stream' })
+      const file = new File([blob], props.ifcFile, {
+        type: 'application/octet-stream',
+      })
 
-      const response = await uploadProjectFile(file, props.projectId)
+      const newName = file.name.endsWith('.ifc') ? file.name : file.name + '.ifc'
+
+      const fileWithIFC = new File([file], newName, {
+        type: file.type,
+      })
+
+      const response = await uploadProjectFile(fileWithIFC, props.projectId)
       console.log(response)
     }
-  }catch(error){
+  } catch (error) {
     console.log(error)
   }
 }
@@ -137,7 +146,10 @@ async function captureImage() {
 }
 
 onMounted(async () => {
-
-  await setupEditor('base', '/base.ifc')
+  if (props.hasFile) {
+    await setupEditor('base', '/base.ifc')
+  } else {
+    await setupEmptyEditor('base')
+  }
 })
 </script>
