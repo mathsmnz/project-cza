@@ -159,7 +159,7 @@ export function useEditorController(container: Ref<HTMLDivElement | null>) {
    * }
    * ```
    */
-  async function captureView(fileName: string): Promise<File | Blob | null> {
+  async function captureView(fileName: string): Promise<File | null> {
     if (!validateContainer()) return null
 
     const result = await captureScreenshot(container.value!, fileName)

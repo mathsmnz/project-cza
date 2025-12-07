@@ -146,10 +146,6 @@ async function captureImage() {
 }
 
 onMounted(async () => {
-  if (props.hasFile) {
-    await setupEditor('base', '/base.ifc')
-  } else {
-    await setupEmptyEditor('base')
-  }
+  await setupEditor({ fileName: 'base' })
 })
 </script>
