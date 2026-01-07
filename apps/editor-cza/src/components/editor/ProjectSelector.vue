@@ -1,5 +1,5 @@
 <template>
-  <div class="relative" v-if="projects?.length">
+  <div class="relative" v-if="projects?.length" ref="dropdownRef">
     <!-- Dropdown trigger -->
     <button
       @click="toggleDropdown"
@@ -10,7 +10,8 @@
       </span>
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        class="h-4 w-4 text-gray-500"
+        class="h-4 w-4 text-gray-500 transition-transform"
+        :class="{ 'rotate-180': isDropdownOpen }"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -21,22 +22,32 @@
     </button>
 
     <!-- Dropdown menu -->
-    <div
-      v-if="isDropdownOpen"
-      class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 shadow-lg z-50"
-    >
-      <ul class="py-1">
-        <li
-          v-for="project in projects"
-          :key="project.id"
-          @click="selectProject(project)"
-          class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-        >
-          {{ project.name }}
-        </li>
-      </ul>
-    </div>
+    <transition name="dropdown">
+      <div
+        v-if="isDropdownOpen"
+        class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 shadow-lg z-50"
+      >
+        <ul class="py-1">
+          <li
+            v-for="project in projects"
+            :key="project.id"
+            @click="handleProjectSelect(project)"
+            class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors"
+            :class="{ 'bg-gray-50 font-semibold': project.id === currentProject?.id }"
+          >
+            {{ project.name }}
+          </li>
+        </ul>
+      </div>
+    </transition>
   </div>
+
+  <!-- Confirmation Modal -->
+  <ConfirmProjectChange
+    v-if="showConfirmModal"
+    @confirm="confirmProjectChange"
+    @cancel="cancelProjectChange"
+  />
 </template>
 
 <script setup lang="ts">
@@ -44,11 +55,15 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useProjectsStore } from '@/stores/projects'
 import { storeToRefs } from 'pinia'
 import type { ProjectResponse } from '@/types/types.ts'
+import ConfirmProjectChange from '@/components/ConfirmProjectChange.vue'
 
 const projectStore = useProjectsStore()
 const { currentProject, projects } = storeToRefs(projectStore)
 
+const dropdownRef = ref<HTMLElement | null>(null)
 const isDropdownOpen = ref(false)
+const showConfirmModal = ref(false)
+const pendingProject = ref<ProjectResponse | null>(null)
 
 function toggleDropdown() {
   isDropdownOpen.value = !isDropdownOpen.value
@@ -58,17 +73,61 @@ function closeDropdown() {
   isDropdownOpen.value = false
 }
 
-function selectProject(project: ProjectResponse) {
-  console.log(project.name)
-  projectStore.setCurrentProject(project)
+function handleProjectSelect(project: ProjectResponse) {
+  // If selecting the same project, just close dropdown
+  if (project.id === currentProject.value?.id) {
+    closeDropdown()
+    return
+  }
+
+  // Store pending project and show confirmation
+  pendingProject.value = project
+  showConfirmModal.value = true
   closeDropdown()
 }
 
-function handleClickOutside(event: MouseEvent) {
-  const dropdown = (event.target as HTMLElement).closest('.relative')
-  if (!dropdown) closeDropdown()
+function confirmProjectChange() {
+  if (pendingProject.value) {
+    projectStore.setCurrentProject(pendingProject.value)
+  }
+  showConfirmModal.value = false
+  pendingProject.value = null
 }
 
-onMounted(() => document.addEventListener('click', handleClickOutside))
-onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
+function cancelProjectChange() {
+  showConfirmModal.value = false
+  pendingProject.value = null
+}
+
+function handleClickOutside(event: MouseEvent) {
+  if (dropdownRef.value && !dropdownRef.value.contains(event.target as Node)) {
+    closeDropdown()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
+
+<style scoped>
+/* Dropdown animation */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.2s ease;
+}
+
+.dropdown-enter-from {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-5px);
+}
+</style>
