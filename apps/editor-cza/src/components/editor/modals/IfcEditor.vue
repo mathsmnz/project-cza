@@ -1,52 +1,69 @@
 <template>
-  <!-- Backdrop -->
   <div class="fixed inset-0 z-50 flex items-center justify-center">
-    <!-- Popup -->
+    <!-- Backdrop -->
     <transition name="fade">
       <div
-        class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity duration-300"
+        class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity duration-300"
         @click="handleClose"
       ></div>
     </transition>
 
-    <transition name="scale-fade w-[900px] h-[600px]" appear> </transition>
-
-    <div
-      class="relative bg-white rounded-lg shadow-2xl w-[900px] h-[600px] transform transition-all duration-300 ease-out"
-    >
-      <!-- Close button -->
-      <button
-        @click="handleClose"
-        class="absolute top-2 right-2 text-black hover:text-red-500 z-50"
+    <!-- Modal Content -->
+    <transition name="scale-fade" appear>
+      <div
+        class="relative bg-white shadow-2xl w-[900px] h-[600px] transform transition-all duration-300 ease-out overflow-hidden"
       >
-        ✖
-      </button>
+        <!-- Header -->
+        <div
+          class="absolute top-0 left-0 right-0 flex items-center justify-between p-4 bg-white border-b border-gray-200 z-50"
+        >
+          <h2 class="text-xl font-bold text-gray-800">Visualizador IFC</h2>
+          <button @click="handleClose" class="text-gray-400 hover:text-gray-600 transition-colors">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
 
-      <!-- Buttons -->
-      <div class="absolute bottom-4 right-4 flex gap-2 z-50">
-        <button
-          @click="loadIfcFile()"
-          class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+        <!-- Viewer container -->
+        <div ref="viewerContainer" class="w-full h-full pt-16 pb-20"></div>
+
+        <!-- Footer Actions -->
+        <div
+          class="absolute bottom-0 left-0 right-0 flex justify-end space-x-4 p-4 bg-gray-50 border-t border-gray-200 z-50"
         >
-          Carregar IFC
-        </button>
-        <button
-          @click="() => uploadIfcFile()"
-          class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-        >
-          Salvar IFC
-        </button>
-        <button
-          @click="() => captureImage()"
-          class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-        >
-          Gerar Imagem
-        </button>
+          <button
+            @click="loadIfcFile()"
+            class="bg-white text-gray-700 py-2 px-4 hover:bg-gray-100 focus:outline-none border border-gray-300 font-semibold"
+          >
+            Carregar IFC
+          </button>
+          <button
+            @click="() => uploadIfcFile()"
+            class="bg-black text-white py-2 px-4 hover:bg-gray-900 focus:outline-none font-semibold"
+          >
+            Salvar IFC
+          </button>
+          <button
+            @click="() => captureImage()"
+            class="bg-black text-white py-2 px-4 hover:bg-gray-900 focus:outline-none font-semibold"
+          >
+            Gerar Imagem
+          </button>
+        </div>
       </div>
-
-      <!-- Viewer container -->
-      <div ref="viewerContainer" class="w-full h-full"></div>
-    </div>
+    </transition>
   </div>
 </template>
 
@@ -149,3 +166,26 @@ onMounted(async () => {
   await setupEditor({ fileName: 'base' })
 })
 </script>
+
+<style scoped>
+/* Backdrop fade */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Modal content scale + fade */
+.scale-fade-enter-active,
+.scale-fade-leave-active {
+  transition: all 0.3s ease;
+}
+.scale-fade-enter-from,
+.scale-fade-leave-to {
+  transform: scale(0.95);
+  opacity: 0;
+}
+</style>

@@ -5,7 +5,7 @@
         <div
           class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4"
         >
-          <h1 class="text-2xl font-bold text-gray-900 uppercase tracking-wide">Schema Editor</h1>
+          <h1 class="text-2xl font-bold text-gray-900 uppercase tracking-wide">Editor de Configurações</h1>
           <div class="flex items-center gap-3">
             <button
               @click="loadFile"
@@ -25,7 +25,7 @@
                   d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
                 />
               </svg>
-              Load JSON
+              Carregar JSON
             </button>
             <button
               @click="saveFile"
@@ -45,7 +45,7 @@
                   d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
                 />
               </svg>
-              Downlaod JSON
+              Download JSON
             </button>
             <button
               @click="setBaseFile"
@@ -65,7 +65,7 @@
                   d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
                 />
               </svg>
-              Set base file
+              Definir IFC base
             </button>
             <button
               @click="uploadSelection"
@@ -85,7 +85,7 @@
                   d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
                 />
               </svg>
-              Save Project
+              Salvar Projeto
             </button>
           </div>
         </div>

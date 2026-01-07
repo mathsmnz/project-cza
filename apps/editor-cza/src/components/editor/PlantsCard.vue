@@ -18,7 +18,7 @@ const emit = defineEmits<{
 <template>
   <div class="lg:col-span-3 bg-white border-2 border-black flex flex-col">
     <div class="p-4 border-b-2 border-black bg-gray-50">
-      <h2 class="text-lg font-bold text-gray-900 uppercase">Plants</h2>
+      <h2 class="text-lg font-bold text-gray-900 uppercase">Seleções (Planta)</h2>
     </div>
     <div class="grow p-4 space-y-2 overflow-y-auto min-h-[300px]">
       <!-- Empty State -->
@@ -36,7 +36,7 @@ const emit = defineEmits<{
             d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"
           />
         </svg>
-        <p class="font-medium">No plants added</p>
+        <p class="font-medium">Sem seleções adicionadas</p>
       </div>
 
       <!-- Plants List -->
@@ -72,7 +72,7 @@ const emit = defineEmits<{
                 d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
               />
             </svg>
-            Associate
+            Associar IFC
           </button>
           <button
             @click="emit('editSelection', selection)"
@@ -135,7 +135,7 @@ const emit = defineEmits<{
             clip-rule="evenodd"
           />
         </svg>
-        Add Plant
+        Adicionar Seleção
       </button>
     </div>
   </div>

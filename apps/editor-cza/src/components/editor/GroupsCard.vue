@@ -19,14 +19,14 @@ const emit = defineEmits<{
   <!-- Column 1: Groups -->
   <div class="lg:col-span-1 bg-white border-2 border-black flex flex-col">
     <div class="p-4 border-b-2 border-black bg-gray-50">
-      <h2 class="text-lg font-bold text-gray-900 uppercase">Groups</h2>
+      <h2 class="text-lg font-bold text-gray-900 uppercase">Grupos</h2>
     </div>
-    <div class="flex-grow p-4 space-y-2 overflow-y-auto min-h-[400px]">
+    <div class="grow p-4 space-y-2 overflow-y-auto min-h-[400px]">
       <div v-if="groups.length === 0" class="text-center text-gray-500 py-12">
         <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
-        <p class="font-medium">No groups added</p>
+        <p class="font-medium">Sem grupos adicionados</p>
       </div>
       <div
         v-else
@@ -81,7 +81,7 @@ const emit = defineEmits<{
             clip-rule="evenodd"
           />
         </svg>
-        Add Group
+        Adicionar Grupo
       </button>
       <button
         @click="emit('deleteGroup')"
@@ -100,7 +100,7 @@ const emit = defineEmits<{
             clip-rule="evenodd"
           />
         </svg>
-        Delete Group
+        Apagar Grupo
       </button>
     </div>
   </div>

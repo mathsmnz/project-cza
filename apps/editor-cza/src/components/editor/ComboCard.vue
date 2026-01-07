@@ -13,7 +13,7 @@ const emit = defineEmits<{
 }>()
 
 const title = computed(() => {
-  if (!props.selectedGroup) return 'Select a Group'
+  if (!props.selectedGroup) return 'Selecione um grupo para começar'
   return `Options for "${props.selectedGroup.label}"`
 })
 </script>
@@ -25,13 +25,13 @@ const title = computed(() => {
         {{ title }}
       </h2>
     </div>
-    <div class="flex-grow p-4 space-y-2 overflow-y-auto min-h-[400px]">
+    <div class="grow p-4 space-y-2 overflow-y-auto min-h-[400px]">
       <!-- No Group Selected -->
       <div v-if="!selectedGroup" class="text-center text-gray-500 py-12">
         <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
         </svg>
-        <p class="font-medium">Select a group to view options</p>
+        <p class="font-medium">Selecione um grupo para ver as opções</p>
       </div>
 
       <!-- No Options in Group -->
@@ -42,7 +42,7 @@ const title = computed(() => {
         <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
         </svg>
-        <p class="font-medium">No options in this group</p>
+        <p class="font-medium">Sem opções para este grupo</p>
       </div>
 
       <!-- Options List -->
@@ -115,7 +115,7 @@ const title = computed(() => {
             clip-rule="evenodd"
           />
         </svg>
-        Add Option
+        Adicionar opção
       </button>
     </div>
   </div>

@@ -5,6 +5,7 @@ import { fetchProjectSelections, fetchUserProjects } from '@/api/axios.ts'
 export interface projectState {
   currentProject: ProjectResponse | null
   projects: ProjectResponse[]
+  isModified: boolean
   currentProjectCustomization: CustomizationSchema | null
 }
 
@@ -12,6 +13,7 @@ export const useProjectsStore = defineStore('Projects', {
   state: (): projectState => ({
     currentProject: null,
     projects: [],
+    isModified: false,
     currentProjectCustomization: null,
   }),
 
