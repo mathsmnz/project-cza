@@ -4,7 +4,7 @@ import type { UserCreationRequest, Project } from '@/types/types.ts'
 
 // --- Props & Emits ---
 const props = defineProps<{
-  availableProjects: Project[],
+  availableProjects: Project[]
 }>()
 
 const emit = defineEmits(['cancel', 'create-invitation'])
@@ -13,7 +13,7 @@ const emit = defineEmits(['cancel', 'create-invitation'])
 const formData = ref<Partial<UserCreationRequest>>({
   email: '',
   role: 'USER',
-  projectIds: []
+  projectIds: [],
 })
 const generatedLink = ref<string | null>(null)
 const hasLink = ref<boolean>(false)
@@ -24,16 +24,21 @@ const isCopied = ref<boolean>(false)
 const handleCreateInvitation = () => {
   isLoading.value = true
   // Emit the form data to the parent, which will handle the API call
-  emit('create-invitation', formData.value, (invitationLink: string) => {
-    // This is a callback function that the parent will call upon success
-    generatedLink.value = invitationLink
-    console.log(invitationLink)
-    isLoading.value = false
-    hasLink.value = true
-  }, () => {
-    // Error callback
-    isLoading.value = false
-  })
+  emit(
+    'create-invitation',
+    formData.value,
+    (invitationLink: string) => {
+      // This is a callback function that the parent will call upon success
+      generatedLink.value = invitationLink
+      console.log(invitationLink)
+      isLoading.value = false
+      hasLink.value = true
+    },
+    () => {
+      // Error callback
+      isLoading.value = false
+    },
+  )
 }
 
 const copyLink = () => {
@@ -68,8 +73,19 @@ const copyLink = () => {
               @click="$emit('cancel')"
               class="text-gray-400 hover:text-gray-600 transition-colors"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -79,7 +95,9 @@ const copyLink = () => {
             <!-- Email and Role Inputs -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-1"
+                  >Email</label
+                >
                 <input
                   id="email"
                   v-model="formData.email"
@@ -87,7 +105,7 @@ const copyLink = () => {
                   required
                   :disabled="!!hasLink"
                   placeholder="email@exemplo.com"
-                  class="block w-full border-gray-300  border py-2 px-3 focus:outline-none focus:ring-2 focus:ring-black sm:text-sm"
+                  class="block w-full border-gray-300 border py-2 px-3 focus:outline-none focus:ring-2 focus:ring-black sm:text-sm"
                 />
               </div>
               <div>
@@ -96,7 +114,7 @@ const copyLink = () => {
                   id="role"
                   v-model="formData.role"
                   :disabled="!!hasLink"
-                  class="block w-full border-gray-300  border py-2 px-3 focus:outline-none focus:ring-2 focus:ring-black sm:text-sm"
+                  class="block w-full border-gray-300 border py-2 px-3 focus:outline-none focus:ring-2 focus:ring-black sm:text-sm"
                 >
                   <option>USER</option>
                   <option>EDITOR</option>
@@ -107,43 +125,64 @@ const copyLink = () => {
 
             <!-- Project Multi-Select -->
             <div>
-              <label for="projects" class="block text-sm font-medium text-gray-700 mb-1">
+              <label class="block text-sm font-medium text-gray-700 mb-2">
                 Associar Projetos (Opcional)
               </label>
-              <select
-                id="projects"
-                v-model="formData.projectIds"
-                multiple
-                :disabled="!!hasLink"
-                class="block w-full h-32 border-gray-300  border py-2 px-3 focus:outline-none focus:ring-2 focus:ring-black sm:text-sm"
-              >
-                <option v-for="project in availableProjects" :key="project.id" :value="project.id">
-                  {{ project.name }}
-                </option>
-              </select>
-              <p class="text-xs text-gray-500 mt-1">Segure Ctrl (ou Cmd no Mac) para selecionar múltiplos projetos.</p>
+              <div class="border border-gray-300 bg-gray-50 max-h-48 overflow-y-auto">
+                <div
+                  v-if="props.availableProjects.length === 0"
+                  class="p-4 text-center text-gray-500 text-sm"
+                >
+                  Nenhum projeto disponível
+                </div>
+                <label
+                  v-for="project in props.availableProjects"
+                  :key="project.id"
+                  class="flex items-center px-4 py-3 hover:bg-gray-100 cursor-pointer transition-colors border-b border-gray-200 last:border-b-0"
+                  :class="{
+                    'bg-gray-100': formData.projectIds?.includes(project.id),
+                    'opacity-50 cursor-not-allowed': hasLink,
+                  }"
+                >
+                  <input
+                    type="checkbox"
+                    :value="project.id"
+                    v-model="formData.projectIds"
+                    :disabled="!!hasLink"
+                    class="h-4 w-4 text-black focus:ring-2 focus:ring-black border-gray-300 mr-3"
+                  />
+                  <span class="text-sm text-gray-700">{{ project.name }}</span>
+                </label>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">
+                Selecione um ou mais projetos para associar ao usuário.
+              </p>
             </div>
 
             <!-- Generated Link Section (Conditional) -->
             <div v-if="hasLink" class="space-y-2">
-              <label class="block text-sm font-medium text-green-700">Link de Registro Gerado com Sucesso!</label>
+              <label class="block text-sm font-medium text-green-700"
+                >Link de Registro Gerado com Sucesso!</label
+              >
               <div class="flex items-center space-x-2">
                 <input
                   type="text"
                   readonly
                   :value="generatedLink"
-                  class="block w-full bg-gray-100 border-gray-300  border py-2 px-3 sm:text-sm"
+                  class="block w-full bg-gray-100 border-gray-300 border py-2 px-3 sm:text-sm"
                 />
                 <button
                   @click="copyLink"
                   type="button"
-                  class="inline-flex items-center px-4 py-2 border-transparent text-sm font-medium  border text-white bg-black hover:bg-gray-900 focus:outline-none"
+                  class="inline-flex items-center px-4 py-2 border-transparent text-sm font-medium border text-white bg-black hover:bg-gray-900 focus:outline-none"
                 >
                   <span v-if="!isCopied">Copiar</span>
                   <span v-else>Copiado!</span>
                 </button>
               </div>
-              <p class="text-xs text-gray-500 mt-1">Envie este link para o novo usuário completar o cadastro.</p>
+              <p class="text-xs text-gray-500 mt-1">
+                Envie este link para o novo usuário completar o cadastro.
+              </p>
             </div>
           </div>
 
@@ -152,7 +191,7 @@ const copyLink = () => {
             <button
               type="button"
               @click="$emit('cancel')"
-              class="bg-white text-gray-700  py-2 px-4 hover:bg-gray-100 focus:outline-none border border-gray-300 font-semibold"
+              class="bg-white text-gray-700 py-2 px-4 hover:bg-gray-100 focus:outline-none border border-gray-300 font-semibold"
             >
               Fechar
             </button>
@@ -160,11 +199,28 @@ const copyLink = () => {
               v-if="!hasLink"
               type="submit"
               :disabled="isLoading"
-              class="bg-black text-white  py-2 px-4 hover:bg-gray-900 focus:outline-none font-semibold flex items-center"
+              class="bg-black text-white py-2 px-4 hover:bg-gray-900 focus:outline-none font-semibold flex items-center"
             >
-              <svg v-if="isLoading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                v-if="isLoading"
+                class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
               <span>{{ isLoading ? 'Gerando...' : 'Enviar Convite' }}</span>
             </button>

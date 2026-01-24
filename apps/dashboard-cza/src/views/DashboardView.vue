@@ -1,22 +1,30 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar.vue'
 import DashboardHeader from '@/components/dashboard/DashboardHeader.vue'
 import type { Project, UserCreationRequest } from '@/types/types.ts'
 import CreateUser from '@/components/dashboard/modals/CreateUser.vue'
 import { inviteUser } from '@/api/axios.ts'
+import { useAdminUserStore } from '@/stores/adminUser.ts'
+import { useToastStore } from '@/stores/toast.ts'
+import ToastNotification from '@/components/ToastNotification.vue'
+import { useProjectStore } from '@/stores/adminProjects.ts'
+import { storeToRefs } from 'pinia'
 
 // Get access to the current route object
 const route = useRoute()
+
+const adminUserStore = useAdminUserStore()
+const toastStore = useToastStore()
+const adminProjectStore = useProjectStore()
 
 const currentTitle = computed(() => {
   const title = route.meta.title || 'Dashboard'
   return String(title).toLowerCase()
 })
 
-// Mock available projects - replace with actual data from API
-const availableProjects = ref<Project[]>([])
+const { projectsPage: projectsPage } = storeToRefs(adminProjectStore)
 
 const userToCreate = ref<UserCreationRequest>({
   email: '',
@@ -37,9 +45,13 @@ const openProjectCreation = () => {
   console.log('Opening project creation modal')
 }
 
-const closeModal = () => {
-  showUserCreator.value = false
+const closeProjectCreation = () => {
   showProjectCreator.value = false
+}
+
+const closeUserCreation = async () => {
+  showUserCreator.value = false
+  await adminUserStore.loadInvites()
 }
 
 const createUserRequest = async (
@@ -56,6 +68,10 @@ const createUserRequest = async (
     onError()
   }
 }
+
+onMounted(async () => {
+  await adminProjectStore.loadProjects()
+})
 
 const handleSearch = (query: string) => {
   console.log('Search query:', query)
@@ -97,17 +113,18 @@ const handleSearch = (query: string) => {
     <!-- Modals -->
     <create-user
       v-if="showUserCreator"
-      :available-projects="availableProjects"
-      @cancel="closeModal"
+      :available-projects="projectsPage.content"
+      @cancel="closeUserCreation"
       @create-invitation="createUserRequest"
     />
 
-    <!-- Add CreateProject modal when you have it -->
-    <!-- <create-project
-      v-if="showProjectCreator"
-      @cancel="closeModal"
-      @create-project="createProjectRequest"
-    /> -->
+    <ToastNotification
+      :show="toastStore.isVisible"
+      :message="toastStore.activeToast?.message || ''"
+      :mode="toastStore.activeToast?.mode || 'success'"
+      :duration="toastStore.activeToast?.duration || 3000"
+      @close="toastStore.onToastClosed"
+    />
   </div>
 </template>
 

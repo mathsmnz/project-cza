@@ -57,22 +57,25 @@ export interface Page<T> {
  */
 export interface PlatformStats {
   /** A unique identifier for the stats record (if stored). */
-  id: number;
+  id: number
 
   /** The total number of projects on the platform. */
-  projectCount: number;
+  projectCount: number
 
   /** The total number of registered users. */
-  userCount: number;
+  userCount: number
 
   /** The total number of files stored. */
-  fileCount: number;
+  fileCount: number
 
   /** The total disk space currently used by files, typically in bytes. */
-  spaceOnDisk: number;
+  spaceOnDisk: number
 
   /** The maximum available disk space for storage, typically in bytes. */
-  maxSpaceOnDisk: number;
+  maxSpaceOnDisk: number
+
+  /** The timestamp of the platform stats*/
+  createdAt: string
 }
 
 /**
@@ -125,8 +128,8 @@ export interface InvitationResponse {
  * This is used for API responses and should not contain sensitive data like passwords.
  */
 export interface UserResponse {
-  /** The unique numeric identifier for the user. */
-  id: number;
+  /** The unique identifier for the user. */
+  id: string;
 
   /** The user's unique username. */
   username: string;
@@ -224,6 +227,32 @@ export interface PasswordRecoveryResponse {
 
   /** Whether the operation was successful (e.g., link sent, password reset). */
   status: 'PENDING' | 'USED' | 'EXPIRED' | 'REVOKED';
+}
+
+/**
+ * Represents the file metadata returned by the file management endpoints.
+ *
+ * This object contains all necessary details to identify, display,
+ * and download a specific file associated with a project.
+ */
+export interface FileResponse {
+  /** The unique identifier (UUID) for the file. */
+  uniqueId: string;
+
+  /** The name of the file (e.g., 'report.pdf', 'main.java'). */
+  fileName: string;
+
+  /** The classification or extension type of the file. */
+  fileType: string;
+
+  /** The size of the file in bytes. */
+  fileSize: number;
+
+  /** The fully qualified URL to download or access the file. */
+  downloadUrl: string;
+
+  /** The timestamp when the file was uploaded or created (ISO 8601 format). */
+  createdAt: string;
 }
 
 /**

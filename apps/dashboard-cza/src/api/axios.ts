@@ -2,6 +2,7 @@ import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 import type {
   CompleteRegistrationRequest,
+  FileResponse,
   InvitationResponse,
   Page,
   PasswordRecoveryRequest,
@@ -115,6 +116,37 @@ export const fetchPlatformStats = async (): Promise<PlatformStats> => {
 }
 
 /**
+ * Deletes a user by their unique ID, requiring a verification code (Admin API Key) for security.
+ *
+ * @param userId - The unique ID of the user to be deleted.
+ * @param verificationCode - The administrator's API key used as a verification code.
+ * @returns A Promise that resolves when the user is successfully deleted (HTTP 204).
+ *
+ * @example
+ * ```ts
+ * await deleteUser('user-uuid-123', 'admin-api-key-verification');
+ * console.log('User deleted successfully');
+ * ```
+ *
+ * @throws If the verification fails (404/403) or the API request errors, the error is logged and rethrown.
+ */
+export const deleteUser = async (
+  userId: string,
+  verificationCode: string
+): Promise<void> => {
+  try {
+    await api.post(`/api/users/v1/${userId}`, verificationCode, {
+      headers: {
+        'Content-Type': 'text/plain'
+      }
+    });
+  } catch (error) {
+    console.error(`Failed to delete user with ID "${userId}":`, error);
+    throw error;
+  }
+};
+
+/**
  * Sends an invitation request to create a new user invitation.
  *
  * @param request - The invitation details, including email, role, and optional project IDs.
@@ -204,6 +236,82 @@ export const completeRegistration = async (
   }
 };
 
+/**
+ * Revokes an existing invitation by its token.
+ *
+ * @param token - The unique invitation token to revoke.
+ * @returns A Promise that resolves to the updated {@link InvitationResponse} object showing the revoked status.
+ *
+ * @example
+ * ```ts
+ * const revoked = await revokeInvitation('abc123token');
+ * console.log('Invitation status:', revoked.status); // 'REVOKED'
+ * ```
+ *
+ * @throws If the API request fails, the error is logged and rethrown.
+ */
+export const revokeInvitation = async (
+  token: string
+): Promise<InvitationResponse> => {
+  try {
+    const response = await api.put<InvitationResponse>(`/api/users/v1/registration/invitations/${token}/revoke`);
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to revoke invitation for token "${token}":`, error);
+    throw error;
+  }
+};
+
+/**
+ * Deletes an invitation permanently.
+ *
+ * @param token - The unique invitation token to delete.
+ * @returns A Promise that resolves when the operation is successful (HTTP 204).
+ *
+ * @example
+ * ```ts
+ * await deleteInvitation('abc123token');
+ * console.log('Invitation successfully deleted.');
+ * ```
+ *
+ * @throws If the API request fails (e.g., token not found), the error is logged and rethrown.
+ */
+export const deleteInvitation = async (
+  token: string
+): Promise<void> => {
+  try {
+    await api.delete(`/api/users/v1/registration/invitations/${token}`);
+  } catch (error) {
+    console.error(`Failed to delete invitation for token "${token}":`, error);
+    throw error;
+  }
+};
+
+/**
+ * Refreshes an existing invitation (e.g. extending its expiration date).
+ *
+ * @param token - The unique invitation token to refresh.
+ * @returns A Promise that resolves to the updated {@link InvitationResponse} object.
+ *
+ * @example
+ * ```ts
+ * const refreshed = await refreshInvitation('abc123token');
+ * console.log('New expiration date:', refreshed.expiration);
+ * ```
+ *
+ * @throws If the API request fails, the error is logged and rethrown.
+ */
+export const refreshInvitation = async (
+  token: string
+): Promise<InvitationResponse> => {
+  try {
+    const response = await api.put<InvitationResponse>(`/api/users/v1/registration/invitations/${token}/refresh`);
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to refresh invitation for token "${token}":`, error);
+    throw error;
+  }
+};
 
 /**
  * Fetches a paginated list of users from the API.
@@ -300,6 +408,59 @@ export const fetchProjects = async (
     return response.data
   } catch (error) {
     console.error('Failed to fetch projects:', error)
+    throw error
+  }
+}
+
+/**
+ * [PROTOTYPE] Saves a project.
+ * If the project has an ID, it updates it (PUT); otherwise, it creates a new one (POST).
+ */
+export const saveProject = async (project: Project): Promise<Project> => {
+  try {
+    if (project.id) {
+      // Update existing
+      const response = await api.put<Project>(`/api/projects/v1/${project.id}`, project)
+      return response.data
+    } else {
+      // Create new
+      const response = await api.post<Project>('/api/projects/v1/', project)
+      return response.data
+    }
+  } catch (error) {
+    console.error('Failed to save project:', error)
+    throw error
+  }
+}
+
+/**
+ * [PROTOTYPE] Deletes a project by its ID.
+ */
+export const deleteProject = async (projectId: string): Promise<void> => {
+  try {
+    await api.delete(`/api/projects/v1/${projectId}`)
+  } catch (error) {
+    console.error(`Failed to delete project "${projectId}":`, error)
+    throw error
+  }
+}
+
+/**
+ * [PROTOTYPE] Fetches files associated with a specific project.
+ */
+export const fetchProjectFiles = async (
+  projectId: string,
+  page = 0,
+  size = 10,
+  sort = 'name,asc'
+): Promise<Page<FileResponse>> => {
+  try {
+    const response = await api.get<Page<FileResponse>>(`/api/projects/v1/${projectId}/files`, {
+      params: { page, size, sort }
+    })
+    return response.data
+  } catch (error) {
+    console.error(`Failed to fetch files for project "${projectId}":`, error)
     throw error
   }
 }
@@ -483,5 +644,82 @@ export const fetchAllPasswordRecoveries = async (
   })
   return response.data
 }
+
+/**
+ * Refreshes (rotates) a recovery token by revoking the old one and issuing a new one.
+ *
+ * @param token - The current recovery token to be refreshed.
+ * @returns A Promise that resolves to the new {@link PasswordRecoveryResponse} object.
+ *
+ * @example
+ * ```ts
+ * const newRecovery = await refreshRecoveryToken('old-token-123');
+ * console.log('New Token:', newRecovery.token);
+ * ```
+ *
+ * @throws If the API request fails, the error is logged and rethrown.
+ */
+export const refreshRecoveryToken = async (
+  token: string
+): Promise<PasswordRecoveryResponse> => {
+  try {
+    const response = await api.put<PasswordRecoveryResponse>(`/api/recovery/v1/${token}/refresh`);
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to refresh recovery token "${token}":`, error);
+    throw error;
+  }
+};
+
+/**
+ * Revokes (Soft Deletes) a recovery request so it can no longer be used.
+ * Maps to the controller's soft delete endpoint.
+ *
+ * @param token - The unique recovery token to revoke.
+ * @returns A Promise that resolves when the operation is successful (no content).
+ *
+ * @example
+ * ```ts
+ * await revokeRecoveryRequest('token-to-revoke-123');
+ * console.log('Recovery request revoked.');
+ * ```
+ *
+ * @throws If the API request fails, the error is logged and rethrown.
+ */
+export const revokeRecoveryRequest = async (
+  token: string
+): Promise<void> => {
+  try {
+    await api.put<void>(`/api/recovery/v1/${token}/revoke`);
+  } catch (error) {
+    console.error(`Failed to revoke recovery request for token "${token}":`, error);
+    throw error;
+  }
+};
+
+/**
+ * Permanently deletes a recovery request and its associated data from the database.
+ *
+ * @param token - The unique recovery token to permanently delete.
+ * @returns A Promise that resolves when the operation is successful (no content).
+ *
+ * @example
+ * ```ts
+ * await deleteRecoveryRequest('token-to-delete-123');
+ * console.log('Recovery request permanently deleted.');
+ * ```
+ *
+ * @throws If the API request fails, the error is logged and rethrown.
+ */
+export const deleteRecoveryRequest = async (
+  token: string
+): Promise<void> => {
+  try {
+    await api.delete<void>(`/api/recovery/v1/${token}`);
+  } catch (error) {
+    console.error(`Failed to hard delete recovery request for token "${token}":`, error);
+    throw error;
+  }
+};
 
 export default api

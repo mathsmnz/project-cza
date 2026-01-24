@@ -38,3 +38,7 @@ yarn-error.log*
 *.pem
 apps/api-cza/env.d.ts
 /qodana.yaml
+/.scannerwork/
+/apps/editor-cza/.scannerwork
+/apps/sistema-cza/.scannerwork
+/apps/dashboard-cza/.scannerwork

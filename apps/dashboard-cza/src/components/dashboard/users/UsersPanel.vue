@@ -1,142 +1,139 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useAdminUserStore } from '@/stores/adminUser.ts' // Adjust path if needed
+import type { UserResponse, PasswordRecoveryRequest } from '@/types/types.ts'
+
+// Components
 import UsersTable from '@/components/dashboard/users/UsersTable.vue'
 import EditUser from '@/components/dashboard/modals/EditUser.vue'
-import { onMounted, ref } from 'vue'
-import {
-  fetchAllPasswordRecoveries,
-  fetchInvitations,
-  fetchUserInfo, requestPasswordRecovery,
-  updateUser,
-} from '@/api/axios.ts'
-import type {
-  InvitationResponse,
-  Page,
-  PasswordRecoveryRequest,
-  PasswordRecoveryResponse,
-  UserResponse,
-} from '@/types/types.ts'
 import InvitesTable from '@/components/dashboard/users/InvitesTable.vue'
 import PasswordRecoveryTable from '@/components/dashboard/users/PasswordRecoveryTable.vue'
+import DeleteUser from '@/components/dashboard/modals/DeleteUser.vue'
+import { useAuthStore } from '@/stores/auth.ts'
+import { useToastStore } from '@/stores/toast.ts'
+import { useProjectStore } from '@/stores/adminProjects.ts'
 
+// ======================
+// Store Setup
+// ======================
+const adminUserStore = useAdminUserStore()
+const authStore = useAuthStore()
+const toastStore = useToastStore()
+
+const {
+  usersPage: usersInfoPage,
+  invitesPage: invitesInfoPage,
+  recoveriesPage: recoveryInfoPage,
+} = storeToRefs(adminUserStore)
+
+const currentUser = authStore.user
+
+// ======================
+// Local UI State
+// ======================
 const showUserEditor = ref<boolean>(false)
+const showUserDeletion = ref<boolean>(false)
 const userToEdit = ref<UserResponse | null>(null)
+const activeTab = ref('All Users')
 
-const usersInfoPage = ref<Page<UserResponse>>({
-  content: [],
-  pageable: {
-    sort: { sorted: false, unsorted: true, empty: true },
-    offset: 0,
-    pageNumber: 0,
-    pageSize: 10,
-    paged: true,
-    unpaged: false,
-  },
-  totalPages: 0,
-  totalElements: 0,
-  last: false,
-  size: 10,
-  number: 0,
-  sort: { sorted: false, unsorted: true, empty: true },
-  numberOfElements: 0,
-  first: true,
-  empty: true,
-})
-const invitesInfoPage = ref<Page<InvitationResponse>>({
-  content: [],
-  pageable: {
-    sort: { sorted: false, unsorted: true, empty: true },
-    offset: 0,
-    pageNumber: 0,
-    pageSize: 10,
-    paged: true,
-    unpaged: false,
-  },
-  totalPages: 0,
-  totalElements: 0,
-  last: false,
-  size: 10,
-  number: 0,
-  sort: { sorted: false, unsorted: true, empty: true },
-  numberOfElements: 0,
-  first: true,
-  empty: true,
-})
-const recoveryInfoPage = ref<Page<PasswordRecoveryResponse>>({
-  content: [],
-  pageable: {
-    sort: { sorted: false, unsorted: true, empty: true },
-    offset: 0,
-    pageNumber: 0,
-    pageSize: 10,
-    paged: true,
-    unpaged: false,
-  },
-  totalPages: 0,
-  totalElements: 0,
-  last: false,
-  size: 10,
-  number: 0,
-  sort: { sorted: false, unsorted: true, empty: true },
-  numberOfElements: 0,
-  first: true,
-  empty: true,
-})
-
-const page = {
+const pageConfig = {
   page: 0,
   size: 10,
   sort: ',asc',
-  sortParam: '',
 }
+
+// ======================
+// Methods
+// ======================
 
 const editCurrentUser = (user: UserResponse): void => {
   userToEdit.value = user
   showUserEditor.value = true
 }
 
-const cancelEdit = (): void => {
+const openUserDeletion = (userToDelete: UserResponse): void => {
+  if (currentUser) {
+    if (currentUser.username === userToDelete.username) {
+      toastStore.addToast('You can’t delete your own account.', 'error')
+      return
+    }
+    userToEdit.value = userToDelete
+    showUserDeletion.value = true
+  }
+}
+
+const attemptUserDeletion = async (confirmationCode: string): Promise<void> => {
+  if (!userToEdit.value) {
+    return
+  }
+
+  try {
+    const username = userToEdit.value.username
+
+    console.log('Attempting to deletion...')
+    console.log(userToEdit.value)
+    console.log(confirmationCode)
+    await adminUserStore.removeUser(userToEdit.value.id, confirmationCode)
+
+    closeModal()
+
+    toastStore.addToast(`Usuário ${username} apagado com sucesso.`, 'success')
+  } catch (error) {
+    toastStore.addToast(error.message, 'error')
+    console.error(error)
+  }
+}
+
+const closeModal = (): void => {
   showUserEditor.value = false
+  showUserDeletion.value = false
   userToEdit.value = null
 }
 
 const saveUser = async (updatedUser: UserResponse): Promise<void> => {
-  await updateUser(updatedUser)
+  await adminUserStore.saveUser(updatedUser, pageConfig.page, pageConfig.size)
 
   showUserEditor.value = false
   userToEdit.value = null
-
-  usersInfoPage.value = await fetchUserInfo(page.page, page.size, page.sort)
 }
+
+// Invitations
+const refreshInvites = (token: string) => adminUserStore.refreshUserInvitation(token)
+const revokeInvite = (token: string) => adminUserStore.revokeUserInvitation(token)
+const deleteInvite = (token: string) => adminUserStore.removeInvitation(token)
+
+// Recovery
+const refreshRecovery = (token: string) => adminUserStore.refreshRecoveries(token)
+const revokeRecovery = (token: string) => adminUserStore.revokeRecovery(token)
+const deleteRecovery = (token: string) => adminUserStore.deleteRecovery(token)
 
 const createRecoveryRequest = async (
   request: PasswordRecoveryRequest,
   onSuccess: (recoveryToken: string) => void,
   onError: () => void,
 ): Promise<void> => {
-  try{
-    const recoveryResponse = await requestPasswordRecovery(request)
-    console.log(recoveryResponse)
-    onSuccess(recoveryResponse.token)
-  }catch(error){
-    console.log(error)
+  try {
+    const token = await adminUserStore.requestRecovery(request)
+    console.log('Recovery Token:', token)
+    onSuccess(token)
+  } catch (error) {
+    console.error(error)
     onError()
   }
 }
 
+// ======================
+// Lifecycle
+// ======================
 onMounted(async () => {
-  usersInfoPage.value = await fetchUserInfo(page.page, page.size, 'name' + page.sort)
-  invitesInfoPage.value = await fetchInvitations(page.page, page.size, 'email' + page.sort)
-  recoveryInfoPage.value = await fetchAllPasswordRecoveries(
-    page.page,
-    page.size,
-    'email' + page.sort,
-  )
-  console.log(usersInfoPage.value.content)
-  console.log(invitesInfoPage.value.content)
-  console.log(recoveryInfoPage.value.content)
-})
+  // Load all data on mount
+  await adminUserStore.loadAll(pageConfig.page, pageConfig.size, pageConfig.sort)
 
-const activeTab = ref('All Users')
+  console.log('Users:', usersInfoPage.value.content)
+  console.log('Invites:', invitesInfoPage.value.content)
+  console.log('Recoveries:', recoveryInfoPage.value.content)
+})
 </script>
 
 <template>
@@ -179,22 +176,47 @@ const activeTab = ref('All Users')
       </nav>
     </div>
   </div>
-  <users-table
-    v-if="activeTab == 'All Users'"
-    :users="usersInfoPage.content"
-    @edit="editCurrentUser"
-  />
-  <invites-table v-if="activeTab == 'Invites'" :invites="invitesInfoPage.content" />
-  <password-recovery-table
-    v-if="activeTab == 'Recovery Requests'"
-    :requests="recoveryInfoPage.content"
-  />
+
+  <div v-if="adminUserStore.loading" class="text-center py-4 text-gray-500">Loading data...</div>
+
+  <template v-else>
+    <users-table
+      v-if="activeTab == 'All Users'"
+      :users="usersInfoPage.content"
+      @edit="editCurrentUser"
+      @delete="openUserDeletion"
+    />
+
+    <invites-table
+      v-if="activeTab == 'Invites'"
+      :invites="invitesInfoPage.content"
+      @refresh="refreshInvites"
+      @revoke="revokeInvite"
+      @delete="deleteInvite"
+    />
+
+    <password-recovery-table
+      v-if="activeTab == 'Recovery Requests'"
+      :requests="recoveryInfoPage.content"
+      @refresh="refreshRecovery"
+      @revoke="revokeRecovery"
+      @delete="deleteRecovery"
+    />
+  </template>
+
   <edit-user
     v-if="showUserEditor"
     :user="userToEdit"
-    @cancel="cancelEdit"
+    @cancel="closeModal"
     @save="saveUser"
     @createRecoveryRequest="createRecoveryRequest"
+  />
+
+  <delete-user
+    v-if="showUserDeletion"
+    :userName="userToEdit ? userToEdit.username : 'INVALID NAME'"
+    @cancel="closeModal"
+    @confirm="attemptUserDeletion"
   />
 </template>
 

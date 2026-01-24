@@ -25,13 +25,14 @@
     "@thatopen/components-front": "2.4.4",
     "@thatopen/fragments": "2.4.0",
     "@types/three": "^0.180.0",
+    "axios": "^1.13.1",
     "pinia": "^3.0.4",
     "tailwindcss": "^4.1.17",
+    "three": "0.160.1",
+    "turbo": "^2.5.4",
     "vue": "^3.5.25",
     "vue-router": "^4.6.3",
-    "three": "0.160.1",
-    "web-ifc": "0.0.66",
-    "axios": "^1.13.1"
+    "web-ifc": "0.0.66"
   },
   "devDependencies": {
     "@tsconfig/node24": "^24.0.3",

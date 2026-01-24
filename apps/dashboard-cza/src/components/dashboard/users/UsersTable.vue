@@ -5,12 +5,12 @@ import { computed, ref } from 'vue'
 const { users } = defineProps<{ users: UserResponse[] }>()
 const emit = defineEmits<{
   (e: 'edit', user: UserResponse): void
-  (e: 'delete', id: number): void
-  (e: 'selectionChange', selectedIds: number[]): void
+  (e: 'delete', user: UserResponse): void
+  (e: 'selectionChange', selectedIds: string[]): void
 }>()
 
 // Selection state
-const selectedUsers = ref<Set<number>>(new Set())
+const selectedUsers = ref<Set<string>>(new Set())
 const selectAll = ref(false)
 
 // Computed property for "select all" state
@@ -21,7 +21,7 @@ const isSomeSelected = computed(
 )
 
 // Toggle individual user selection
-const toggleUser = (userId: number) => {
+const toggleUser = (userId: string) => {
   if (selectedUsers.value.has(userId)) {
     selectedUsers.value.delete(userId)
   } else {
@@ -135,7 +135,7 @@ const roleClass = (role: string) => {
                 aria-label="Delete user"
                 class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                 title="Delete user"
-                @click="emit('delete', user.id)"
+                @click="emit('delete', user)"
               >
                 <svg
                   class="h-5 w-5"

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { InvitationResponse } from '@/types/types.ts'
 import { computed, ref } from 'vue'
+import { retrieveToken } from '@/util/util.ts'
 
 const { invites } = defineProps<{ invites: InvitationResponse[] }>()
 const emit = defineEmits<{
-  (e: 'refresh', email: string): void
+  (e: 'refresh', token: string): void
   (e: 'delete', token: string): void
   (e: 'revoke', email: string): void
   (e: 'selectionChange', selectedEmails: string[]): void
@@ -62,6 +63,33 @@ const copyLink = async (link: string) => {
     // You could add a toast notification here
   } catch (err) {
     console.error('Failed to copy link:', err)
+  }
+}
+
+const deleteInvite = (url: string): void => {
+  try {
+    const token = retrieveToken(url)
+    emit('delete', token)
+  } catch (err) {
+    console.error('Failed to delete invite:', err)
+  }
+}
+
+const revokeInvite = (url: string): void => {
+  try {
+    const token = retrieveToken(url)
+    emit('revoke', token)
+  } catch (err) {
+    console.error('Failed to revoke link:', err)
+  }
+}
+
+const refreshInvite = (url: string): void => {
+  try {
+    const token = retrieveToken(url)
+    emit('refresh', token)
+  } catch (err) {
+    console.error('Failed to refresh invites:', err)
   }
 }
 </script>
@@ -142,9 +170,9 @@ const copyLink = async (link: string) => {
               <!-- Resend/Refresh Invite -->
               <button
                 class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                @click="emit('refresh', invite.email)"
-                aria-label="Resend invitation"
-                title="Resend invitation"
+                @click="refreshInvite(invite.registrationLink)"
+                aria-label="Refresh invitation"
+                title="Refresh invitation"
                 :disabled="invite.status.toLowerCase() === 'accepted'"
               >
                 <svg
@@ -164,7 +192,7 @@ const copyLink = async (link: string) => {
               <!-- Revoke Invite -->
               <button
                 class="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-colors"
-                @click="emit('revoke', invite.email)"
+                @click="revokeInvite(invite.registrationLink)"
                 aria-label="Revoke invitation"
                 title="Revoke invitation"
                 :disabled="
@@ -189,7 +217,7 @@ const copyLink = async (link: string) => {
               <!-- Delete Invite -->
               <button
                 class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                @click="emit('delete', invite.registrationLink)"
+                @click="deleteInvite(invite.registrationLink)"
                 aria-label="Delete invitation"
                 title="Delete invitation"
               >

@@ -6,7 +6,13 @@ import type { AxiosInstance } from 'axios'
 // Types
 // ======================
 
+export const authApi = axios.create({
+  baseURL: import.meta.env.VITE_BASE_API_PATH,
+  withCredentials: true,
+})
+
 export interface User {
+  id: string
   email: string
   lastname: string
   name: string
@@ -107,17 +113,19 @@ export const useAuthStore = defineStore('auth', {
      */
     async refresh(): Promise<string> {
       try {
-        const response = await api.post<RefreshResponse>('/api/auth/v1/refresh', {}, {
-          withCredentials: true,
-        })
+        const response = await authApi.post<RefreshResponse>('/api/auth/v1/refresh')
 
         this.setAccessToken(response.data.accessToken)
-        if (response.data.user) this.setUser(response.data.user)
+
+        if (response.data.user) {
+          this.setUser(response.data.user)
+        }
+
         return response.data.accessToken
       } catch (error) {
         this.setAccessToken(null)
         this.setUser(null)
-        throw new Error('Refresh failed')
+        throw error
       }
     },
 
@@ -126,10 +134,10 @@ export const useAuthStore = defineStore('auth', {
      * Returns true if successful, false if user must log in again.
      */
     async attemptRefresh(): Promise<boolean> {
-      try{
+      try {
         await this.refresh()
         return true
-      }catch(error){
+      } catch (error) {
         this.setAccessToken(null)
         this.setUser(null)
         console.error(error)

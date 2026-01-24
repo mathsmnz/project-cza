@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import type { PasswordRecoveryResponse } from '@/types/types.ts'
 import { ref, computed } from 'vue'
+import { retrieveToken } from '@/util/util.ts'
 
 const { requests } = defineProps<{ requests: PasswordRecoveryResponse[] }>()
 const emit = defineEmits<{
-  (e: 'refresh', email: string): void
+  (e: 'refresh', token: string): void
+  (e: 'revoke', token: string): void
   (e: 'delete', token: string): void
   (e: 'selectionChange', selectedEmails: string[]): void
 }>()
@@ -55,6 +57,33 @@ const recoveryStatus = (status: string) => {
       return 'bg-red-100 text-red-700 border border-red-300'
     default:
       return 'bg-gray-100 text-gray-700 border border-gray-300'
+  }
+}
+
+const deleteRecovery = (url: string): void => {
+  try {
+    const token = retrieveToken(url)
+    emit('delete', token)
+  } catch (error) {
+    console.error('Failed to parse token for delete:', error)
+  }
+}
+
+const refreshRecovery = (url: string): void => {
+  try {
+    const token = retrieveToken(url)
+    emit('refresh', token)
+  } catch (error) {
+    console.error('Failed to parse token for refresh:', error)
+  }
+}
+
+const revokeRecovery = (url: string): void => {
+  try {
+    const token = retrieveToken(url)
+    emit('revoke', token)
+  } catch (error) {
+    console.error('Failed to parse token for revoke:', error)
   }
 }
 
@@ -145,7 +174,7 @@ const copyLink = async (link: string) => {
               <!-- Resend Recovery Link -->
               <button
                 class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                @click="emit('refresh', request.email)"
+                @click="refreshRecovery(request.token)"
                 aria-label="Resend recovery link"
                 title="Resend recovery link"
                 :disabled="request.status.toLowerCase() === 'used'"
@@ -163,11 +192,34 @@ const copyLink = async (link: string) => {
                   />
                 </svg>
               </button>
-
+              <!-- Revoke Invite -->
+              <button
+                class="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-colors"
+                @click="revokeRecovery(request.token)"
+                aria-label="Revoke invitation"
+                title="Revoke invitation"
+                :disabled="
+                  request.status.toLowerCase() === 'revoked' ||
+                  request.status.toLowerCase() === 'used'
+                "
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </button>
               <!-- Delete Recovery Request -->
               <button
                 class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                @click="emit('delete', request.token)"
+                @click="deleteRecovery(request.token)"
                 aria-label="Delete recovery request"
                 title="Delete recovery request"
               >
