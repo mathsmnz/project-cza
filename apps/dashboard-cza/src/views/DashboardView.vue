@@ -11,6 +11,7 @@ import { useToastStore } from '@/stores/toast.ts'
 import ToastNotification from '@/components/ToastNotification.vue'
 import { useProjectStore } from '@/stores/adminProjects.ts'
 import { storeToRefs } from 'pinia'
+import CreateProject from '@/components/dashboard/modals/CreateProject.vue'
 
 // Get access to the current route object
 const route = useRoute()
@@ -25,6 +26,7 @@ const currentTitle = computed(() => {
 })
 
 const { projectsPage: projectsPage } = storeToRefs(adminProjectStore)
+const { usersPage: usersPage } = storeToRefs(adminUserStore)
 
 const userToCreate = ref<UserCreationRequest>({
   email: '',
@@ -116,6 +118,11 @@ const handleSearch = (query: string) => {
       :available-projects="projectsPage.content"
       @cancel="closeUserCreation"
       @create-invitation="createUserRequest"
+    />
+    <create-project
+      v-if="showProjectCreator"
+      :available-users="usersPage.content"
+      @cancel="closeProjectCreation"
     />
 
     <ToastNotification

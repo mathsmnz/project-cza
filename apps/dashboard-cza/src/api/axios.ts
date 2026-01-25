@@ -5,12 +5,15 @@ import type {
   FileResponse,
   InvitationResponse,
   Page,
+  PartialProjectResponse,
   PasswordRecoveryRequest,
   PasswordRecoveryResponse,
   PasswordResetRequest,
   PlatformStats,
   Project,
+  CreateProjectRequest,
   TokenValidationResponse,
+  UpdateProjectRequest,
   UpdateUserRequest,
   UserCreationRequest,
   UserResponse,
@@ -721,5 +724,70 @@ export const deleteRecoveryRequest = async (
     throw error;
   }
 };
+
+/**
+ * Creates a new project with the provided name, description, and associated users.
+ *
+ * @param projectData - The payload containing the project name, description, and list of user IDs.
+ * @returns A Promise that resolves to the created project data (PartialProjectResponse).
+ *
+ * @example
+ * ```ts
+ * const newProject = await createProject({
+ * name: 'New Dashboard',
+ * description: ' redesign of the admin panel',
+ * userIds: ['user-1', 'user-2']
+ * });
+ * console.log('Project created:', newProject);
+ * ```
+ *
+ * @throws If the input is invalid (400) or the server fails, the error is logged and rethrown.
+ */
+export const createProject = async (
+  projectData: CreateProjectRequest,
+): Promise<PartialProjectResponse> => {
+  try {
+    const response = await api.post<PartialProjectResponse>('/api/projects/v1', projectData)
+    return response.data;
+  } catch (error) {
+    console.error('Failed to create new project:', error);
+    throw error;
+  }
+};
+
+/**
+ * Updates the details (name, description) of an existing project by its unique ID.
+ *
+ * @param projectId - The unique UUID of the project to update.
+ * @param projectData - The partial data to update (name and/or description).
+ * @returns A Promise that resolves to the updated project data.
+ *
+ * @example
+ * ```ts
+ * const updated = await updateProject('proj-uuid-123', {
+ * name: 'Updated Name',
+ * description: 'Updated description text'
+ * });
+ * console.log('Project updated:', updated);
+ * ```
+ *
+ * @throws If the project is not found (404) or the request fails, the error is logged and rethrown.
+ */
+export const updateProject = async (
+  projectId: string,
+  projectData: UpdateProjectRequest
+): Promise<PartialProjectResponse> => {
+  try {
+    const response = await api.put<PartialProjectResponse>(
+      `/api/projects/v1/${projectId}`,
+      projectData,
+    )
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to update project with ID "${projectId}":`, error);
+    throw error;
+  }
+};
+
 
 export default api

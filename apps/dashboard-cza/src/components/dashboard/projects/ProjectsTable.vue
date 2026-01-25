@@ -6,12 +6,12 @@ import { ref, computed } from 'vue'
 const { projects } = defineProps<{ projects: Project[] }>()
 const emit = defineEmits<{
   (e: 'edit', project: Project): void
-  (e: 'delete', id: number): void
-  (e: 'selectionChange', selectedIds: number[]): void
+  (e: 'delete', id: string): void
+  (e: 'selectionChange', selectedIds: string[]): void
 }>()
 
 // Selection state
-const selectedProjects = ref<Set<number>>(new Set())
+const selectedProjects = ref<Set<string>>(new Set())
 
 // Computed properties for selection
 const isAllSelected = computed(
@@ -23,7 +23,7 @@ const isSomeSelected = computed(
 )
 
 // Toggle individual project selection
-const toggleProject = (id: number) => {
+const toggleProject = (id: string) => {
   if (selectedProjects.value.has(id)) {
     selectedProjects.value.delete(id)
   } else {

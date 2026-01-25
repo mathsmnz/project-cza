@@ -80,7 +80,11 @@ const attemptUserDeletion = async (confirmationCode: string): Promise<void> => {
 
     toastStore.addToast(`Usuário ${username} apagado com sucesso.`, 'success')
   } catch (error) {
-    toastStore.addToast(error.message, 'error')
+    if (error instanceof Error) {
+      toastStore.addToast(error.message, 'error')
+    } else {
+      toastStore.addToast('Erro inesperado.', 'error')
+    }
     console.error(error)
   }
 }
