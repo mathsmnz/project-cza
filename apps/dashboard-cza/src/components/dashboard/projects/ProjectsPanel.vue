@@ -2,11 +2,11 @@
 import { onMounted, ref } from 'vue'
 import ProjectsTable from './ProjectsTable.vue'
 import type { ProjectResponse } from '@/types/types.ts'
-import EditProject from '@/components/dashboard/modals/EditProject.vue'
+import EditProject from '@/components/dashboard/modals/project/EditProject.vue'
 import { useAdminUserStore } from '@/stores/adminUser.ts'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/stores/adminProjects.ts'
-import DeleteProject from '@/components/dashboard/modals/DeleteProject.vue'
+import DeleteProject from '@/components/dashboard/modals/project/DeleteProject.vue'
 import { useToastStore } from '@/stores/toast.ts' // Import the new table component
 
 const page = {

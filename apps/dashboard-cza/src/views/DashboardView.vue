@@ -4,14 +4,14 @@ import { useRoute } from 'vue-router'
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar.vue'
 import DashboardHeader from '@/components/dashboard/DashboardHeader.vue'
 import type { CreateProjectRequest, ProjectResponse, UserCreationRequest } from '@/types/types.ts'
-import CreateUser from '@/components/dashboard/modals/CreateUser.vue'
+import CreateUser from '@/components/dashboard/modals/user/CreateUser.vue'
 import { createProject, inviteUser } from '@/api/axios.ts'
 import { useAdminUserStore } from '@/stores/adminUser.ts'
 import { useToastStore } from '@/stores/toast.ts'
 import ToastNotification from '@/components/ToastNotification.vue'
 import { useProjectStore } from '@/stores/adminProjects.ts'
 import { storeToRefs } from 'pinia'
-import CreateProject from '@/components/dashboard/modals/CreateProject.vue'
+import CreateProject from '@/components/dashboard/modals/user/CreateProject.vue'
 
 // Get access to the current route object
 const route = useRoute()

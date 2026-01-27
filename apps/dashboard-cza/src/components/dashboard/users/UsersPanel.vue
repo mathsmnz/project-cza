@@ -6,10 +6,10 @@ import type { UserResponse, PasswordRecoveryRequest } from '@/types/types.ts'
 
 // Components
 import UsersTable from '@/components/dashboard/users/UsersTable.vue'
-import EditUser from '@/components/dashboard/modals/EditUser.vue'
+import EditUser from '@/components/dashboard/modals/user/EditUser.vue'
 import InvitesTable from '@/components/dashboard/users/InvitesTable.vue'
 import PasswordRecoveryTable from '@/components/dashboard/users/PasswordRecoveryTable.vue'
-import DeleteUser from '@/components/dashboard/modals/DeleteUser.vue'
+import DeleteUser from '@/components/dashboard/modals/user/DeleteUser.vue'
 import { useAuthStore } from '@/stores/auth.ts'
 import { useToastStore } from '@/stores/toast.ts'
 
