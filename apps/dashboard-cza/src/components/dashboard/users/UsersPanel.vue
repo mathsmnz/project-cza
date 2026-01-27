@@ -12,7 +12,6 @@ import PasswordRecoveryTable from '@/components/dashboard/users/PasswordRecovery
 import DeleteUser from '@/components/dashboard/modals/DeleteUser.vue'
 import { useAuthStore } from '@/stores/auth.ts'
 import { useToastStore } from '@/stores/toast.ts'
-import { useProjectStore } from '@/stores/adminProjects.ts'
 
 // ======================
 // Store Setup

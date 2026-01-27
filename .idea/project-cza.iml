@@ -10,6 +10,14 @@
       <excludeFolder url="file://$MODULE_DIR$/.turbo" />
       <excludeFolder url="file://$MODULE_DIR$/apps/dashboard-cza/.scannerwork" />
       <excludeFolder url="file://$MODULE_DIR$/apps/editor-cza/.scannerwork" />
+      <excludeFolder url="file://$MODULE_DIR$/.idea" />
+      <excludeFolder url="file://$MODULE_DIR$/.vscode" />
+      <excludeFolder url="file://$MODULE_DIR$/apps/dashboard-cza/.vscode" />
+      <excludeFolder url="file://$MODULE_DIR$/apps/editor-cza/.vscode" />
+      <excludeFolder url="file://$MODULE_DIR$/apps/sistema-cza/.scannerwork" />
+      <excludeFolder url="file://$MODULE_DIR$/apps/sistema-cza/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/apps/sistema-cza/.vscode" />
+      <excludeFolder url="file://$MODULE_DIR$/apps/sistema-cza/cypress" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

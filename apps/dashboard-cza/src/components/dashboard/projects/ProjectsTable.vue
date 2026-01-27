@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { Project } from '@/types/types.ts'
+import type { ProjectResponse } from '@/types/types.ts'
 import { formatDisplayDate } from '@/util/util.ts'
 import { ref, computed } from 'vue'
 
-const { projects } = defineProps<{ projects: Project[] }>()
+const { projects } = defineProps<{ projects: ProjectResponse[] }>()
 const emit = defineEmits<{
-  (e: 'edit', project: Project): void
-  (e: 'delete', id: string): void
+  (e: 'edit', project: ProjectResponse): void
+  (e: 'delete', project: ProjectResponse): void
   (e: 'selectionChange', selectedIds: string[]): void
 }>()
 
@@ -44,7 +44,7 @@ const toggleAll = () => {
 </script>
 
 <template>
-  <div class="overflow-x-auto   border border-gray-300">
+  <div class="overflow-x-auto border border-gray-300">
     <table class="w-full text-sm text-left text-gray-600">
       <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-300">
         <tr>
@@ -54,13 +54,14 @@ const toggleAll = () => {
               :checked="isAllSelected"
               :indeterminate="isSomeSelected"
               @change="toggleAll"
-              class="w-4 h-4 text-blue-600 bg-gray-200 border-gray-400  focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              class="w-4 h-4 text-blue-600 bg-gray-200 border-gray-400 focus:ring-2 focus:ring-blue-500 cursor-pointer"
               aria-label="Select all projects"
             />
           </th>
           <th class="py-3 px-6 font-semibold">ID</th>
           <th class="py-3 px-6 font-semibold">Project</th>
           <th class="py-3 px-6 font-semibold">Created</th>
+          <th class="py-3 px-6 font-semibold">Updated</th>
           <th class="py-3 px-6 font-semibold">Description</th>
           <th class="py-3 px-6 text-right font-semibold">Actions</th>
         </tr>
@@ -78,7 +79,7 @@ const toggleAll = () => {
               type="checkbox"
               :checked="selectedProjects.has(project.id)"
               @change="toggleProject(project.id)"
-              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300  focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-2 focus:ring-blue-500 cursor-pointer"
               :aria-label="`Select ${project.name}`"
             />
           </td>
@@ -92,6 +93,9 @@ const toggleAll = () => {
           <td class="py-4 px-6 text-gray-600 whitespace-nowrap">
             {{ formatDisplayDate(project.createdAt) }}
           </td>
+          <td class="py-4 px-6 text-gray-600 whitespace-nowrap">
+            {{ formatDisplayDate(project.updatedAt) }}
+          </td>
           <td class="py-4 px-6">
             <div class="max-w-xs">
               <p class="text-gray-600 truncate" :title="project.description">
@@ -103,7 +107,7 @@ const toggleAll = () => {
             <div class="flex justify-end items-center gap-1">
               <!-- Edit Project -->
               <button
-                class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50   transition-colors"
+                class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                 @click="emit('edit', project)"
                 aria-label="Edit project"
                 title="Edit project"
@@ -127,8 +131,8 @@ const toggleAll = () => {
 
               <!-- Delete Project -->
               <button
-                class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50   transition-colors"
-                @click="emit('delete', project.id)"
+                class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                @click="emit('delete', project)"
                 aria-label="Delete project"
                 title="Delete project"
               >

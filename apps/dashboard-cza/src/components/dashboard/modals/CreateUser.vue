@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { UserCreationRequest, Project } from '@/types/types.ts'
+import type { UserCreationRequest, ProjectResponse } from '@/types/types.ts'
 
 // --- Props & Emits ---
 const props = defineProps<{
-  availableProjects: Project[]
+  availableProjects: ProjectResponse[]
 }>()
 
 const emit = defineEmits(['cancel', 'create-invitation'])

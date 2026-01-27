@@ -168,20 +168,22 @@ export interface UpdateUserRequest {
 }
 
 /**
- * Represents the basic information of a project.
+ * Represents the payload for updating an existing project's details.
+ *
+ * All fields are optional to allow for partial updates (e.g., changing only the description).
  */
-export interface Project {
+export interface UpdateProjectRequest {
   /** The unique numeric identifier for the project. */
-  id: string
+  id?: string
 
   /** The name of the project. */
-  name: string
+  name?: string
 
   /** A brief description of the project. */
-  description: string
+  description?: string
 
-  /** The timestamp when the project was created, in ISO format. */
-  createdAt: string
+  /** List of user IDs to be modified in the project*/
+  userIds?: string[]
 }
 
 /**
@@ -284,25 +286,12 @@ export interface CreateProjectRequest {
 }
 
 /**
- * Represents the payload for updating an existing project's details.
- *
- * All fields are optional to allow for partial updates (e.g., changing only the description).
- */
-export interface UpdateProjectRequest {
-  /** The new display name for the project, if it is being changed. */
-  name?: string
-
-  /** The new description text for the project, if it is being changed. */
-  description?: string
-}
-
-/**
  * Represents the subset of project data returned after creation or update operations.
  *
  * This response provides the immediate confirmation details of the project
  * stored in the system.
  */
-export interface PartialProjectResponse {
+export interface ProjectResponse {
   /** The unique identifier (UUID) assigned to the project. */
   id: string
 
@@ -311,6 +300,9 @@ export interface PartialProjectResponse {
 
   /** The description of the project. */
   description: string
+
+  /** The current list of users present in the project*/
+  userIds: string[]
 
   /** The timestamp when the project was created (ISO 8601 format). */
   createdAt: string

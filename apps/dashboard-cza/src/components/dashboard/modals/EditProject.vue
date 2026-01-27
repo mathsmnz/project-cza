@@ -1,30 +1,30 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import type { UserResponse, CreateProjectRequest } from '@/types/types.ts'
+import type {
+  UserResponse,
+  ProjectResponse
+} from '@/types/types.ts'
 
 // --- Props & Emits ---
 const props = defineProps<{
+  currentProject: ProjectResponse | null
   availableUsers: UserResponse[]
 }>()
 
-const emit = defineEmits(['cancel', 'create-project'])
+const emit = defineEmits(['cancel', 'edit-project'])
 
 // --- Component State ---
-const formData = ref<CreateProjectRequest>({
-  name: '',
-  description: '',
-  userIds: [],
-})
+const formData = ref<Partial<ProjectResponse>>({...props.currentProject})
 
 const isLoading = ref<boolean>(false)
 
 // --- Methods ---
-const handleCreateProject = () => {
+const handleEditProject = () => {
   isLoading.value = true
 
   emit(
-    'create-project',
+    'edit-project',
     formData.value,
     () => {
       // Success callback
@@ -52,9 +52,9 @@ const handleCreateProject = () => {
       <div
         class="relative bg-white outline-2 shadow-2xl w-full max-w-lg m-4 overflow-hidden transform transition-all duration-300 ease-out"
       >
-        <form @submit.prevent="handleCreateProject">
+        <form @submit.prevent="handleEditProject">
           <div class="flex items-center justify-between p-4 border-b border-gray-200">
-            <h2 class="text-xl font-bold text-gray-800">Criar Novo Projeto</h2>
+            <h2 class="text-xl font-bold text-gray-800">Editar Projeto</h2>
             <button
               type="button"
               @click="$emit('cancel')"
@@ -107,7 +107,7 @@ const handleCreateProject = () => {
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
-                Adicionar Membros
+                Modificar Membros
               </label>
               <div class="border border-gray-300 bg-gray-50 max-h-48 overflow-y-auto">
                 <div
@@ -187,7 +187,7 @@ const handleCreateProject = () => {
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 ></path>
               </svg>
-              <span>{{ isLoading ? 'Criando...' : 'Criar Projeto' }}</span>
+              <span>{{ isLoading ? 'Salvando...' : 'Salvar Projeto' }}</span>
             </button>
           </div>
         </form>

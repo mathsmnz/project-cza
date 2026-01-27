@@ -3,9 +3,9 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar.vue'
 import DashboardHeader from '@/components/dashboard/DashboardHeader.vue'
-import type { Project, UserCreationRequest } from '@/types/types.ts'
+import type { CreateProjectRequest, ProjectResponse, UserCreationRequest } from '@/types/types.ts'
 import CreateUser from '@/components/dashboard/modals/CreateUser.vue'
-import { inviteUser } from '@/api/axios.ts'
+import { createProject, inviteUser } from '@/api/axios.ts'
 import { useAdminUserStore } from '@/stores/adminUser.ts'
 import { useToastStore } from '@/stores/toast.ts'
 import ToastNotification from '@/components/ToastNotification.vue'
@@ -42,8 +42,11 @@ const openUserCreation = () => {
   console.log('Opening user creation modal')
 }
 
-const openProjectCreation = () => {
+const openProjectCreation = async () => {
   showProjectCreator.value = true
+  if (usersPage.value.empty) {
+    await adminUserStore.loadUsers()
+  }
   console.log('Opening project creation modal')
 }
 
@@ -67,6 +70,22 @@ const createUserRequest = async (
     onSuccess(invitationResponse.registrationLink)
   } catch (err) {
     console.error('Failed to create user invitation:', err)
+    onError()
+  }
+}
+
+const createProjectRequest = async (
+  projectCreationRequest: CreateProjectRequest,
+  onSuccess: (creationStatus: boolean) => void,
+  onError: () => void,
+) => {
+  try {
+    const projectResponse = await createProject(projectCreationRequest)
+    console.log('Create project request:', projectResponse)
+    await adminProjectStore.loadProjects()
+    onSuccess(true)
+  } catch (error) {
+    console.error('Failed to create project:', error)
     onError()
   }
 }
@@ -123,6 +142,7 @@ const handleSearch = (query: string) => {
       v-if="showProjectCreator"
       :available-users="usersPage.content"
       @cancel="closeProjectCreation"
+      @create-project="createProjectRequest"
     />
 
     <ToastNotification

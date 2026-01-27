@@ -5,12 +5,11 @@ import type {
   FileResponse,
   InvitationResponse,
   Page,
-  PartialProjectResponse,
+  ProjectResponse,
   PasswordRecoveryRequest,
   PasswordRecoveryResponse,
   PasswordResetRequest,
   PlatformStats,
-  Project,
   CreateProjectRequest,
   TokenValidationResponse,
   UpdateProjectRequest,
@@ -403,9 +402,9 @@ export const fetchProjects = async (
   page = 0,
   size = 10,
   sort = 'name,asc'
-): Promise<Page<Project>> => {
+): Promise<Page<ProjectResponse>> => {
   try {
-    const response = await api.get<Page<Project>>('/api/projects/v1/', {
+    const response = await api.get<Page<ProjectResponse>>('/api/projects/v1/', {
       params: { page, size, sort }
     })
     return response.data
@@ -419,15 +418,15 @@ export const fetchProjects = async (
  * [PROTOTYPE] Saves a project.
  * If the project has an ID, it updates it (PUT); otherwise, it creates a new one (POST).
  */
-export const saveProject = async (project: Project): Promise<Project> => {
+export const saveProject = async (project: ProjectResponse): Promise<ProjectResponse> => {
   try {
     if (project.id) {
       // Update existing
-      const response = await api.put<Project>(`/api/projects/v1/${project.id}`, project)
+      const response = await api.put<ProjectResponse>(`/api/projects/v1/${project.id}`, project)
       return response.data
     } else {
       // Create new
-      const response = await api.post<Project>('/api/projects/v1/', project)
+      const response = await api.post<ProjectResponse>('/api/projects/v1/', project)
       return response.data
     }
   } catch (error) {
@@ -439,15 +438,32 @@ export const saveProject = async (project: Project): Promise<Project> => {
 /**
  * [PROTOTYPE] Deletes a project by its ID.
  */
-export const deleteProject = async (projectId: string): Promise<void> => {
+export const deleteProject = async (projectId: string, confirmationCode: string): Promise<void> => {
   try {
-    await api.delete(`/api/projects/v1/${projectId}`)
+    await api.post(`/api/projects/v1/${projectId}/delete`, confirmationCode, {
+      headers: {
+        'Content-Type': 'text/plain',
+      },
+    })
   } catch (error) {
-    console.error(`Failed to delete project "${projectId}":`, error)
-    throw error
+    if (!axios.isAxiosError(error) || !error.response) {
+      throw new Error('Network or unexpected error')
+    }
+
+    switch (error.response.status) {
+      case 401:
+        throw new Error('You are not logged in')
+      case 403:
+        throw new Error('You do not have permission to delete this project')
+      case 404:
+        throw new Error('Project not found')
+      case 422:
+        throw new Error('Confirmation password is incorrect')
+      default:
+        throw new Error('Failed to delete project')
+    }
   }
 }
-
 /**
  * [PROTOTYPE] Fetches files associated with a specific project.
  */
@@ -745,9 +761,9 @@ export const deleteRecoveryRequest = async (
  */
 export const createProject = async (
   projectData: CreateProjectRequest,
-): Promise<PartialProjectResponse> => {
+): Promise<ProjectResponse> => {
   try {
-    const response = await api.post<PartialProjectResponse>('/api/projects/v1', projectData)
+    const response = await api.post<ProjectResponse>('/api/projects/v1/', projectData)
     return response.data;
   } catch (error) {
     console.error('Failed to create new project:', error);
@@ -776,9 +792,9 @@ export const createProject = async (
 export const updateProject = async (
   projectId: string,
   projectData: UpdateProjectRequest
-): Promise<PartialProjectResponse> => {
+): Promise<ProjectResponse> => {
   try {
-    const response = await api.put<PartialProjectResponse>(
+    const response = await api.put<ProjectResponse>(
       `/api/projects/v1/${projectId}`,
       projectData,
     )

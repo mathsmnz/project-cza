@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { fetchProjects, saveProject, deleteProject, fetchProjectFiles } from '@/api/axios.ts'
 
-import type { Page, Project, FileResponse } from '@/types/types.ts'
+import type { Page, ProjectResponse, FileResponse } from '@/types/types.ts'
 
 // ======================
 // Constants & Helpers
@@ -36,7 +36,7 @@ const createEmptyPage = <T>(): Page<T> => JSON.parse(JSON.stringify(EMPTY_PAGE_D
 // ======================
 
 export interface ProjectState {
-  projectsPage: Page<Project>
+  projectsPage: Page<ProjectResponse>
   filesPage: Page<FileResponse> // Stores files for the currently selected project
   loading: boolean
 }
@@ -47,7 +47,7 @@ export interface ProjectState {
 
 export const useProjectStore = defineStore('project', {
   state: (): ProjectState => ({
-    projectsPage: createEmptyPage<Project>(),
+    projectsPage: createEmptyPage<ProjectResponse>(),
     filesPage: createEmptyPage<FileResponse>(),
     loading: false,
   }),
@@ -80,7 +80,7 @@ export const useProjectStore = defineStore('project', {
      * Saves a project (create or update) and refreshes the list.
      */
     async saveProject(
-      project: Project,
+      project: ProjectResponse,
       currentPage = 0,
       currentSize = 10,
       currentSort = 'name,asc',
@@ -100,12 +100,13 @@ export const useProjectStore = defineStore('project', {
      */
     async removeProject(
       projectId: string,
+      confirmationCode: string,
       currentPage = 0,
       currentSize = 10,
       currentSort = 'name,asc',
     ): Promise<void> {
       try {
-        await deleteProject(projectId)
+        await deleteProject(projectId, confirmationCode)
         await this.loadProjects(currentPage, currentSize, currentSort)
       } catch (error) {
         console.error(`Failed to delete project ${projectId}:`, error)
