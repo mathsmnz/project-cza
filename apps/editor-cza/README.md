@@ -1,48 +1,81 @@
 # editor-cza
 
-This template should help get you started developing with Vue 3 in Vite.
+Editor de configuração IFC/BIM da plataforma CZA: carregar modelos IFC, editar grupos, combos e plantas, importar/exportar config em JSON e visualizar em 3D. Parte do monorepo [project-cza](../../README.md).
 
-## Recommended IDE Setup
+## Stack
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+- **Vue 3** + **Vue Router** + **Pinia**
+- **Vite** + **TypeScript**
+- **Tailwind CSS** v4
+- **That Open Components** (`@thatopen/components`, `@thatopen/components-front`, `@thatopen/fragments`)
+- **web-ifc** + **Three.js** (IFC e 3D)
+- **Axios** (API com JWT)
 
-## Recommended Browser Setup
+## Pré-requisitos
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd) 
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+- Node.js ^20.19.0 ou ≥22.12.0
+- Backend da API CZA em execução (para auth e projetos)
 
-## Type Support for `.vue` Imports in TS
+## Variáveis de ambiente
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+| Variável | Descrição |
+|----------|-----------|
+| `VITE_BASE_API_PATH` | URL base da API (ex.: `http://localhost:8080`) |
 
-## Customize configuration
+Crie um `.env` na pasta do app com o valor desejado.
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+## Scripts
 
-## Project Setup
+| Comando | Descrição |
+|---------|-----------|
+| `pnpm dev` | Servidor de desenvolvimento (Vite). |
+| `pnpm build` | Type-check + build de produção. |
+| `pnpm preview` | Preview do build de produção. |
+| `pnpm type-check` | Verificação de tipos (vue-tsc). |
+| `pnpm lint` | ESLint com auto-fix e cache. |
+| `pnpm format` | Prettier em `src/`. |
 
-```sh
-pnpm install
+## Rotas
+
+| Rota | Descrição |
+|------|-----------|
+| `/` | Home. |
+| `/login` | Login. |
+| `/editor` | Editor de configurações (IFC, grupos, combos, plantas). Requer auth. |
+| `/about` | Sobre. |
+
+## Estrutura principal
+
+```
+src/
+├── api/           # Cliente Axios e chamadas à API
+├── components/    # Componentes Vue (NavBar, ProjectSelector, cards do editor)
+│   └── editor/    # ComboCard, GroupsCard, PlantsCard, modais (IfcEditor, etc.)
+├── editor/        # Lógica do editor 3D/IFC
+│   ├── editorModel.ts   # Mundo, fragments, IFC loader, planos, gizmo
+│   ├── editorController.ts
+│   └── gizmo/     # Gizmo 3D
+├── router/        # Rotas e authManager
+├── stores/        # Pinia: auth, projects
+├── types/         # Tipos TypeScript
+├── util/          # authWatcher, utilitários
+└── views/         # Home, Login, EditorView, About
 ```
 
-### Compile and Hot-Reload for Development
+O **EditorView** oferece: carregar JSON, download JSON, definir IFC base, enviar seleção para a API, e edição de grupos/combos/plantas via modais.
 
-```sh
+## Desenvolvimento
+
+Na raiz do monorepo:
+
+```bash
+pnpm dev --filter=editor-cza
+```
+
+Ou dentro do app:
+
+```bash
+cd apps/editor-cza
+pnpm install   # se ainda não instalou na raiz com pnpm install
 pnpm dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-pnpm build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-pnpm lint
 ```

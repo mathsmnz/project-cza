@@ -1,135 +1,123 @@
-# Turborepo starter
+# Project CZA
 
-This Turborepo starter is maintained by the Turborepo core team.
+Monorepo da plataforma CZA BIM/IFC: painel administrativo, editor de configuração IFC e aplicativo do sistema para o usuário final. Desenvolvido com [Turborepo](https://turbo.build/), [Vue 3](https://vuejs.org/), [Vite](https://vite.dev/) e [TypeScript](https://www.typescriptlang.org/).
 
-## Using this example
+## O que há no repositório
 
-Run the following command:
+| App | Descrição |
+|-----|-----------|
+| **dashboard-cza** | Painel administrativo: usuários, projetos, convites, recuperação de senha e analytics. |
+| **editor-cza** | Editor de configuração IFC/BIM: carregar modelos IFC, editar grupos/combos/plantas, config em JSON e visualizador 3D. |
+| **sistema-cza** | Fluxo para o usuário final: seleção de projeto (preflight), opções e editor; inclui testes E2E (Cypress) e unitários (Vitest). |
 
-```sh
-npx create-turbo@latest
+Todos os apps são frontends SPA em Vue 3 que se comunicam com uma API backend compartilhada (autenticação JWT, REST). Os apps de editor usam [That Open Components](https://thatopen.com/) e [web-ifc](https://github.com/ThatOpen/web-ifc) para carregar IFC e exibir o 3D.
+
+## Pré-requisitos
+
+- **Node.js** ≥ 22
+- **pnpm** 9.x (ver `package.json` na raiz → `packageManager`)
+
+## Configuração
+
+```bash
+# Instalar dependências (na raiz do repositório)
+pnpm install
 ```
 
-## What's inside?
+## Variáveis de ambiente
 
-This Turborepo includes the following packages/apps:
+Cada app que chama a API espera:
 
-### Apps and Packages
+| Variável | Descrição |
+|----------|------------|
+| `VITE_BASE_API_PATH` | URL base da API do backend (ex.: `https://api.exemplo.com`) |
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+Crie um arquivo `.env` (ou `.env.local`) na pasta do app ou na raiz, conforme necessário. Exemplo:
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+```env
+VITE_BASE_API_PATH=http://localhost:8080
 ```
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+Variáveis do backend referenciadas no Turbo (para uso futuro/backend): `DB_NAME`, `PORT`, `MONGO_URI`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_ACCESS_EXPIRES`, `JWT_REFRESH_EXPIRES`, etc.
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+## Scripts
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+Na **raiz do repositório**:
 
-### Develop
+| Comando            | Descrição                                               |
+|--------------------|---------------------------------------------------------|
+| `pnpm turbo dev`   | Subir todos os apps em modo de desenvolvimento (Turbo). |
+| `pnpm turbo build` | Fazer o build de todos os apps.                         |
+| `pnpm lint`        | Rodar lint em todos os apps.                            |
+| `pnpm format`      | Formatar o código com Prettier.                         |
+| `pnpm check-types` | Verificar tipos em todos os apps.                       |
 
-To develop all apps and packages, run the following command:
+Para rodar apenas um app:
 
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+```bash
+pnpm dev --filter=dashboard-cza
+pnpm dev --filter=editor-cza
+pnpm dev --filter=sistema-cza
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+Ou a partir da pasta do app:
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+```bash
+cd apps/dashboard-cza && pnpm dev
+cd apps/editor-cza   && pnpm dev
+cd apps/sistema-cza && pnpm dev
 ```
 
-### Remote Caching
+### Apenas em sistema-cza (A SER IMPLEMENTADO)
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+- `pnpm test:unit` — testes unitários (Vitest)
+- `pnpm test:e2e:dev` — testes E2E com Cypress contra o servidor de desenvolvimento
+- `pnpm test:e2e` — testes E2E contra o build de produção (`pnpm build` e depois preview)
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+## Estrutura do projeto
 
 ```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+project-cza/
+├── apps/
+│   ├── dashboard-cza/    # Interface administrativa
+│   ├── editor-cza/       # Editor de config IFC
+│   └── sistema-cza/      # App para o usuário final + testes
+├── package.json          # Scripts da raiz, Turbo, Prettier
+├── pnpm-workspace.yaml   # apps/*, packages/*
+├── turbo.json            # Tarefas e env do Turbo
+└── README.md
 ```
 
-## Useful Links
+Cada app segue uma estrutura parecida:
 
-Learn more about the power of Turborepo:
+- `src/api/` — Instância do Axios e funções de API
+- `src/components/` — Componentes Vue
+- `src/router/` — Vue Router e guards de autenticação
+- `src/stores/` — Stores Pinia (ex.: auth, projects)
+- `src/views/` — Views das rotas
+- `src/types/` — Tipos TypeScript compartilhados
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+## Stack do projeto
+
+- **Monorepo:** Turborepo, pnpm workspaces
+- **Frontend:** Vue 3, Vue Router, Pinia, TypeScript, Vite
+- **Estilos:** Tailwind CSS v4
+- **Editor/IFC:** That Open Components, web-ifc, Three.js
+- **Dashboard:** Chart.js, Axios
+- **Testes (sistema-cza):** Vitest, Cypress
+- **CI:** GitHub Actions (ex.: Qodana code quality)
+- **Deploy:** Configuração Vercel por app (`vercel.json`)
+
+## Autenticação
+
+Os apps usam tokens JWT de acesso e de refresh. O cliente de API (Axios):
+
+- Envia `Authorization: Bearer <accessToken>` nas requisições
+- Em resposta 401, renova o token (e enfileira requisições em andamento)
+- Usa cookies para o refresh quando o backend exige (`withCredentials: true`)
+
+Rotas protegidas usam `meta: { requiresAuth: true }` e um guard global `beforeEach` que redireciona para a tela de login quando o usuário não está autenticado.
+
+## Licença
+
+Privado. Ver configurações do repositório.

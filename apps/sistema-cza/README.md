@@ -1,70 +1,90 @@
 # sistema-cza
 
-This template should help get you started developing with Vue 3 in Vite.
+Aplicativo do sistema CZA para o usuário final: fluxo de preflight (seleção de projeto), opções e editor IFC. Inclui testes unitários (Vitest) e E2E (Cypress). Parte do monorepo [project-cza](../../README.md).
 
-## Recommended IDE Setup
+## Stack
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+- **Vue 3** + **Vue Router** + **Pinia**
+- **Vite** + **TypeScript**
+- **Tailwind CSS** v4
+- **That Open Components** + **web-ifc** + **Three.js** (editor IFC/3D)
+- **Axios** (API com JWT)
+- **Vitest** (testes unitários)
+- **Cypress** (testes E2E)
 
-## Recommended Browser Setup
+## Pré-requisitos
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd) 
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+- Node.js ^20.19.0 ou ≥22.12.0
+- Backend da API CZA em execução
 
-## Type Support for `.vue` Imports in TS
+## Variáveis de ambiente
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+| Variável | Descrição |
+|----------|-----------|
+| `VITE_BASE_API_PATH` | URL base da API (ex.: `http://localhost:8080`) |
 
-## Customize configuration
+Crie um `.env` na pasta do app com o valor desejado.
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+## Scripts
 
-## Project Setup
+| Comando | Descrição |
+|---------|-----------|
+| `pnpm dev` | Servidor de desenvolvimento (Vite). |
+| `pnpm build` | Type-check + build de produção. |
+| `pnpm preview` | Preview do build de produção. |
+| `pnpm type-check` | Verificação de tipos (vue-tsc). |
+| `pnpm lint` | ESLint com auto-fix e cache. |
+| `pnpm format` | Prettier em `src/`. |
+| `pnpm test:unit` | Testes unitários (Vitest). |
+| `pnpm test:e2e:dev` | Cypress E2E contra o dev server (porta 4173). |
+| `pnpm test:e2e` | Cypress E2E contra o build de produção (preview na 4173). |
 
-```sh
-pnpm install
+Para `test:e2e`, faça antes `pnpm build` e use o preview na porta 4173.
+
+## Rotas
+
+| Rota | Descrição |
+|------|-----------|
+| `/` | Home. |
+| `/login` | Login. |
+| `/about` | Sobre. |
+| `/preflight` | Seleção de projeto. Requer auth. |
+| `/options` | Opções. Requer auth. |
+| `/editor` | Editor IFC. Requer auth. |
+
+## Estrutura principal
+
+```
+src/
+├── api/           # Cliente Axios e chamadas à API
+├── components/    # NavBar, ProjectSelector, OptionSelector, Toast, etc.
+├── editor/        # editorModel, editorController, gizmo (IFC/3D)
+├── router/        # Rotas e guards de auth
+├── stores/        # Pinia: auth, projects, data, telemetry
+├── types/         # Tipos TypeScript
+├── util/          # authWatcher, utilitários
+├── views/         # Home, Login, PreflightView, OptionsView, EditorView, About
+└── __tests__/     # Testes unitários (ex.: App.spec.ts)
+cypress/           # E2E (fixtures, support, e2e)
 ```
 
-### Compile and Hot-Reload for Development
+## Desenvolvimento
 
-```sh
+Na raiz do monorepo:
+
+```bash
+pnpm dev --filter=sistema-cza
+```
+
+Ou dentro do app:
+
+```bash
+cd apps/sistema-cza
+pnpm install   # se ainda não instalou na raiz com pnpm install
 pnpm dev
 ```
 
-### Type-Check, Compile and Minify for Production
+## Testes
 
-```sh
-pnpm build
-```
-
-### Run Unit Tests with [Vitest](https://vitest.dev/)
-
-```sh
-pnpm test:unit
-```
-
-### Run End-to-End Tests with [Cypress](https://www.cypress.io/)
-
-```sh
-pnpm test:e2e:dev
-```
-
-This runs the end-to-end tests against the Vite development server.
-It is much faster than the production build.
-
-But it's still recommended to test the production build with `test:e2e` before deploying (e.g. in CI environments):
-
-```sh
-pnpm build
-pnpm test:e2e
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-pnpm lint
-```
+- **Unitários:** `pnpm test:unit` (Vitest, arquivos em `src/__tests__/` e config no `vitest.config.ts`).
+- **E2E:** `pnpm test:e2e:dev` abre o Cypress contra o dev server; `pnpm test:e2e` roda contra o build (preview). Especificar porta 4173 no comando de preview se necessário.

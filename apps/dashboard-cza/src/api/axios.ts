@@ -118,35 +118,34 @@ export const fetchPlatformStats = async (): Promise<PlatformStats> => {
 }
 
 /**
- * Deletes a user by their unique ID, requiring a verification code (Admin API Key) for security.
+ * Permanently deletes a user by their ID.
+ * Requires the Admin's verification code (API Key) for security.
+ * * Maps to: POST /api/users/v1/{id}/delete
  *
- * @param userId - The unique ID of the user to be deleted.
- * @param verificationCode - The administrator's API key used as a verification code.
- * @returns A Promise that resolves when the user is successfully deleted (HTTP 204).
+ * @param userId - The unique UUID of the user to delete.
+ * @param verificationCode - The admin's API key (verification code) to authorize the action.
+ * @returns A Promise that resolves when the deletion is successful (204 No Content).
  *
  * @example
  * ```ts
- * await deleteUser('user-uuid-123', 'admin-api-key-verification');
+ * try {
+ * await deleteUser('target-user-uuid', 'my-admin-api-key');
  * console.log('User deleted successfully');
+ * } catch (error) {
+ * if (error.response.status === 409) console.error('Cannot delete yourself!');
+ * if (error.response.status === 403) console.error('Invalid API Key');
+ * }
  * ```
- *
- * @throws If the verification fails (404/403) or the API request errors, the error is logged and rethrown.
  */
-export const deleteUser = async (
-  userId: string,
-  verificationCode: string
-): Promise<void> => {
+export const deleteUser = async (userId: string, verificationCode: string): Promise<void> => {
   try {
-    await api.post(`/api/users/v1/${userId}`, verificationCode, {
-      headers: {
-        'Content-Type': 'text/plain'
-      }
-    });
+    // The controller expects a JSON body: { "verificationCode": "..." }
+    await api.post<void>(`/api/users/v1/${userId}/delete`, { verificationCode })
   } catch (error) {
-    console.error(`Failed to delete user with ID "${userId}":`, error);
-    throw error;
+    console.error(`Failed to delete user "${userId}":`, error)
+    throw error
   }
-};
+}
 
 /**
  * Sends an invitation request to create a new user invitation.
