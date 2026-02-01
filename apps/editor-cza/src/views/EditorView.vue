@@ -5,7 +5,9 @@
         <div
           class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4"
         >
-          <h1 class="text-2xl font-bold text-gray-900 uppercase tracking-wide">Editor de Configurações</h1>
+          <h1 class="text-2xl font-bold text-gray-900 uppercase tracking-wide">
+            Editor de Customizações
+          </h1>
           <div class="flex items-center gap-3">
             <button
               @click="loadFile"

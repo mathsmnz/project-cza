@@ -43,8 +43,11 @@
   </div>
 
   <!-- Confirmation Modal -->
-  <ConfirmProjectChange
+  <ConfirmationModal
     v-if="showConfirmModal"
+    :title="modalTitle"
+    :message="modalMessage"
+    variant="danger"
     @confirm="confirmProjectChange"
     @cancel="cancelProjectChange"
   />
@@ -55,7 +58,7 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useProjectsStore } from '@/stores/projects'
 import { storeToRefs } from 'pinia'
 import type { ProjectResponse } from '@/types/types.ts'
-import ConfirmProjectChange from '@/components/ConfirmProjectChange.vue'
+import ConfirmationModal from '@/components/ConfirmationModal.vue'
 
 const projectStore = useProjectsStore()
 const { currentProject, projects } = storeToRefs(projectStore)
@@ -64,6 +67,10 @@ const dropdownRef = ref<HTMLElement | null>(null)
 const isDropdownOpen = ref(false)
 const showConfirmModal = ref(false)
 const pendingProject = ref<ProjectResponse | null>(null)
+
+const modalTitle = 'Trocar de Projeto'
+const modalMessage =
+  'Você deseja trocar de projeto? Quaisquer modificações não salvas serão apagadas.'
 
 function toggleDropdown() {
   isDropdownOpen.value = !isDropdownOpen.value
