@@ -73,6 +73,7 @@ import { useEditorController } from '@/editor/editorController.ts'
 import { uploadProjectFile } from '@/api/axios.ts'
 
 const props = defineProps<{
+  mode: string
   ifcFile: string | null
   projectId: string | null
   hasFile: boolean

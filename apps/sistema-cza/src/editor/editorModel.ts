@@ -379,7 +379,7 @@ export function useEditorModel() {
     world.scene.three.background = null
 
     // Increase screenshot resolution (e.g., 2x or 4x the original size)
-    const scaleFactor = 2 // Change to 3 or 4 for even higher quality
+    const scaleFactor = 2
     const width = originalSize.x * scaleFactor
     const height = originalSize.y * scaleFactor
 
@@ -438,7 +438,7 @@ export function useEditorModel() {
 
     const maxDim = Math.max(size.x, size.y, size.z)
 
-    const sidebarWidth = document.getElementById('menuLateral')?.offsetWidth || 0
+    const sidebarWidth = 0
     const viewportWidth = window.innerWidth - sidebarWidth
     const scaleFactor = viewportWidth / window.innerWidth
 
