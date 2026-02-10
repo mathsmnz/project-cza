@@ -387,7 +387,7 @@ export const updateUser = async (userInfo: UserResponse): Promise<void> => {
  * @param page - The page number to retrieve (0-indexed). Defaults to 0.
  * @param size - The number of items per page. Defaults to 10.
  * @param sort - The sort parameter, e.g., `"name,asc"`. Defaults to `"name,asc"`.
- * @returns A Promise that resolves to a {@link Page} of {@link Project} objects.
+ * @returns A Promise that resolves to a {@link Page} of {@link ProjectResponse} objects.
  *
  * @example
  * ```ts

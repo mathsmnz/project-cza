@@ -78,7 +78,5 @@ export async function generateUniqueId(sortedCombos: string[]): Promise<string> 
 
   // Convert the hash buffer to a hexadecimal string
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-
-  return hashHex; // Hash is deterministic and filename-safe
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('') // Hash is deterministic and filename-safe
 }

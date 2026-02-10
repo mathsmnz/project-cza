@@ -26,7 +26,6 @@
 
       <!-- Right Side: Project & User Info -->
       <div v-if="isAuthenticated" class="flex items-center space-x-4">
-
         <!-- User Info with Dropdown -->
         <div class="relative" ref="dropdownRef">
           <div @click="toggleDropdown" class="flex items-center space-x-2 cursor-pointer group">
@@ -185,7 +184,7 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { fetchConfirmationKey } from '@/api/axios.ts'
 
 const auth = useAuthStore()
@@ -212,8 +211,7 @@ async function toggleDropdown() {
   if (isDropdownOpen.value && !confirmationToken.value && auth.user) {
     isLoadingToken.value = true
     try {
-      const token = await fetchConfirmationKey(auth.user.id)
-      confirmationToken.value = token
+      confirmationToken.value = await fetchConfirmationKey(auth.user.id)
     } catch (error) {
       console.error('Failed to fetch confirmation key:', error)
     } finally {
