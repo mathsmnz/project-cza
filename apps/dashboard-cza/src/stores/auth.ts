@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import axios  from 'axios'
 import type { AxiosInstance } from 'axios'
+import router from '@/router'
 
 // ======================
 // Types
@@ -100,6 +101,7 @@ export const useAuthStore = defineStore('auth', {
     async logout(): Promise<void> {
       try {
         await api.post('/api/auth/v1/logout')
+        await router.push('/')
       } catch (error) {
         console.error('Logout failed', error)
       } finally {

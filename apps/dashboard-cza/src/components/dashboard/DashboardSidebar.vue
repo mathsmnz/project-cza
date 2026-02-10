@@ -88,20 +88,5 @@ const auth = useAuthStore()
         </li>
       </ul>
     </nav>
-
-    <!-- User Section at Bottom -->
-    <div class="p-4 border-t-2 border-gray-800">
-
-      <!-- Logout Button -->
-      <button
-        @click="auth.logout"
-        class="w-full mt-3 flex items-center justify-center py-2 px-4 border-2 border-gray-700 text-gray-400 font-medium hover:bg-gray-900 hover:text-white hover:border-white transition-colors"
-      >
-        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-        </svg>
-        Logout
-      </button>
-    </div>
   </aside>
 </template>

@@ -804,5 +804,10 @@ export const updateProject = async (
   }
 };
 
+export const fetchConfirmationKey = async (userId: string): Promise<string> => {
+  const response = await api.get<string>(`/api/users/v1/${userId}/key`)
+  return response.data
+}
+
 
 export default api
