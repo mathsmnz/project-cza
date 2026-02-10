@@ -3,7 +3,10 @@
     <!-- Viewer Container -->
     <div ref="viewerContainer" class="fixed h-full w-full z-0">
       <!-- Loading Overlay -->
-      <div v-if="!isEditorReady" class="absolute inset-0 flex flex-col justify-center items-center bg-gray-900/50 backdrop-blur-sm z-20">
+      <div
+        v-if="!isEditorReady"
+        class="absolute inset-0 flex flex-col justify-center items-center bg-gray-900/50 backdrop-blur-sm z-20"
+      >
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-black border-solid"></div>
         <p class="text-gray-700 mt-4 font-medium">Carregando modelo 3D...</p>
       </div>
@@ -11,7 +14,10 @@
 
     <!-- Floating Menu -->
     <div class="fixed top-20 left-4 z-20">
-      <div class="bg-white border border-gray-200 shadow-2xl overflow-hidden" :class="isMenuExpanded ? 'w-72' : 'w-auto'">
+      <div
+        class="bg-white border border-gray-200 shadow-2xl overflow-hidden"
+        :class="isMenuExpanded ? 'w-72' : 'w-auto'"
+      >
         <!-- Header -->
         <div class="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
           <h2 v-if="isMenuExpanded" class="text-sm font-bold text-gray-800">Visualizador IFC</h2>
@@ -28,7 +34,12 @@
               viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16"
+              />
             </svg>
           </button>
         </div>
@@ -41,18 +52,40 @@
               @click="loadFromFile"
               class="w-full flex items-center space-x-3 bg-white border border-gray-300 text-gray-700 p-3 hover:bg-gray-100 focus:outline-none font-semibold transition-colors text-sm"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                />
               </svg>
               <span>Importar Arquivo IFC</span>
             </button>
 
             <button
-              @click="exportFragments"
+              @click="downloadFile"
               class="w-full flex items-center space-x-3 bg-black text-white p-3 hover:bg-gray-900 focus:outline-none font-semibold transition-colors text-sm"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
+                />
               </svg>
               <span>Exportar Modelo</span>
             </button>
@@ -61,9 +94,25 @@
               @click="captureView(selectionId)"
               class="w-full flex items-center space-x-3 bg-black text-white p-3 hover:bg-gray-900 focus:outline-none font-semibold transition-colors text-sm"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                />
               </svg>
               <span>Gerar Imagem</span>
             </button>
@@ -77,7 +126,7 @@
                 @click="togglePlants"
                 class="w-full flex items-center justify-between text-sm font-semibold text-gray-800 mb-2"
               >
-                <span>Plantas Disponíveis</span>
+                <span>Níveis Disponíveis</span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   class="h-4 w-4 transition-transform"
@@ -86,7 +135,12 @@
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </button>
 
@@ -110,8 +164,19 @@
                       @click="resetPlanView"
                       class="w-full flex items-center space-x-2 bg-red-600 text-white p-2 hover:bg-red-700 focus:outline-none font-semibold transition-colors text-sm mt-2"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        />
                       </svg>
                       <span>Resetar Visualização</span>
                     </button>
@@ -153,6 +218,7 @@ const viewerContainer = ref<HTMLDivElement | null>(null)
 // Menu state
 const isMenuExpanded = ref(true)
 const isPlantsExpanded = ref(false)
+const projectFileUrl = ref<string>('')
 
 // Get controller functions
 const {
@@ -163,7 +229,7 @@ const {
   isEditorReady,
   selectPlan,
   resetPlanView,
-  captureView
+  captureView,
 } = useEditorController(viewerContainer)
 
 // Menu controls
@@ -174,6 +240,15 @@ function toggleMenu() {
   }
 }
 
+function downloadFile() {
+  const link = document.createElement('a')
+  link.href = projectFileUrl.value
+  link.download = `${selectionId}.ifc`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
 function togglePlants() {
   isPlantsExpanded.value = !isPlantsExpanded.value
 }
@@ -182,11 +257,11 @@ function togglePlants() {
 onMounted(() => {
   if (!currentProject.value) return
   const selectionStr = selectionId
-  const projectFileUrl = getProjectFileUrl(currentProject.value.id, `${selectionStr}.ifc`)
-  console.log(projectFileUrl)
+  projectFileUrl.value = getProjectFileUrl(currentProject.value.id, `${selectionStr}.ifc`)
+  console.log(projectFileUrl.value)
   setupEditor({
     fileName: selectionStr,
-    fileSource: projectFileUrl
+    fileSource: projectFileUrl.value,
   })
 })
 </script>
