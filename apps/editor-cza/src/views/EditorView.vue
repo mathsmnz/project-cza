@@ -160,7 +160,7 @@
 </template>
 
 <script lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
 import GroupEditor from '@/components/editor/modals/GroupEditor.vue'
 import ComboEditor from '@/components/editor/modals/ComboEditor.vue'
 import SelectionEditor from '@/components/editor/modals/SelectionEditor.vue'
@@ -213,10 +213,14 @@ export default {
     const viewerMode = ref<string>('base-card')
 
     watch(currentProject, async () => {
-      await checkBasefile()
+      await checkBaseFile()
     })
 
-    const checkBasefile = async () => {
+    onMounted(async () => {
+      await checkBaseFile()
+    })
+
+    const checkBaseFile = async () => {
       if (currentProject.value) {
         try {
           const fileResult = await downloadProjectFile(currentProject.value?.id, 'base.ifc')
