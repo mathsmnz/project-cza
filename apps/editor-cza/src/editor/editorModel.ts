@@ -379,7 +379,7 @@ export function useEditorModel() {
     world.scene.three.background = null
 
     // Increase screenshot resolution (e.g., 2x or 4x the original size)
-    const scaleFactor = 2 // Change to 3 or 4 for even higher quality
+    const scaleFactor = 3 // Change to 3 or 4 for even higher quality
     const width = originalSize.x * scaleFactor
     const height = originalSize.y * scaleFactor
 
@@ -404,7 +404,7 @@ export function useEditorModel() {
 
     // Converts to a base64 file for upload
     const blob = await (await fetch(screenshot)).blob()
-    const file = new File([blob], `${fileName.split('.')[0]}.jpg`)
+    const file = new File([blob], `${fileName.split('.')[0]}.png`)
 
     // Restore original renderer settings
     world.renderer.three.setClearColor(originalClearColor, originalAlpha)
