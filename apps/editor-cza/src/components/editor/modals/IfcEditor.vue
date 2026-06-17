@@ -41,26 +41,49 @@
 
         <!-- Footer Actions -->
         <div
-          class="absolute bottom-0 left-0 right-0 flex justify-end space-x-4 p-4 bg-gray-50 border-t border-gray-200 z-50"
+          class="absolute bottom-0 left-0 right-0 flex items-center justify-between p-4 bg-gray-50 border-t border-gray-200 z-50"
         >
-          <button
-            @click="loadIfcFile()"
-            class="bg-white text-gray-700 py-2 px-4 hover:bg-gray-100 focus:outline-none border border-gray-300 font-semibold"
-          >
-            Carregar IFC
-          </button>
-          <button
-            @click="() => uploadIfcFile()"
-            class="bg-black text-white py-2 px-4 hover:bg-gray-900 focus:outline-none font-semibold"
-          >
-            Salvar IFC
-          </button>
-          <button
-            @click="() => captureImage()"
-            class="bg-black text-white py-2 px-4 hover:bg-gray-900 focus:outline-none font-semibold"
-          >
-            Gerar Imagem
-          </button>
+          <!-- Level Selector Dropdown -->
+          <div class="flex items-center space-x-2">
+            <template v-if="plans && plans.length > 0">
+              <label for="level-select" class="text-sm font-semibold text-gray-700">Nível:</label>
+              <select
+                id="level-select"
+                v-model="selectedLevelId"
+                class="bg-white border border-gray-300 text-gray-700 py-2 px-3 pr-8 rounded focus:outline-none focus:border-black font-semibold text-sm cursor-pointer transition-colors"
+              >
+                <option v-for="plan in plans" :key="plan.id" :value="plan.id">
+                  {{ plan.name }}
+                </option>
+              </select>
+            </template>
+            <span v-else class="text-xs text-gray-500 italic">
+              Nenhum nível detectado no modelo IFC.
+            </span>
+          </div>
+
+          <!-- Buttons -->
+          <div class="flex space-x-4">
+            <button
+              @click="loadIfcFile()"
+              class="bg-white text-gray-700 py-2 px-4 hover:bg-gray-100 focus:outline-none border border-gray-300 font-semibold transition-colors"
+            >
+              Carregar IFC
+            </button>
+            <button
+              @click="() => uploadIfcFile()"
+              class="bg-black text-white py-2 px-4 hover:bg-gray-900 focus:outline-none font-semibold transition-colors"
+            >
+              Salvar IFC
+            </button>
+            <button
+              @click="() => captureImage()"
+              :disabled="plans.length === 0"
+              class="bg-black text-white py-2 px-4 hover:bg-gray-900 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none font-semibold transition-colors"
+            >
+              Gerar Imagem
+            </button>
+          </div>
         </div>
       </div>
     </transition>
@@ -68,7 +91,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useEditorController } from '@/editor/editorController.ts'
 import { uploadProjectFile } from '@/api/axios.ts'
 
@@ -85,9 +108,25 @@ const emit = defineEmits<{
 
 const viewerContainer = ref<HTMLDivElement | null>(null)
 const loadedIfc = ref<ArrayBuffer | null>(null)
-
 const { plans, setupEditor, loadFromFile, selectPlan, resetPlanView, captureView, disposeEditor } =
   useEditorController(viewerContainer)
+
+const selectedLevelId = ref<string>('')
+
+watch(
+  () => plans.value,
+  (newPlans) => {
+    console.log('Detected levels/plans in IFC:', newPlans)
+    if (newPlans && newPlans.length > 0) {
+      if (!selectedLevelId.value || !newPlans.some((p) => p.id === selectedLevelId.value)) {
+        selectedLevelId.value = newPlans[0]?.id ?? ''
+      }
+    } else {
+      selectedLevelId.value = ''
+    }
+  },
+  { immediate: true, deep: true }
+)
 
 function handleClose() {
   disposeEditor()
@@ -130,9 +169,9 @@ async function uploadIfcFile() {
 async function captureImage() {
   console.log(plans.value)
 
-  const currentPlan = plans.value[0]?.id
+  const currentPlan = selectedLevelId.value
   if (!currentPlan) {
-    console.warn('No plans available to capture.')
+    console.warn('No level selected to capture.')
     return
   }
 

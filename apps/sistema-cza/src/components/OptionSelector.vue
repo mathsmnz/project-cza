@@ -110,10 +110,30 @@ const selectedCombos = ref<string[]>([...props.modelValue])
 
 const telemetryStore = useTelemetryStore()
 
-const activeGroups = ref<string[]>([...props.optionsData.map((option) => option.id)])
-const activeCombos = ref<string[]>([
-  ...props.optionsData.flatMap((option) => option.combos.map((combo) => combo.id)),
-])
+const activeGroups = ref<string[]>([])
+const activeCombos = ref<string[]>([])
+
+// Watch for props updates (e.g. project change or initial load after API responds)
+watch(
+  () => props.optionsData,
+  (newOptions) => {
+    options.value = newOptions
+    activeGroups.value = [...newOptions.map((option) => option.id)]
+    activeCombos.value = [...newOptions.flatMap((option) => option.combos.map((combo) => combo.id))]
+    // Reset selected state when project configuration changes
+    selectedGroups.value = []
+    selectedCombos.value = []
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.selectionsData,
+  (newSelections) => {
+    selections.value = newSelections
+  },
+  { immediate: true }
+)
 
 const updateActiveGroups = () => {
   if (selectedGroups.value.length === 0) {

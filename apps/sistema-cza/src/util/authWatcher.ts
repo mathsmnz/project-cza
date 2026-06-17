@@ -9,14 +9,19 @@ export function useAuthWatcher() {
   const projects = useProjectsStore()
   const { isAuthenticated } = storeToRefs(auth)
 
-  watch(isAuthenticated, async (val) => {
-    if (val) {
-      if(auth.user){
-        const id = auth.user.id
-        await projects.fetchProjects(id)
+  watch(
+    isAuthenticated,
+    async (val) => {
+      if (val) {
+        if (auth.user) {
+          const id = auth.user.id
+          await projects.fetchProjects(id)
+        }
+      } else {
+        projects.clearProjects()
       }
-    } else {
-      projects.clearProjects()
-    }
-  })
+    },
+    { immediate: true },
+  )
 }
+
