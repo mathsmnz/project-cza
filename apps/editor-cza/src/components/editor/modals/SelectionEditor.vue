@@ -131,7 +131,7 @@
                         v-model="selectedCombos"
                         class="h-4 w-4 text-black focus:ring-2 focus:ring-black border-gray-300 mr-2"
                       />
-                      <label :for="'combo-' + combo.associated" class="text-sm text-gray-600">{{
+                      <label :for="'combo-' + combo.associated" class="text-sm text-gray-600">({{combo.associated}}) {{
                         combo.label
                       }}</label>
                     </div>
