@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { completeRegistration, getInvitationByToken } from '@/api/axios.ts'
 import type { CompleteRegistrationRequest } from '@/types/types.ts' // Para pegar o token da URL
+import { useToastStore } from '@/stores/toast.ts'
 
 // Define a estrutura para os dados do formulário
 interface RegistrationData {
@@ -17,6 +18,7 @@ interface RegistrationData {
 
 const route = useRoute()
 const router = useRouter()
+const toastStore = useToastStore()
 
 const props = defineProps<{ token: string }>()
 
@@ -51,6 +53,7 @@ const fetchInvitationDetails = async (token: string) => {
   } catch (err) {
     console.error('Erro ao buscar detalhes do convite:', err)
     error.value = 'Link de convite inválido ou expirado.'
+    toastStore.addToast('Link de convite inválido ou expirado.', 'error')
   } finally {
     isLoading.value = false
   }
@@ -77,11 +80,12 @@ const handleRegistration = async (token: string) => {
 
     await completeRegistration(token, submitData.value)
 
-    alert('Cadastro concluído com sucesso! Você será redirecionado para o login.') // Use um toast/notificação
+    toastStore.addToast('Cadastro concluído com sucesso! Você será redirecionado para o login.', 'success')
     await router.push('/login') // Ou para onde for apropriado
   } catch (err) {
     console.error('Erro ao completar cadastro:', err)
     error.value = 'Não foi possível completar o cadastro. Tente novamente.' // Ou pegue erro da API
+    toastStore.addToast('Não foi possível completar o cadastro. Tente novamente.', 'error')
   } finally {
     isLoading.value = false
   }

@@ -38,6 +38,7 @@
 import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth.ts'
 import { useRoute, useRouter } from 'vue-router'
+import { useToastStore } from '@/stores/toast.ts'
 
 const router = useRouter()
 const route = useRoute()
@@ -45,6 +46,7 @@ const route = useRoute()
 const email = ref('')
 const password = ref('')
 const auth = useAuthStore()
+const toastStore = useToastStore()
 
 async function login() {
   try {
@@ -52,14 +54,13 @@ async function login() {
 
     if (success) {
       const redirectPath = route.query.redirect as string || '/'
-
       await router.push(redirectPath)
     } else {
-      alert('Login failed. Please check your credentials.')
+      toastStore.addToast('Login failed. Please check your credentials.', 'error')
     }
   } catch (error) {
     console.error('An error occurred during login:', error)
-    alert('An error occurred. Please try again.')
+    toastStore.addToast('An error occurred during login. Please try again.', 'error')
   }
 }
 </script>

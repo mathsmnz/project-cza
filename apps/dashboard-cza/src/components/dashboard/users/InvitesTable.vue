@@ -2,6 +2,7 @@
 import type { InvitationResponse } from '@/types/types.ts'
 import { computed, ref } from 'vue'
 import { retrieveToken } from '@/util/util.ts'
+import { useToastStore } from '@/stores/toast.ts'
 
 const { invites } = defineProps<{ invites: InvitationResponse[] }>()
 const emit = defineEmits<{
@@ -10,6 +11,8 @@ const emit = defineEmits<{
   (e: 'revoke', email: string): void
   (e: 'selectionChange', selectedEmails: string[]): void
 }>()
+
+const toastStore = useToastStore()
 
 // Selection state
 const selectedInvites = ref<Set<string>>(new Set())
@@ -60,9 +63,10 @@ const inviteClass = (status: string) => {
 const copyLink = async (link: string) => {
   try {
     await navigator.clipboard.writeText(link)
-    // You could add a toast notification here
+    toastStore.addToast('Link copiado para a área de transferência!', 'success')
   } catch (err) {
     console.error('Failed to copy link:', err)
+    toastStore.addToast('Falha ao copiar link.', 'error')
   }
 }
 
@@ -72,6 +76,7 @@ const deleteInvite = (url: string): void => {
     emit('delete', token)
   } catch (err) {
     console.error('Failed to delete invite:', err)
+    toastStore.addToast('Falha ao remover convite.', 'error')
   }
 }
 
@@ -81,6 +86,7 @@ const revokeInvite = (url: string): void => {
     emit('revoke', token)
   } catch (err) {
     console.error('Failed to revoke link:', err)
+    toastStore.addToast('Falha ao revogar link.', 'error')
   }
 }
 
@@ -90,6 +96,7 @@ const refreshInvite = (url: string): void => {
     emit('refresh', token)
   } catch (err) {
     console.error('Failed to refresh invites:', err)
+    toastStore.addToast('Falha ao atualizar convite.', 'error')
   }
 }
 </script>

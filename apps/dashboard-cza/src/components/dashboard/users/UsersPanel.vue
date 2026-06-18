@@ -95,21 +95,74 @@ const closeModal = (): void => {
 }
 
 const saveUser = async (updatedUser: UserResponse): Promise<void> => {
-  await adminUserStore.saveUser(updatedUser, pageConfig.page, pageConfig.size)
-
-  showUserEditor.value = false
-  userToEdit.value = null
+  try {
+    await adminUserStore.saveUser(updatedUser, pageConfig.page, pageConfig.size)
+    showUserEditor.value = false
+    userToEdit.value = null
+    toastStore.addToast('Usuário salvo com sucesso.', 'success')
+  } catch (error) {
+    console.error(error)
+    toastStore.addToast('Falha ao salvar usuário.', 'error')
+  }
 }
 
 // Invitations
-const refreshInvites = (token: string) => adminUserStore.refreshUserInvitation(token)
-const revokeInvite = (token: string) => adminUserStore.revokeUserInvitation(token)
-const deleteInvite = (token: string) => adminUserStore.removeInvitation(token)
+const refreshInvites = async (token: string) => {
+  try {
+    await adminUserStore.refreshUserInvitation(token)
+    toastStore.addToast('Convite atualizado com sucesso.', 'success')
+  } catch (error) {
+    console.error(error)
+    toastStore.addToast('Falha ao atualizar convite.', 'error')
+  }
+}
+const revokeInvite = async (token: string) => {
+  try {
+    await adminUserStore.revokeUserInvitation(token)
+    toastStore.addToast('Convite revogado com sucesso.', 'success')
+  } catch (error) {
+    console.error(error)
+    toastStore.addToast('Falha ao revogar convite.', 'error')
+  }
+}
+const deleteInvite = async (token: string) => {
+  try {
+    await adminUserStore.removeInvitation(token)
+    toastStore.addToast('Convite removido com sucesso.', 'success')
+  } catch (error) {
+    console.error(error)
+    toastStore.addToast('Falha ao remover convite.', 'error')
+  }
+}
 
 // Recovery
-const refreshRecovery = (token: string) => adminUserStore.refreshRecoveries(token)
-const revokeRecovery = (token: string) => adminUserStore.revokeRecovery(token)
-const deleteRecovery = (token: string) => adminUserStore.deleteRecovery(token)
+const refreshRecovery = async (token: string) => {
+  try {
+    await adminUserStore.refreshRecoveries(token)
+    toastStore.addToast('Solicitação atualizada com sucesso.', 'success')
+  } catch (error) {
+    console.error(error)
+    toastStore.addToast('Falha ao atualizar solicitação.', 'error')
+  }
+}
+const revokeRecovery = async (token: string) => {
+  try {
+    await adminUserStore.revokeRecovery(token)
+    toastStore.addToast('Solicitação revogada com sucesso.', 'success')
+  } catch (error) {
+    console.error(error)
+    toastStore.addToast('Falha ao revogar solicitação.', 'error')
+  }
+}
+const deleteRecovery = async (token: string) => {
+  try {
+    await adminUserStore.deleteRecovery(token)
+    toastStore.addToast('Solicitação removida com sucesso.', 'success')
+  } catch (error) {
+    console.error(error)
+    toastStore.addToast('Falha ao remover solicitação.', 'error')
+  }
+}
 
 const createRecoveryRequest = async (
   request: PasswordRecoveryRequest,
@@ -119,9 +172,11 @@ const createRecoveryRequest = async (
   try {
     const token = await adminUserStore.requestRecovery(request)
     console.log('Recovery Token:', token)
+    toastStore.addToast('Recuperação solicitada com sucesso.', 'success')
     onSuccess(token)
   } catch (error) {
     console.error(error)
+    toastStore.addToast('Falha ao solicitar recuperação.', 'error')
     onError()
   }
 }

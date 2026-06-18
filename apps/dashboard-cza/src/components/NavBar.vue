@@ -186,9 +186,11 @@ import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { fetchConfirmationKey } from '@/api/axios.ts'
+import { useToastStore } from '@/stores/toast.ts'
 
 const auth = useAuthStore()
 const { isAuthenticated, user } = storeToRefs(auth)
+const toastStore = useToastStore()
 
 const profilePicUrl = computed(() =>
   user.value?.username
@@ -214,6 +216,7 @@ async function toggleDropdown() {
       confirmationToken.value = await fetchConfirmationKey(auth.user.id)
     } catch (error) {
       console.error('Failed to fetch confirmation key:', error)
+      toastStore.addToast('Falha ao buscar token de confirmação.', 'error')
     } finally {
       isLoadingToken.value = false
     }
@@ -228,11 +231,13 @@ async function copyToken() {
   try {
     await navigator.clipboard.writeText(confirmationToken.value)
     isCopied.value = true
+    toastStore.addToast('Token copiado com sucesso!', 'success')
     setTimeout(() => {
       isCopied.value = false
     }, 2000)
   } catch (error) {
     console.error('Failed to copy token:', error)
+    toastStore.addToast('Falha ao copiar token.', 'error')
   }
 }
 

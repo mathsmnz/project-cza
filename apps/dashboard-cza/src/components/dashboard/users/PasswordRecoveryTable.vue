@@ -2,6 +2,7 @@
 import type { PasswordRecoveryResponse } from '@/types/types.ts'
 import { ref, computed } from 'vue'
 import { retrieveToken } from '@/util/util.ts'
+import { useToastStore } from '@/stores/toast.ts'
 
 const { requests } = defineProps<{ requests: PasswordRecoveryResponse[] }>()
 const emit = defineEmits<{
@@ -10,6 +11,8 @@ const emit = defineEmits<{
   (e: 'delete', token: string): void
   (e: 'selectionChange', selectedEmails: string[]): void
 }>()
+
+const toastStore = useToastStore()
 
 // Selection state
 const selectedRequests = ref<Set<string>>(new Set())
@@ -66,6 +69,7 @@ const deleteRecovery = (url: string): void => {
     emit('delete', token)
   } catch (error) {
     console.error('Failed to parse token for delete:', error)
+    toastStore.addToast('Falha ao interpretar o token para exclusão.', 'error')
   }
 }
 
@@ -75,6 +79,7 @@ const refreshRecovery = (url: string): void => {
     emit('refresh', token)
   } catch (error) {
     console.error('Failed to parse token for refresh:', error)
+    toastStore.addToast('Falha ao interpretar o token para atualização.', 'error')
   }
 }
 
@@ -84,6 +89,7 @@ const revokeRecovery = (url: string): void => {
     emit('revoke', token)
   } catch (error) {
     console.error('Failed to parse token for revoke:', error)
+    toastStore.addToast('Falha ao interpretar o token para revogação.', 'error')
   }
 }
 
@@ -91,9 +97,10 @@ const revokeRecovery = (url: string): void => {
 const copyLink = async (link: string) => {
   try {
     await navigator.clipboard.writeText(link)
-    // You could add a toast notification here
+    toastStore.addToast('Link copiado para a área de transferência!', 'success')
   } catch (err) {
     console.error('Failed to copy link:', err)
+    toastStore.addToast('Falha ao copiar o link.', 'error')
   }
 }
 </script>

@@ -26,9 +26,14 @@ const showProjectDeletion = ref<boolean>(false)
 const projectToEdit = ref<ProjectResponse | null>(null)
 
 const openProjectEditor = async (project: ProjectResponse) => {
-  await userStore.loadUsers()
-  projectToEdit.value = project
-  showProjectEditor.value = true
+  try {
+    await userStore.loadUsers()
+    projectToEdit.value = project
+    showProjectEditor.value = true
+  } catch (error) {
+    console.error(error)
+    toastStore.addToast('Falha ao carregar usuários.', 'error')
+  }
 }
 
 const openProjectDeletion = async (project: ProjectResponse) => {
@@ -42,9 +47,15 @@ const closeModal = () => {
 }
 
 const saveProject = async (project: ProjectResponse) => {
-  await projectStore.saveProject(project)
-  showProjectEditor.value = false
-  projectToEdit.value = null
+  try {
+    await projectStore.saveProject(project)
+    showProjectEditor.value = false
+    projectToEdit.value = null
+    toastStore.addToast('Projeto salvo com sucesso.', 'success')
+  } catch (error) {
+    console.error(error)
+    toastStore.addToast('Falha ao salvar projeto.', 'error')
+  }
 }
 
 const attemptProjectDeletion = async (confirmationCode: string) => {

@@ -3,9 +3,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { onMounted, ref } from 'vue'
 import { fetchRecoveryToken, resetPassword } from '@/api/axios.ts'
 import type { PasswordResetRequest, TokenValidationResponse } from '@/types/types.ts'
+import { useToastStore } from '@/stores/toast.ts'
 
 const route = useRoute()
 const router = useRouter()
+const toastStore = useToastStore()
 
 // Form state
 const isLoading = ref(false)
@@ -40,12 +42,14 @@ const handleResetPassword = async (token: string) => {
 
     await resetPassword(request)
     successMessage.value = 'Senha redefinida com sucesso! Redirecionando...'
+    toastStore.addToast('Senha redefinida com sucesso!', 'success')
 
     // Delay navigation a bit for UX
     setTimeout(() => router.push('/login'), 2000)
   } catch (err: any) {
     console.error(err)
     error.value = 'Falha ao redefinir senha. O link pode estar expirado ou inválido.'
+    toastStore.addToast('Falha ao redefinir senha. O link pode estar expirado ou inválido.', 'error')
   } finally {
     isLoading.value = false
   }
@@ -57,6 +61,7 @@ onMounted(async () => {
     const token = (route.query.token as string) || ''
     if (!token) {
       error.value = 'Token ausente no link de recuperação.'
+      toastStore.addToast('Token ausente no link de recuperação.', 'error')
       return
     }
 
@@ -64,6 +69,7 @@ onMounted(async () => {
 
     if (!response.valid || !response.recovery) {
       error.value = 'Este link de recuperação é inválido ou expirou.'
+      toastStore.addToast('Este link de recuperação é inválido ou expirou.', 'error')
       return
     }
 
@@ -72,6 +78,7 @@ onMounted(async () => {
   } catch (err) {
     console.error(err)
     error.value = 'Erro ao validar o token. Tente novamente mais tarde.'
+    toastStore.addToast('Erro ao validar o token. Tente novamente mais tarde.', 'error')
   } finally {
     isLoading.value = false
   }

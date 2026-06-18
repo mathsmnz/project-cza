@@ -67,9 +67,11 @@ const createUserRequest = async (
   try {
     const invitationResponse = await inviteUser(userCreationRequest)
     console.log('Invitation created:', invitationResponse)
+    toastStore.addToast('Convite criado com sucesso!', 'success')
     onSuccess(invitationResponse.registrationLink)
   } catch (err) {
     console.error('Failed to create user invitation:', err)
+    toastStore.addToast('Falha ao criar convite de usuário.', 'error')
     onError()
   }
 }
@@ -83,9 +85,11 @@ const createProjectRequest = async (
     const projectResponse = await createProject(projectCreationRequest)
     console.log('Create project request:', projectResponse)
     await adminProjectStore.loadProjects()
+    toastStore.addToast('Projeto criado com sucesso!', 'success')
     onSuccess(true)
   } catch (error) {
     console.error('Failed to create project:', error)
+    toastStore.addToast('Falha ao criar projeto.', 'error')
     onError()
   }
 }
