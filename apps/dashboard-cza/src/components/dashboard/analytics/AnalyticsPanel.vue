@@ -2,11 +2,14 @@
 import { ref, onMounted } from 'vue'
 import { getAllTelemetry } from '@/api/axios.ts'
 import type { TelemetryData } from '@/types/types.ts'
+import { useToastStore } from '@/stores/toast.ts'
 
 const telemetryEntries = ref<TelemetryData[]>([])
 const isLoading = ref<boolean>(true)
 const errorMessage = ref<string | null>(null)
 const selectedEntry = ref<TelemetryData | null>(null)
+
+const toastStore = useToastStore()
 
 const fetchTelemetryData = async () => {
   isLoading.value = true
@@ -29,6 +32,7 @@ const fetchTelemetryData = async () => {
     telemetryEntries.value = []
     selectedEntry.value = null
     errorMessage.value = 'Não foi possível carregar os dados de telemetria.'
+    toastStore.addToast('Falha ao carregar dados de telemetria.', 'error')
   } finally {
     isLoading.value = false
   }

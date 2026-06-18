@@ -3,6 +3,7 @@ import { nextTick, onMounted, onUnmounted, ref, watch, computed } from 'vue'
 import { Chart, registerables } from 'chart.js'
 import { fetchPlatformStats, forceRefreshPlatformStats } from '@/api/axios.ts'
 import { formatBytes } from '@/util/util.ts'
+import { useToastStore } from '@/stores/toast.ts'
 
 Chart.register(...registerables)
 
@@ -21,6 +22,8 @@ const isLoading = ref(true)
 const error = ref<string | null>(null)
 const diskChartRef = ref<HTMLCanvasElement | null>(null)
 let diskChartInstance: Chart | null = null
+
+const toastStore = useToastStore()
 
 // --- COMPUTED PROPERTIES ---
 const diskUsagePercentage = computed(() => {
@@ -108,6 +111,7 @@ const loadStats = async (forceRefresh = false, showLoading = true) => {
   } catch (err) {
     console.error('Failed to fetch platform stats', err)
     if (showLoading) error.value = 'Failed to load statistics'
+    toastStore.addToast('Falha ao carregar estatísticas.', 'error')
   } finally {
     if (showLoading) isLoading.value = false
   }
