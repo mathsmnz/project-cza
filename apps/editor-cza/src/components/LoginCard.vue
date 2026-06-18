@@ -32,11 +32,17 @@
       </p>
     </div>
   </div>
-  <toast-notification :message='message' :show='showToast' :mode='mode'/>
+  <ToastNotification
+    :show="toastState.show"
+    :message="toastState.message"
+    :mode="toastState.mode"
+    :duration="toastState.duration"
+    @close="hideToast"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { useAuthStore } from '@/stores/auth.ts'
 import { useRoute, useRouter } from 'vue-router'
 import type { LoginUserRequest } from '@/types/types.ts'
@@ -48,9 +54,24 @@ const route = useRoute()
 const email = ref('')
 const password = ref('')
 const auth = useAuthStore()
-const message = ref('')
-const showToast = ref(false)
-const mode = ref('error')
+
+const toastState = reactive({
+  show: false,
+  message: '',
+  mode: 'success',
+  duration: 3000,
+})
+
+const showToast = (message: string, mode = 'success', duration = 3000) => {
+  toastState.message = message
+  toastState.mode = mode
+  toastState.duration = duration
+  toastState.show = true
+}
+
+const hideToast = () => {
+  toastState.show = false
+}
 
 async function login() {
   try {
@@ -62,19 +83,13 @@ async function login() {
 
     if (success) {
       const redirectPath = (route.query.redirect as string) || '/'
-      message.value = 'Login successful!'
-      showToast.value = true
-      mode.value = 'success'
+      showToast('Login realizado com sucesso!', 'success')
       await router.push(redirectPath)
     } else {
-      message.value = 'Login failed. Please check your credentials.'
-      showToast.value = true
-      mode.value = 'error'
+      showToast('Falha no login. Verifique suas credenciais.', 'error')
     }
   } catch (error) {
-    message.value = 'An error occurred during login: ' + error
-    showToast.value = true
-    mode.value = 'error'
+    showToast('Ocorreu um erro durante o login.', 'error')
   }
 }
 </script>

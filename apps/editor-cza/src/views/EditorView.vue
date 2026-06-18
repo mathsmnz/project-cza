@@ -532,6 +532,7 @@ export default {
         showToast('Ação completada com sucesso!', 'success')
       } catch (err) {
         console.error(`Failed to upload selections for project ${currentProject.value.id}:`, err)
+        showToast('Falha ao publicar projeto.', 'error')
       }
     }
 

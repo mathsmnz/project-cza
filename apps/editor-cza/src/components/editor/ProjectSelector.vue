@@ -51,14 +51,23 @@
     @confirm="confirmProjectChange"
     @cancel="cancelProjectChange"
   />
+
+  <ToastNotification
+    :show="toastState.show"
+    :message="toastState.message"
+    :mode="toastState.mode"
+    :duration="toastState.duration"
+    @close="hideToast"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useProjectsStore } from '@/stores/projects'
 import { storeToRefs } from 'pinia'
 import type { ProjectResponse } from '@/types/types.ts'
 import ConfirmationModal from '@/components/ConfirmationModal.vue'
+import ToastNotification from '@/components/ToastNotification.vue'
 
 const projectStore = useProjectsStore()
 const { currentProject, projects } = storeToRefs(projectStore)
@@ -67,6 +76,24 @@ const dropdownRef = ref<HTMLElement | null>(null)
 const isDropdownOpen = ref(false)
 const showConfirmModal = ref(false)
 const pendingProject = ref<ProjectResponse | null>(null)
+
+const toastState = reactive({
+  show: false,
+  message: '',
+  mode: 'success',
+  duration: 3000,
+})
+
+const showToast = (message: string, mode = 'success', duration = 3000) => {
+  toastState.message = message
+  toastState.mode = mode
+  toastState.duration = duration
+  toastState.show = true
+}
+
+const hideToast = () => {
+  toastState.show = false
+}
 
 const modalTitle = 'Trocar de Projeto'
 const modalMessage =
@@ -95,7 +122,12 @@ function handleProjectSelect(project: ProjectResponse) {
 
 function confirmProjectChange() {
   if (pendingProject.value) {
-    projectStore.setCurrentProject(pendingProject.value)
+    try {
+      projectStore.setCurrentProject(pendingProject.value)
+      showToast('Projeto selecionado com sucesso.', 'success')
+    } catch(err) {
+      showToast('Falha ao selecionar projeto.', 'error')
+    }
   }
   showConfirmModal.value = false
   pendingProject.value = null

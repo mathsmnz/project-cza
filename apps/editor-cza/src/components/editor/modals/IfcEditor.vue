@@ -87,13 +87,21 @@
         </div>
       </div>
     </transition>
+    <ToastNotification
+      :show="toastState.show"
+      :message="toastState.message"
+      :mode="toastState.mode"
+      :duration="toastState.duration"
+      @close="hideToast"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch, reactive } from 'vue'
 import { useEditorController } from '@/editor/editorController.ts'
 import { uploadProjectFile } from '@/api/axios.ts'
+import ToastNotification from '@/components/ToastNotification.vue'
 
 const props = defineProps<{
   mode: string
@@ -112,6 +120,24 @@ const { plans, setupEditor, loadFromFile, selectPlan, resetPlanView, captureView
   useEditorController(viewerContainer)
 
 const selectedLevelId = ref<string>('')
+
+const toastState = reactive({
+  show: false,
+  message: '',
+  mode: 'success',
+  duration: 3000,
+})
+
+const showToast = (message: string, mode = 'success', duration = 3000) => {
+  toastState.message = message
+  toastState.mode = mode
+  toastState.duration = duration
+  toastState.show = true
+}
+
+const hideToast = () => {
+  toastState.show = false
+}
 
 watch(
   () => plans.value,
@@ -138,8 +164,10 @@ async function loadIfcFile() {
     const buffer = await loadFromFile()
     loadedIfc.value = buffer
     console.log(buffer)
+    showToast('Arquivo IFC carregado com sucesso.', 'success')
   } catch (error) {
     console.log(error)
+    showToast('Falha ao carregar arquivo IFC.', 'error')
   }
 }
 
@@ -160,9 +188,13 @@ async function uploadIfcFile() {
 
       const response = await uploadProjectFile(fileWithIFC, props.projectId)
       console.log(response)
+      showToast('Arquivo IFC salvo com sucesso.', 'success')
+    } else {
+      showToast('Nenhum arquivo IFC carregado ou projeto inválido.', 'error')
     }
   } catch (error) {
     console.log(error)
+    showToast('Falha ao salvar arquivo IFC.', 'error')
   }
 }
 
@@ -172,6 +204,7 @@ async function captureImage() {
   const currentPlan = selectedLevelId.value
   if (!currentPlan) {
     console.warn('No level selected to capture.')
+    showToast('Nenhum nível selecionado para captura.', 'error')
     return
   }
 
@@ -184,6 +217,7 @@ async function captureImage() {
   // Capture screenshot
   if (!props.ifcFile) {
     console.warn('No IFC file provided to capture.')
+    showToast('Nenhum arquivo IFC fornecido para captura.', 'error')
     return
   }
   const file = await captureView(props.ifcFile)
@@ -193,9 +227,11 @@ async function captureImage() {
     if (file && props.projectId) {
       const response = await uploadProjectFile(file, props.projectId)
       console.log(response)
+      showToast('Imagem gerada e salva com sucesso.', 'success')
     }
   } catch (error) {
     console.error(error)
+    showToast('Falha ao fazer upload da imagem.', 'error')
   } finally {
     // Reset plan view
     resetPlanView()
