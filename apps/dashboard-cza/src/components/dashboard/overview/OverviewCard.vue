@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref, watch, computed } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref, watch, computed } from 'vue'
 import { Chart, registerables } from 'chart.js'
-import { fetchPlatformStats } from '@/api/axios.ts'
+import { fetchPlatformStats, forceRefreshPlatformStats } from '@/api/axios.ts'
 import { formatBytes } from '@/util/util.ts'
 
 Chart.register(...registerables)
@@ -31,15 +31,13 @@ const diskUsagePercentage = computed(() => {
 const diskUsageColor = computed(() => {
   const percentage = diskUsagePercentage.value
   if (percentage >= 90) return 'text-red-600'
-  if (percentage >= 75) return 'text-orange-600'
-  return 'text-blue-600'
+  return 'text-black'
 })
 
 const diskUsageBarColor = computed(() => {
   const percentage = diskUsagePercentage.value
-  if (percentage >= 90) return 'bg-red-500'
-  if (percentage >= 75) return 'bg-orange-500'
-  return 'bg-blue-500'
+  if (percentage >= 90) return 'bg-red-600'
+  return 'bg-black'
 })
 
 // --- CHART LOGIC ---
@@ -50,9 +48,8 @@ function createOrUpdateDiskUsageChart() {
   const freeSpace = stats.value.maxSpaceOnDisk - usedSpace
 
   const percentage = diskUsagePercentage.value
-  let usedColor = '#2563EB' // blue
+  let usedColor = '#000000' // black
   if (percentage >= 90) usedColor = '#DC2626' // red
-  else if (percentage >= 75) usedColor = '#EA580C' // orange
 
   const data = {
     labels: ['Used Space', 'Free Space'],
@@ -103,17 +100,22 @@ function createOrUpdateDiskUsageChart() {
 }
 
 // --- LIFECYCLE HOOKS ---
-onMounted(async () => {
+const loadStats = async (forceRefresh = false, showLoading = true) => {
   try {
-    isLoading.value = true
-    stats.value = await fetchPlatformStats()
+    if (showLoading) isLoading.value = true
+    stats.value = forceRefresh ? await forceRefreshPlatformStats() : await fetchPlatformStats()
     error.value = null
   } catch (err) {
-    console.error('Failed to fetch initial platform stats', err)
-    error.value = 'Failed to load statistics'
+    console.error('Failed to fetch platform stats', err)
+    if (showLoading) error.value = 'Failed to load statistics'
   } finally {
-    isLoading.value = false
+    if (showLoading) isLoading.value = false
   }
+}
+
+onMounted(() => {
+  // Update on demand when opening the page
+  loadStats(true, true)
 })
 
 watch(stats, async () => {
@@ -131,12 +133,12 @@ watch(stats, async () => {
       <div
         v-for="i in 3"
         :key="i"
-        class="bg-white border-2 border-gray-300 p-6 animate-pulse"
+        class="bg-white border-2 border-black p-6 animate-pulse"
       >
         <div class="h-4 bg-gray-200 w-24 mb-4"></div>
         <div class="h-8 bg-gray-200 w-16"></div>
       </div>
-      <div class="bg-white border-2 border-gray-300 p-6 animate-pulse col-span-1 md:col-span-2 lg:col-span-4">
+      <div class="bg-white border-2 border-black p-6 animate-pulse col-span-1 md:col-span-2 lg:col-span-4">
         <div class="h-6 bg-gray-200 w-32 mb-4"></div>
         <div class="h-48 bg-gray-200"></div>
       </div>
@@ -153,57 +155,66 @@ watch(stats, async () => {
     <!-- Stats Display -->
     <div v-else-if="stats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <!-- Projects Card -->
-      <div class="bg-white border border-gray-300 p-6 hover:border-black transition-colors">
+      <div class="bg-white border-2 border-black p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
         <div class="flex items-center justify-between mb-2">
-          <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Projects</h3>
-          <div class="p-2 bg-blue-100 border border-blue-300">
-            <svg class="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <h3 class="text-sm font-bold text-black uppercase tracking-wider">Projects</h3>
+          <div class="p-2 bg-black text-white border-2 border-black">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
             </svg>
           </div>
         </div>
-        <p class="text-4xl font-bold text-gray-900 mt-4">{{ stats.projectCount.toLocaleString() }}</p>
-        <p class="text-xs text-gray-500 mt-2">Total active projects</p>
+        <p class="text-4xl font-bold text-black mt-4">{{ stats.projectCount.toLocaleString() }}</p>
+        <p class="text-xs text-gray-500 font-bold uppercase tracking-wider mt-2">Total active projects</p>
       </div>
 
       <!-- Users Card -->
-      <div class="bg-white border border-gray-300 p-6 hover:border-black transition-colors">
+      <div class="bg-white border-2 border-black p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
         <div class="flex items-center justify-between mb-2">
-          <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Users</h3>
-          <div class="p-2 bg-green-100 border border-green-300">
-            <svg class="w-5 h-5 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <h3 class="text-sm font-bold text-black uppercase tracking-wider">Users</h3>
+          <div class="p-2 bg-white text-black border-2 border-black">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           </div>
         </div>
-        <p class="text-4xl font-bold text-gray-900 mt-4">{{ stats.userCount.toLocaleString() }}</p>
-        <p class="text-xs text-gray-500 mt-2">Registered accounts</p>
+        <p class="text-4xl font-bold text-black mt-4">{{ stats.userCount.toLocaleString() }}</p>
+        <p class="text-xs text-gray-500 font-bold uppercase tracking-wider mt-2">Registered accounts</p>
       </div>
 
       <!-- Files Card -->
-      <div class="bg-white border border-gray-300 p-6 hover:border-black transition-colors">
+      <div class="bg-white border-2 border-black p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
         <div class="flex items-center justify-between mb-2">
-          <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Files</h3>
-          <div class="p-2 bg-purple-100 border border-purple-300">
-            <svg class="w-5 h-5 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <h3 class="text-sm font-bold text-black uppercase tracking-wider">Files</h3>
+          <div class="p-2 bg-black text-white border-2 border-black">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>
           </div>
         </div>
-        <p class="text-4xl font-bold text-gray-900 mt-4">{{ stats.fileCount.toLocaleString() }}</p>
-        <p class="text-xs text-gray-500 mt-2">Uploaded files</p>
+        <p class="text-4xl font-bold text-black mt-4">{{ stats.fileCount.toLocaleString() }}</p>
+        <p class="text-xs text-gray-500 font-bold uppercase tracking-wider mt-2">Uploaded files</p>
       </div>
 
       <!-- Disk Usage Card -->
-      <div class="bg-white border border-gray-300 p-6 col-span-1 md:col-span-2 lg:col-span-4">
-        <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
-          <h3 class="text-xl font-bold text-gray-900">Storage Overview</h3>
+      <div class="bg-white border-2 border-black p-6 col-span-1 md:col-span-2 lg:col-span-4">
+        <div class="flex items-center justify-between mb-6 pb-4 border-b-2 border-black">
+          <div class="flex items-center space-x-4">
+            <h3 class="text-xl font-bold text-black uppercase tracking-wider">Storage Overview</h3>
+            <button 
+              @click="loadStats(true, true)"
+              class="p-2 border-2 border-black text-black hover:bg-black hover:text-white transition-colors"
+              title="Refresh stats"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
           <span
-            class="px-4 py-1.5 border text-sm font-bold uppercase tracking-wide"
+            class="px-4 py-1.5 border-2 border-black text-sm font-bold uppercase tracking-wide"
             :class="[
-              diskUsagePercentage >= 90 ? 'bg-red-100 text-red-800 border-red-500' :
-              diskUsagePercentage >= 75 ? 'bg-orange-100 text-orange-800 border-orange-500' :
-              'bg-blue-100 text-blue-800 border-blue-500'
+              diskUsagePercentage >= 90 ? 'bg-red-600 text-white' : 'bg-black text-white'
             ]"
           >
             {{ diskUsagePercentage }}% Used
@@ -213,13 +224,13 @@ watch(stats, async () => {
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
           <!-- Chart Section -->
           <div class="lg:col-span-1 flex flex-col items-center">
-            <div class="relative h-56 w-56 border border-gray-200 p-4">
+            <div class="relative h-56 w-56 border-2 border-black p-4 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
               <canvas ref="diskChartRef"></canvas>
               <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 <span class="text-4xl font-bold" :class="diskUsageColor">
                   {{ diskUsagePercentage }}%
                 </span>
-                <span class="text-sm text-gray-600 font-medium mt-1">USED</span>
+                <span class="text-sm text-gray-600 font-bold uppercase tracking-wider mt-1">USED</span>
               </div>
             </div>
           </div>
@@ -227,40 +238,40 @@ watch(stats, async () => {
           <!-- Stats Section -->
           <div class="lg:col-span-2 space-y-4">
             <!-- Used Space -->
-            <div class="bg-gray-50 border border-gray-300 p-4">
+            <div class="bg-white border-2 border-black p-4 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-shadow">
               <div class="flex justify-between items-baseline mb-3">
-                <span class="text-sm font-bold text-gray-700 uppercase">Used Space</span>
+                <span class="text-sm font-bold text-black uppercase tracking-wider">Used Space</span>
                 <span class="text-xl font-bold" :class="diskUsageColor">
                   {{ formatBytes(stats.spaceOnDisk) }}
                 </span>
               </div>
-              <div class="w-full bg-gray-200 border border-gray-300 h-3 overflow-hidden">
+              <div class="w-full bg-white border-2 border-black h-4 overflow-hidden">
                 <div
                   :class="diskUsageBarColor"
-                  class="h-3 transition-all duration-500"
+                  class="h-full transition-all duration-500"
                   :style="{ width: diskUsagePercentage + '%' }"
                 ></div>
               </div>
             </div>
 
             <!-- Free Space -->
-            <div class="bg-gray-50 border border-gray-300 p-4">
+            <div class="bg-white border-2 border-black p-4 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-shadow">
               <div class="flex justify-between items-baseline mb-2">
-                <span class="text-sm font-bold text-gray-700 uppercase">Free Space</span>
-                <span class="text-xl font-bold text-gray-900">
+                <span class="text-sm font-bold text-black uppercase tracking-wider">Free Space</span>
+                <span class="text-xl font-bold text-black">
                   {{ formatBytes(stats.maxSpaceOnDisk - stats.spaceOnDisk) }}
                 </span>
               </div>
-              <div class="text-xs text-gray-600 font-medium mt-2">
+              <div class="text-xs text-gray-500 font-bold uppercase tracking-wide mt-2">
                 Available for new uploads
               </div>
             </div>
 
             <!-- Total Capacity -->
-            <div class="bg-gray-50 border border-gray-300 p-4">
+            <div class="bg-white border-2 border-black p-4 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-shadow">
               <div class="flex justify-between items-baseline">
-                <span class="text-sm font-bold text-gray-700 uppercase">Total Capacity</span>
-                <span class="text-xl font-bold text-gray-900">
+                <span class="text-sm font-bold text-black uppercase tracking-wider">Total Capacity</span>
+                <span class="text-xl font-bold text-black">
                   {{ formatBytes(stats.maxSpaceOnDisk) }}
                 </span>
               </div>
@@ -271,29 +282,29 @@ watch(stats, async () => {
         <!-- Warning Alert -->
         <div
           v-if="diskUsagePercentage >= 90"
-          class="mt-6 bg-red-50 border-l-4 border-red-600 border-2 border-red-200 p-4"
+          class="mt-6 bg-white border-2 border-red-600 p-4 shadow-[4px_4px_0px_0px_rgba(220,38,38,1)]"
         >
           <div class="flex items-start">
             <svg class="w-6 h-6 text-red-600 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
             </svg>
             <div>
-              <h4 class="text-sm font-bold text-red-900 uppercase">Storage Almost Full</h4>
-              <p class="text-sm text-red-800 mt-1">Your storage is critically low. Please consider upgrading or removing unused files.</p>
+              <h4 class="text-sm font-bold text-red-600 uppercase tracking-wider">Storage Almost Full</h4>
+              <p class="text-sm text-black font-semibold mt-1">Your storage is critically low. Please consider upgrading or removing unused files.</p>
             </div>
           </div>
         </div>
         <div
           v-else-if="diskUsagePercentage >= 75"
-          class="mt-6 bg-orange-50 border-l-4 border-orange-600 border-2 border-orange-200 p-4"
+          class="mt-6 bg-white border-2 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
         >
           <div class="flex items-start">
-            <svg class="w-6 h-6 text-orange-600 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <svg class="w-6 h-6 text-black mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
             </svg>
             <div>
-              <h4 class="text-sm font-bold text-orange-900 uppercase">Storage Running Low</h4>
-              <p class="text-sm text-orange-800 mt-1">You're using over 75% of your storage. Consider cleaning up old files.</p>
+              <h4 class="text-sm font-bold text-black uppercase tracking-wider">Storage Running Low</h4>
+              <p class="text-sm text-gray-700 font-semibold mt-1">You're using over 75% of your storage. Consider cleaning up old files.</p>
             </div>
           </div>
         </div>

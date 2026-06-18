@@ -118,6 +118,16 @@ export const fetchPlatformStats = async (): Promise<PlatformStats> => {
   }
 }
 
+export const forceRefreshPlatformStats = async (): Promise<PlatformStats> => {
+  try {
+    const response = await api.post<PlatformStats>('api/stats/v1/platform/refresh')
+    return response.data
+  } catch (err) {
+    console.error('Failed to force refresh stats:', err)
+    throw err
+  }
+}
+
 export const getAllTelemetry = async (): Promise<TelemetryData[]> => {
   try {
     const response = await api.get<TelemetryData[]>('/api/telemetry/v1')
