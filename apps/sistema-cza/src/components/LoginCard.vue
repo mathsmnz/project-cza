@@ -32,7 +32,7 @@
       </p>
     </div>
   </div>
-  <toast-notification :message='message' :show='showToast' :mode='mode'/>
+  <toast-notification :message='message' :show='showToast' :mode='mode' @close='showToast = false'/>
 </template>
 
 <script setup lang="ts">
@@ -62,17 +62,17 @@ async function login() {
 
     if (success) {
       const redirectPath = (route.query.redirect as string) || '/'
-      message.value = 'Login successful!'
+      message.value = 'Login realizado com sucesso!'
       showToast.value = true
       mode.value = 'success'
       await router.push(redirectPath)
     } else {
-      message.value = 'Login failed. Please check your credentials.'
+      message.value = 'Falha no login. Verifique suas credenciais.'
       showToast.value = true
       mode.value = 'error'
     }
   } catch (error) {
-    message.value = 'An error occurred during login: ' + error
+    message.value = 'Ocorreu um erro durante o login.'
     showToast.value = true
     mode.value = 'error'
   }
