@@ -10,6 +10,7 @@ import type {
   PasswordRecoveryResponse,
   PasswordResetRequest,
   PlatformStats,
+  TelemetryData,
   CreateProjectRequest,
   TokenValidationResponse,
   UpdateProjectRequest,
@@ -114,6 +115,38 @@ export const fetchPlatformStats = async (): Promise<PlatformStats> => {
   } catch (err) {
     console.error('Failed to fetch stats:', err)
     throw err
+  }
+}
+
+export const getAllTelemetry = async (): Promise<TelemetryData[]> => {
+  try {
+    const response = await api.get<TelemetryData[]>('/api/telemetry/v1')
+    return response.data
+  } catch (error) {
+    console.error('Failed to fetch telemetry records:', error)
+    throw error
+  }
+}
+
+export const getTelemetryById = async (id: number): Promise<TelemetryData> => {
+  try {
+    const response = await api.get<TelemetryData>(`/api/telemetry/v1/${id}`)
+    return response.data
+  } catch (error) {
+    console.error(`Failed to fetch telemetry record with ID "${id}":`, error)
+    throw error
+  }
+}
+
+export const getTelemetryByUserId = async (userId: string): Promise<TelemetryData[]> => {
+  try {
+    const response = await api.get<TelemetryData[]>(
+      `/api/telemetry/v1/user/${encodeURIComponent(userId)}`,
+    )
+    return response.data
+  } catch (error) {
+    console.error(`Failed to fetch telemetry records for user "${userId}":`, error)
+    throw error
   }
 }
 

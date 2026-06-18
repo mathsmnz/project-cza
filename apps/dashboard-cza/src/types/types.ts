@@ -79,6 +79,38 @@ export interface PlatformStats {
 }
 
 /**
+ * Represents telemetry data collected from a user session.
+ */
+export interface TelemetryData {
+  /** The unique identifier for the telemetry record. */
+  id: number
+
+  /** The identifier for the user/session that generated the data. */
+  userId: string
+
+  /** The timestamp when the user session began. Stored as UTC ISO string. */
+  sessionStart: string
+
+  /** A map of group selections and their counts. */
+  groupSelections: Record<string, number> | null
+
+  /** A map of combo selections and their counts. */
+  comboSelections: Record<string, number> | null
+
+  /** The total number of times the form was submitted. */
+  formSubmissions: number
+
+  /** A list of the final selections made by the user. */
+  finalSelection: string[] | null
+
+  /** The total number of times the form was reset. */
+  formResets: number
+
+  /** The total time elapsed during the session, in milliseconds. */
+  elapsedTime: number
+}
+
+/**
  * Represents the request payload for creating a new user invitation.
  */
 export interface UserCreationRequest {
