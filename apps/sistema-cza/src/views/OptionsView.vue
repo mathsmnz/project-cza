@@ -46,7 +46,7 @@ import OptionSelector from '@/components/OptionSelector.vue'
 import { useProjectsStore } from '@/stores/projects.ts'
 import { storeToRefs } from 'pinia'
 import { useDataStore } from '@/stores/data.ts'
-import { getProjectFileUrl } from '@/api/axios.ts'
+import { fetchProtectedFileUrl } from '@/api/axios.ts'
 import { useTelemetryStore } from '@/stores/telemetry.ts'
 
 const selectedInfo = ref<string[]>([])
@@ -66,10 +66,31 @@ const telemetryStore = useTelemetryStore()
 const option = computed(() => currentProjectCustomization.value?.groups ?? [])
 const selections = computed(() => currentProjectCustomization.value?.selections ?? [])
 
-const imagePath = computed<string>(() => {
-  if (!currentProject.value) return ''
-  if (!displayId.value) return getProjectFileUrl(currentProject.value.id, `base.png`)
-  return getProjectFileUrl(currentProject.value.id, `${displayId.value}.png`)
+const imagePath = ref<string>('')
+
+watch([currentProject, displayId], async ([project, displayIdValue]) => {
+  if (imagePath.value) {
+    URL.revokeObjectURL(imagePath.value)
+  }
+  if (!project) {
+    imagePath.value = ''
+    return
+  }
+  try {
+    if (!displayIdValue) {
+      imagePath.value = await fetchProtectedFileUrl(project.id, `base.png`)
+    } else {
+      imagePath.value = await fetchProtectedFileUrl(project.id, `${displayIdValue}.png`)
+    }
+  } catch (error) {
+    console.error('Failed to load image for OptionsView:', error)
+  }
+}, { immediate: true })
+
+onBeforeUnmount(() => {
+  if (imagePath.value) {
+    URL.revokeObjectURL(imagePath.value)
+  }
 })
 
 const handleResize = (): void => {

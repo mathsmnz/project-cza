@@ -199,12 +199,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useDataStore } from '@/stores/data.js'
 import { useEditorController } from '@/editor/editorController.ts'
 import { useProjectsStore } from '@/stores/projects.ts'
 import { storeToRefs } from 'pinia'
-import { getProjectFileUrl } from '@/api/axios.ts'
+import { fetchProtectedFileUrl } from '@/api/axios.ts'
 
 const store = useDataStore()
 const selectionId = store.getSelectionId
@@ -254,15 +254,21 @@ function togglePlants() {
 }
 
 // Setup scene on mount
-onMounted(() => {
+onMounted(async () => {
   if (!currentProject.value) return
   const selectionStr = selectionId
-  projectFileUrl.value = getProjectFileUrl(currentProject.value.id, `${selectionStr}.ifc`)
+  projectFileUrl.value = await fetchProtectedFileUrl(currentProject.value.id, `${selectionStr}.ifc`)
   console.log(projectFileUrl.value)
   setupEditor({
     fileName: selectionStr,
     fileSource: projectFileUrl.value,
   })
+})
+
+onUnmounted(() => {
+  if (projectFileUrl.value) {
+    URL.revokeObjectURL(projectFileUrl.value)
+  }
 })
 </script>
 

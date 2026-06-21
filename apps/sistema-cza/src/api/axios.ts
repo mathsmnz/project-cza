@@ -50,7 +50,7 @@ api.interceptors.request.use(
   (config) => {
     try {
       const auth = useAuthStore()
-      if (auth.accessToken) {
+      if (auth.accessToken && !config.url?.includes('/api/auth/v1/refresh')) {
         config.headers = config.headers || {}
         config.headers.Authorization = `Bearer ${auth.accessToken}`
       }
@@ -68,6 +68,10 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
     if (!error.response || error.response.status !== 401) {
+      return Promise.reject(error)
+    }
+    // Prevent deadlock if the refresh token itself has expired
+    if (originalRequest.url?.includes('/api/auth/v1/refresh')) {
       return Promise.reject(error)
     }
     if (originalRequest._retry) {
@@ -788,6 +792,18 @@ export const downloadProjectFile = async (
     )
     throw err
   }
+}
+
+/**
+ * Fetches a protected file as a Blob and returns a temporary local Object URL.
+ * Make sure to revoke the URL (URL.revokeObjectURL) when the component unmounts to free memory.
+ */
+export const fetchProtectedFileUrl = async (
+  projectId: string,
+  filename: string,
+): Promise<string> => {
+  const blob = await downloadProjectFile(projectId, filename)
+  return URL.createObjectURL(blob)
 }
 
 /**
