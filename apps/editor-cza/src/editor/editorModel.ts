@@ -8,6 +8,18 @@ import { setupGizmo } from '@/editor/gizmo/gizmo.ts'
 import type { FragmentsGroup } from '@thatopen/fragments'
 import { ref } from 'vue'
 
+export type ToggleableIfcEntity = 'IFCROOF' | 'IFCSLAB'
+
+export interface ToggleableIfcElement {
+  id: number
+  entity: ToggleableIfcEntity
+  name: string
+}
+
+export interface CaptureScreenshotOptions {
+  hiddenElementIds?: number[]
+}
+
 const components = new OBC.Components()
 const fragments = components.get(OBC.FragmentsManager)
 const ifcLoader = components.get(OBC.IfcLoader)
@@ -26,6 +38,7 @@ export function useEditorModel() {
   const classifier = components.get(OBC.Classifier)
   const plans = components.get(OBCF.Plans)
   const reactivePlansList = ref<OBCF.PlanView[]>([])
+  const toggleableElements = ref<ToggleableIfcElement[]>([])
   const isFileReady = ref(false)
 
   async function _setupWorld(container: HTMLElement) {
@@ -122,6 +135,7 @@ export function useEditorModel() {
           _setupBoundingBox(loadedModel)
           await _planManager()
           await _setupStyling()
+          await refreshToggleableElements()
 
           isFileReady.value = true
 
@@ -200,6 +214,7 @@ export function useEditorModel() {
 
     await _planManager()
     await _setupStyling()
+    await refreshToggleableElements()
   }
 
   function _cleanupScene() {
@@ -207,6 +222,7 @@ export function useEditorModel() {
       world.scene.three.remove(model)
       model.dispose()
     }
+    toggleableElements.value = []
     plans?.dispose()
     //culler?.dispose()
     fragments?.dispose()
@@ -352,11 +368,58 @@ export function useEditorModel() {
     await edges.update(true)
   }
 
-  const captureScreenshot = async (container: HTMLElement, fileName: string) => {
-    if (!world || !world.renderer || !container) return
+  function setElementsVisibility(ids: number[], visible: boolean) {
+    if (!model) return
+    const hider = components.get(OBC.Hider)
+    const items = model.getFragmentMap(ids)
+    if (items) {
+      hider.set(visible, items)
+    }
+  }
 
-    // Hide the grid before capturing
-    if (grid) grid.visible = false
+  async function refreshToggleableElements() {
+    if (!model) {
+      toggleableElements.value = []
+      return
+    }
+
+    const elements: ToggleableIfcElement[] = []
+
+    for (const entity of ['IFCROOF', 'IFCSLAB'] as ToggleableIfcEntity[]) {
+      const entityMap = classifier.find({ entities: [entity] })
+      const ids = new Set<number>()
+
+      for (const fragID in entityMap) {
+        const expressIDs = entityMap[fragID]
+        if (!expressIDs) continue
+
+        for (const expressID of expressIDs) {
+          ids.add(expressID)
+        }
+      }
+
+      for (const id of ids) {
+        const properties = await model.getProperties(id)
+        const rawName = properties?.Name?.value ?? properties?.Name
+        const rawGlobalId = properties?.GlobalId?.value ?? properties?.GlobalId
+        const name = String(rawName || rawGlobalId || `${entity} #${id}`)
+
+        elements.push({ id, entity, name })
+      }
+    }
+
+    toggleableElements.value = elements.sort((a, b) => {
+      if (a.entity !== b.entity) return a.entity.localeCompare(b.entity)
+      return a.name.localeCompare(b.name, undefined, { numeric: true })
+    })
+  }
+
+  const captureScreenshot = async (
+    container: HTMLElement,
+    fileName: string,
+    options: CaptureScreenshotOptions = {},
+  ) => {
+    if (!world || !world.renderer || !container) return
 
     let activePlan = plans.currentPlan
     if (!activePlan) {
@@ -374,61 +437,190 @@ export function useEditorModel() {
     // Store the original background
     const originalSceneBackground = world.scene.three.background
 
-    // Set transparent background
-    world.renderer.three.setClearColor(0x000000, 0)
-    world.scene.three.background = null
+    const hiddenElementIds = options.hiddenElementIds ?? []
+    const hiddenItems = hiddenElementIds.length ? model.getFragmentMap(hiddenElementIds) : null
+    const hider = components.get(OBC.Hider)
 
-    // Increase screenshot resolution (e.g., 2x or 4x the original size)
-    const scaleFactor = 3 // Change to 3 or 4 for even higher quality
-    const width = originalSize.x * scaleFactor
-    const height = originalSize.y * scaleFactor
+    // Hide the grid before capturing
+    if (grid) grid.visible = false
 
-    // Set renderer size and pixel ratio for better quality
-    world.renderer.three.setPixelRatio(window.devicePixelRatio * scaleFactor)
-    world.renderer.three.setSize(width, height, false)
+    const originalMaterials = new Map<any, any>()
 
-    //_setupBoundingBox(model)
-    await _fitToPlanView()
+    try {
+      if (hiddenItems) {
+        hider.set(false, hiddenItems)
+      }
 
-    // Render the scene at high resolution
-    world.renderer.three.render(world.scene.three, world.camera.three)
+      // Set transparent background
+      world.renderer.three.setClearColor(0x000000, 0)
+      world.scene.three.background = null
 
-    const canvas = container.querySelector('canvas')
+      const entityColors: Record<string, number> = {
+        IFCSLAB: 0xffffff,
+        IFCWALL: 0x373737,
+        IFCWALLSTANDARDCASE: 0x373737,
+        IFCCOLUMN: 0xeeeeee,
+        IFCBEAM: 0xeeeeee,
+        IFCSTAIR: 0xeeeeee,
+      }
 
-    if (!canvas) {
-      return
+      for (const [entity, colorHex] of Object.entries(entityColors)) {
+        const structureItems = classifier.find({ entities: [entity] })
+
+        for (const fragID in structureItems) {
+          const foundFrag = fragments.list.get(fragID)
+          if (foundFrag && 'mesh' in foundFrag) {
+            const mesh = foundFrag.mesh
+            if (!originalMaterials.has(mesh)) {
+              originalMaterials.set(mesh, mesh.material)
+            }
+
+            if (Array.isArray(mesh.material)) {
+              mesh.material = mesh.material.map(m => {
+                const newMat = m.clone()
+                if ('color' in newMat) { // @ts-ignore
+                  newMat.color.set(colorHex)
+                }
+                return newMat
+              })
+            } else if (mesh.material) {
+              const newMat = (mesh.material as any).clone()
+              if ('color' in newMat) newMat.color.set(colorHex)
+              mesh.material = newMat
+            }
+          }
+        }
+      }
+
+      // Use the screen aspect ratio so the final image is landscape,
+      // but perfectly centered around the building
+      const bbox = model.boundingBox
+      const size = new THREE.Vector3()
+      bbox.getSize(size)
+
+      const aspect = originalSize.x / originalSize.y
+      let trueAspect = aspect
+      if (!aspect || !isFinite(aspect) || aspect === 0) trueAspect = 1
+
+      const MAX_RES = 4000
+      let width, height
+      if (trueAspect > 1) {
+        width = MAX_RES
+        height = Math.floor(MAX_RES / trueAspect)
+      } else {
+        height = MAX_RES
+        width = Math.floor(MAX_RES * trueAspect)
+      }
+
+      const camera = world.camera.three as any
+      const isOrtho = camera.isOrthographicCamera
+      let origLeft, origRight, origTop, origBottom, origAspect
+
+      if (isOrtho) {
+        origLeft = camera.left
+        origRight = camera.right
+        origTop = camera.top
+        origBottom = camera.bottom
+
+        const renderAspect = width / height
+        const frustumHeight = camera.top - camera.bottom
+        camera.left = -(frustumHeight * renderAspect) / 2
+        camera.right = (frustumHeight * renderAspect) / 2
+        camera.updateProjectionMatrix()
+      } else {
+        origAspect = camera.aspect
+        camera.aspect = width / height
+        camera.updateProjectionMatrix()
+      }
+
+      await _fitToPlanView(0.2, true)
+
+      // Wait exactly one animation frame to ensure the scene has settled
+      await new Promise(resolve => requestAnimationFrame(resolve))
+
+      // Use a RenderTarget to capture high-res without resizing the DOM canvas
+      const renderTarget = new THREE.WebGLRenderTarget(width, height, { samples: 4 })
+      world.renderer.three.setRenderTarget(renderTarget)
+      world.renderer.three.setPixelRatio(1)
+      world.renderer.three.setViewport(0, 0, width, height)
+
+      // Render the scene into the render target
+      world.renderer.three.render(world.scene.three, world.camera.three)
+
+      // Read pixels back
+      const buffer = new Uint8Array(width * height * 4)
+      world.renderer.three.readRenderTargetPixels(renderTarget, 0, 0, width, height, buffer)
+      world.renderer.three.setRenderTarget(null)
+      renderTarget.dispose()
+
+      // Restore camera aspect ratio
+      if (isOrtho) {
+        camera.left = origLeft
+        camera.right = origRight
+        camera.top = origTop
+        camera.bottom = origBottom
+        camera.updateProjectionMatrix()
+      } else if (origAspect) {
+        camera.aspect = origAspect
+        camera.updateProjectionMatrix()
+      }
+
+      // We must re-fit to the original screen aspect ratio so the UI viewer isn't broken
+      await _fitToPlanView()
+
+      // Flip pixels vertically (WebGL is bottom-to-top)
+      const flippedBuffer = new Uint8ClampedArray(width * height * 4)
+      for (let row = 0; row < height; row++) {
+        const srcRow = row * width * 4
+        const destRow = (height - 1 - row) * width * 4
+        flippedBuffer.set(buffer.subarray(srcRow, srcRow + width * 4), destRow)
+      }
+
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')!
+      const imgData = new ImageData(flippedBuffer, width, height)
+      ctx.putImageData(imgData, 0, 0)
+
+      const screenshot = canvas.toDataURL('image/png')
+
+      // Converts to a base64 file for upload
+      const blob = await (await fetch(screenshot)).blob()
+      const file = new File([blob], `${fileName.split('.')[0]}.png`)
+
+      // Download the image
+      const link = document.createElement('a')
+      link.href = screenshot
+      const screenshotName = fileName.split('.')[0]
+      link.download = `${screenshotName}.png`
+      link.click()
+
+      return file
+    } finally {
+      // Restore original structural materials
+      originalMaterials.forEach((originalMat, mesh) => {
+        mesh.material = originalMat
+      })
+
+      // Restore original renderer settings
+      world.renderer.three.setClearColor(originalClearColor, originalAlpha)
+      world.renderer.three.setPixelRatio(originalPixelRatio)
+      world.renderer.three.setSize(originalSize.x, originalSize.y, false)
+
+      if (hiddenItems) {
+        hider.set(true, hiddenItems)
+      }
+
+      // Restore original background
+      world.scene.three.background = originalSceneBackground
+
+      // Restore grid visibility
+      if (grid) grid.visible = true
     }
-
-    // Capture the image at high resolution
-    const screenshot = canvas.toDataURL('image/png')
-
-    // Converts to a base64 file for upload
-    const blob = await (await fetch(screenshot)).blob()
-    const file = new File([blob], `${fileName.split('.')[0]}.png`)
-
-    // Restore original renderer settings
-    world.renderer.three.setClearColor(originalClearColor, originalAlpha)
-    world.renderer.three.setPixelRatio(originalPixelRatio)
-    world.renderer.three.setSize(originalSize.x, originalSize.y, false)
-
-    // Restore original background
-    world.scene.three.background = originalSceneBackground
-
-    // Restore grid visibility
-    if (grid) grid.visible = true
-
-    // Download the image
-    const link = document.createElement('a')
-    link.href = screenshot
-    const screenshotName = fileName.split('.')[0]
-    link.download = `${screenshotName}.png`
-    link.click()
-
-    return file
   }
-
   // Função que ajusta o zoom no plano antes da captura
-  const _fitToPlanView = async (offset = 0.2) => {
+  const _fitToPlanView = async (offset = 0.2, isCapture = false) => {
     const boundingBox = model.boundingBox
     const center = new THREE.Vector3()
     boundingBox.getCenter(center)
@@ -438,9 +630,9 @@ export function useEditorModel() {
 
     const maxDim = Math.max(size.x, size.y, size.z)
 
-    const sidebarWidth = document.getElementById('menuLateral')?.offsetWidth || 0
-    const viewportWidth = window.innerWidth - sidebarWidth
-    const scaleFactor = viewportWidth / window.innerWidth
+    const sidebarWidth = isCapture ? 0 : (document.getElementById('menuLateral')?.offsetWidth || 0)
+    const viewportWidth = isCapture ? window.innerWidth : (window.innerWidth - sidebarWidth)
+    const scaleFactor = isCapture ? 1 : (viewportWidth / window.innerWidth)
 
     const box = new THREE.Box3(
       new THREE.Vector3(-maxDim, -maxDim, -maxDim),
@@ -452,7 +644,7 @@ export function useEditorModel() {
     box.getCenter(sceneCenter)
 
     // Calculate offset for centering considering sidebar width
-    const xOffset = (sidebarWidth / window.innerWidth) * sceneSize.x
+    const xOffset = isCapture ? 0 : ((sidebarWidth / window.innerWidth) * sceneSize.x)
     sceneCenter.x += xOffset / 2.0 // Shift center to compensate for sidebar
 
     const radius = Math.max(sceneSize.x, sceneSize.y, sceneSize.z) * offset * scaleFactor
@@ -533,8 +725,45 @@ export function useEditorModel() {
     world.camera.dispose()
   }
 
+  async function toggleProjection(isOrtho: boolean) {
+    if (world.camera.hasCamera) {
+      const projection = isOrtho ? 'Orthographic' : 'Perspective'
+      world.camera.projection.set(projection)
+
+      if (isOrtho && model && model.boundingBox) {
+        // Move camera to top-down view
+        const center = new THREE.Vector3()
+        model.boundingBox.getCenter(center)
+        
+        const size = new THREE.Vector3()
+        model.boundingBox.getSize(size)
+        const maxDim = Math.max(size.x, size.y, size.z)
+
+        world.camera.three.position.set(center.x, center.y + maxDim, center.z)
+        await world.camera.controls.setLookAt(
+          center.x, center.y + maxDim, center.z, // position
+          center.x, center.y, center.z,          // target
+          true                                   // smooth
+        )
+        await _fitToPlanView(0.2, false)
+      } else if (!isOrtho) {
+        await resetCamera()
+      }
+    }
+  }
+
+  async function fitToScreen() {
+    await _fitToPlanView(0.2, false)
+  }
+
+  async function resetCamera() {
+    await world.camera.controls.setLookAt(12, 6, 8, 0, 0, -10, true)
+  }
+
   return {
     getPlans: () => reactivePlansList,
+    getToggleableElements: () => toggleableElements,
+    setElementsVisibility,
     setupScene,
     setupFragments,
     loadIfcModel,
@@ -545,5 +774,8 @@ export function useEditorModel() {
     isFileReady,
     dispose,
     captureScreenshot,
+    toggleProjection,
+    fitToScreen,
+    resetCamera,
   }
 }

@@ -1,5 +1,5 @@
 import { type Ref } from 'vue'
-import { useEditorModel } from '@/editor/editorModel'
+import { useEditorModel, type CaptureScreenshotOptions } from '@/editor/editorModel'
 
 export interface EditorSetupOptions {
   /** File identifier/name */
@@ -21,9 +21,15 @@ export function useEditorController(container: Ref<HTMLDivElement | null>) {
     exitPlanView,
     captureScreenshot,
     isFileReady,
+    getToggleableElements,
+    setElementsVisibility,
+    toggleProjection,
+    fitToScreen,
+    resetCamera,
   } = useEditorModel()
 
   const plans = getPlans()
+  const toggleableElements = getToggleableElements()
   const isEditorReady = isFileReady
 
   /**
@@ -77,7 +83,7 @@ export function useEditorController(container: Ref<HTMLDivElement | null>) {
       // URL-based setup
       await setupScene(container.value!, {
         fileUrl: fileSource,
-        selectedId: fileName
+        selectedId: fileName,
       })
     } else {
       // Blob-based setup (TODO: implement blob loading in setupScene)
@@ -112,7 +118,7 @@ export function useEditorController(container: Ref<HTMLDivElement | null>) {
     if (model && validateContainer()) {
       await setupScene(container.value!, {
         fileUrl: url,
-        selectedId: model.name
+        selectedId: model.name,
       })
     }
   }
@@ -159,10 +165,13 @@ export function useEditorController(container: Ref<HTMLDivElement | null>) {
    * }
    * ```
    */
-  async function captureView(fileName: string): Promise<File | null> {
+  async function captureView(
+    fileName: string,
+    options: CaptureScreenshotOptions = {},
+  ): Promise<File | null> {
     if (!validateContainer()) return null
 
-    const result = await captureScreenshot(container.value!, fileName)
+    const result = await captureScreenshot(container.value!, fileName, options)
     return result ?? null
   }
 
@@ -178,6 +187,7 @@ export function useEditorController(container: Ref<HTMLDivElement | null>) {
     // State
     plans,
     isEditorReady,
+    toggleableElements,
 
     // Setup
     setupEditor,
@@ -194,5 +204,11 @@ export function useEditorController(container: Ref<HTMLDivElement | null>) {
 
     // Cleanup
     disposeEditor,
+    setElementsVisibility,
+
+    // Gizmo Actions
+    toggleProjection,
+    fitToScreen,
+    resetCamera,
   }
 }
