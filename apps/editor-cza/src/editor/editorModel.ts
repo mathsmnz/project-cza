@@ -726,7 +726,7 @@ export function useEditorModel() {
   }
 
   async function toggleProjection(isOrtho: boolean) {
-    if (world.camera.hasCamera) {
+    if (world.camera) {
       const projection = isOrtho ? 'Orthographic' : 'Perspective'
       world.camera.projection.set(projection)
 
@@ -734,7 +734,7 @@ export function useEditorModel() {
         // Move camera to top-down view
         const center = new THREE.Vector3()
         model.boundingBox.getCenter(center)
-        
+
         const size = new THREE.Vector3()
         model.boundingBox.getSize(size)
         const maxDim = Math.max(size.x, size.y, size.z)
