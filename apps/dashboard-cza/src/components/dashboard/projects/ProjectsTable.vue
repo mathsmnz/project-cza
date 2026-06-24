@@ -48,7 +48,7 @@ const toggleAll = () => {
     <table class="w-full text-sm text-left text-gray-600">
       <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-300">
         <tr>
-          <th class="p-4 w-12">
+          <th class="p-4 w-12 whitespace-nowrap">
             <input
               type="checkbox"
               :checked="isAllSelected"
@@ -58,12 +58,12 @@ const toggleAll = () => {
               aria-label="Select all projects"
             />
           </th>
-          <th class="py-3 px-6 font-semibold">ID</th>
-          <th class="py-3 px-6 font-semibold">Project</th>
-          <th class="py-3 px-6 font-semibold">Created</th>
-          <th class="py-3 px-6 font-semibold">Updated</th>
-          <th class="py-3 px-6 font-semibold">Description</th>
-          <th class="py-3 px-6 text-right font-semibold">Actions</th>
+          <th class="py-3 px-6 font-semibold whitespace-nowrap">ID</th>
+          <th class="py-3 px-6 font-semibold whitespace-nowrap">Project</th>
+          <th class="py-3 px-6 font-semibold whitespace-nowrap">Created</th>
+          <th class="py-3 px-6 font-semibold whitespace-nowrap">Updated</th>
+          <th class="py-3 px-6 font-semibold whitespace-nowrap">Description</th>
+          <th class="py-3 px-6 text-right font-semibold whitespace-nowrap">Actions</th>
         </tr>
       </thead>
 
@@ -74,7 +74,7 @@ const toggleAll = () => {
           class="bg-gray-100 border-b border-gray-200 hover:bg-gray-50 transition-colors"
           :class="{ 'bg-blue-50': selectedProjects.has(project.id) }"
         >
-          <td class="p-4">
+          <td class="p-4 whitespace-nowrap">
             <input
               type="checkbox"
               :checked="selectedProjects.has(project.id)"
@@ -84,8 +84,8 @@ const toggleAll = () => {
             />
           </td>
 
-          <td class="py-4 px-6 font-medium text-gray-900">{{ project.id }}</td>
-          <td class="py-4 px-6">
+          <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap">{{ project.id }}</td>
+          <td class="py-4 px-6 whitespace-nowrap">
             <div class="flex items-center gap-2">
               <span class="font-semibold text-gray-900">{{ project.name }}</span>
             </div>
@@ -96,14 +96,14 @@ const toggleAll = () => {
           <td class="py-4 px-6 text-gray-600 whitespace-nowrap">
             {{ formatDisplayDate(project.updatedAt) }}
           </td>
-          <td class="py-4 px-6">
+          <td class="py-4 px-6 whitespace-nowrap">
             <div class="max-w-xs">
               <p class="text-gray-600 truncate" :title="project.description">
                 {{ project.description || '—' }}
               </p>
             </div>
           </td>
-          <td class="py-4 px-6">
+          <td class="py-4 px-6 whitespace-nowrap">
             <div class="flex justify-end items-center gap-1">
               <!-- Edit Project -->
               <button

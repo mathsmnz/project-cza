@@ -106,7 +106,7 @@ const refreshInvite = (url: string): void => {
     <table class="w-full text-sm text-left text-gray-600">
       <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-300">
         <tr>
-          <th class="p-4 w-12">
+          <th class="p-4 w-12 whitespace-nowrap">
             <input
               type="checkbox"
               :checked="isAllSelected"
@@ -116,10 +116,10 @@ const refreshInvite = (url: string): void => {
               aria-label="Select all invitations"
             />
           </th>
-          <th class="py-3 px-6 font-semibold">Email</th>
-          <th class="py-3 px-6 font-semibold">Status</th>
-          <th class="py-3 px-6 font-semibold">Registration Link</th>
-          <th class="py-3 px-6 text-right font-semibold">Actions</th>
+          <th class="py-3 px-6 font-semibold whitespace-nowrap">Email</th>
+          <th class="py-3 px-6 font-semibold whitespace-nowrap">Status</th>
+          <th class="py-3 px-6 font-semibold whitespace-nowrap">Registration Link</th>
+          <th class="py-3 px-6 text-right font-semibold whitespace-nowrap">Actions</th>
         </tr>
       </thead>
       <tbody v-if="invites.length">
@@ -129,7 +129,7 @@ const refreshInvite = (url: string): void => {
           class="bg-gray-100 border-b border-gray-200 hover:bg-gray-50 transition-colors"
           :class="{ 'bg-blue-50': selectedInvites.has(invite.email) }"
         >
-          <td class="p-4">
+          <td class="p-4 whitespace-nowrap">
             <input
               type="checkbox"
               :checked="selectedInvites.has(invite.email)"
@@ -138,8 +138,8 @@ const refreshInvite = (url: string): void => {
               :aria-label="`Select ${invite.email}`"
             />
           </td>
-          <td class="py-4 px-6 font-medium text-gray-900">{{ invite.email }}</td>
-          <td class="py-4 px-6">
+          <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap">{{ invite.email }}</td>
+          <td class="py-4 px-6 whitespace-nowrap">
             <span
               class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium capitalize"
               :class="inviteClass(invite.status)"
@@ -147,7 +147,7 @@ const refreshInvite = (url: string): void => {
               {{ invite.status }}
             </span>
           </td>
-          <td class="py-4 px-6">
+          <td class="py-4 px-6 whitespace-nowrap">
             <div class="flex items-center gap-2 max-w-xs">
               <span class="truncate text-gray-600 text-xs font-mono">
                 {{ invite.registrationLink }}
@@ -172,7 +172,7 @@ const refreshInvite = (url: string): void => {
               </button>
             </div>
           </td>
-          <td class="py-4 px-6">
+          <td class="py-4 px-6 whitespace-nowrap">
             <div class="flex justify-end items-center gap-1">
               <!-- Resend/Refresh Invite -->
               <button

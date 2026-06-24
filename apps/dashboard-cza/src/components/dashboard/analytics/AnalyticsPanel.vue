@@ -96,118 +96,123 @@ onMounted(fetchTelemetryData)
     <!-- Main Content Grid -->
     <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <!-- Coluna 1: Lista de Sessões -->
-      <div class="md:col-span-1 bg-white outline outline-black overflow-hidden flex flex-col">
-        <div class="p-4 border-b border-gray-200">
-          <h2 class="text font-semibold text-gray-700">Sessões Registradas</h2>
+      <div class="md:col-span-1 bg-gray-100 border-2 border-black shadow-[4px_4px_0_0_#000] overflow-hidden flex flex-col">
+        <div class="p-4 border-b-2 border-black bg-gray-200">
+          <h2 class="text-lg font-bold text-black uppercase tracking-wider">Sessões Registradas</h2>
         </div>
-        <div class="flex-grow p-4 space-y-2 overflow-y-auto max-h-[70vh]">
-          <div v-if="errorMessage" class="text-center text-red-600 py-6">
+        <div class="flex-grow overflow-y-auto max-h-[70vh]">
+          <div v-if="errorMessage" class="text-center text-red-600 py-6 font-bold">
             {{ errorMessage }}
           </div>
-          <div v-else-if="telemetryEntries.length === 0" class="text-center text-gray-500 py-6">
+          <div v-else-if="telemetryEntries.length === 0" class="text-center text-gray-500 py-6 font-bold uppercase tracking-wider">
             Nenhum dado de telemetria encontrado.
           </div>
           <!-- Session List Item -->
           <div v-else v-for="entry in telemetryEntries" :key="entry.id" @click="selectEntry(entry)"
-            class="p-3 -md cursor-pointer border transition-colors duration-150" :class="{
-              'bg-gray-50 border-l-4 border-gray-500 text-gray-800 font-medium':
-                entry.id === selectedEntry?.id,
-              'border-gray-200 hover:bg-gray-100': entry.id !== selectedEntry?.id,
+            class="p-4 cursor-pointer border-b-2 border-black transition-all duration-200 last:border-b-0" :class="{
+              'bg-black text-white': entry.id === selectedEntry?.id,
+              'bg-gray-100 text-black hover:bg-gray-200': entry.id !== selectedEntry?.id,
             }">
-            <p class="text-sm font-medium truncate" :title="String(entry.id)">
+            <p class="text-sm font-bold uppercase tracking-wide truncate" :title="String(entry.id)">
               Sessão #{{ entry.id }}
             </p>
-            <p class="text-xs text-gray-500">Início: {{ formatTimestamp(entry.sessionStart) }}</p>
-            <p class="text-xs text-gray-500">Usuário: {{ formatUserSuffix(entry.userId) }}</p>
+            <p class="text-xs mt-1" :class="entry.id === selectedEntry?.id ? 'text-gray-300' : 'text-gray-500'">
+              Início: {{ formatTimestamp(entry.sessionStart) }}
+            </p>
+            <p class="text-xs" :class="entry.id === selectedEntry?.id ? 'text-gray-300' : 'text-gray-500'">
+              Usuário: {{ formatUserSuffix(entry.userId) }}
+            </p>
           </div>
         </div>
       </div>
 
       <!-- Coluna 2: Detalhes da Sessão Selecionada -->
       <div class="md:col-span-2 space-y-6">
-        <div v-if="!selectedEntry" class="bg-white outline outline-black p-6 text-center text-gray-500">
+        <div v-if="!selectedEntry" class="bg-gray-100 border-2 border-black shadow-[4px_4px_0_0_#000] p-8 text-center text-black font-bold uppercase tracking-wider">
           Selecione uma sessão na lista para ver os detalhes.
         </div>
 
         <div v-else>
           <!-- Card: Métricas Principais -->
-          <div class="bg-white outline outline-black overflow-hidden">
-            <div class="p-4 border-b border-gray-200">
-              <h2 class="text font-semibold text-gray-700">
+          <div class="bg-gray-100 border-2 border-black shadow-[4px_4px_0_0_#000] overflow-hidden">
+            <div class="p-4 border-b-2 border-black bg-gray-200">
+              <h2 class="text-lg font-bold text-black uppercase tracking-wider">
                 Detalhes da Sessão #{{ selectedEntry.id }}
               </h2>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4">
-              <div class="text-center p-3 bg-gray-50">
-                <p class="text-xs text-gray-500 uppercase">Tempo Decorrido</p>
-                <p class="text-xl font-semibold text-black">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-[2px] bg-black border-b-2 border-black">
+              <div class="text-center p-4 bg-gray-100 hover:bg-gray-200 transition-colors">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Tempo Decorrido</p>
+                <p class="text-2xl font-black text-black">
                   {{ formatElapsedTime(selectedEntry.elapsedTime) }}
                 </p>
               </div>
-              <div class="text-center p-3 bg-gray-50">
-                <p class="text-xs text-gray-500 uppercase">Envios</p>
-                <p class="text-xl font-semibold text-gray-700">
+              <div class="text-center p-4 bg-gray-100 hover:bg-gray-200 transition-colors">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Envios</p>
+                <p class="text-2xl font-black text-black">
                   {{ selectedEntry.formSubmissions }}
                 </p>
               </div>
-              <div class="text-center p-3 bg-gray-50">
-                <p class="text-xs text-gray-500 uppercase">Resets</p>
-                <p class="text-xl font-semibold text-gray-700">{{ selectedEntry.formResets }}</p>
+              <div class="text-center p-4 bg-gray-100 hover:bg-gray-200 transition-colors">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Resets</p>
+                <p class="text-2xl font-black text-black">{{ selectedEntry.formResets }}</p>
               </div>
-              <div class="text-center p-3 bg-gray-50">
-                <p class="text-xs text-gray-500 uppercase">Seleções Finais</p>
-                <p class="text-xl font-semibold text-gray-700">
+              <div class="text-center p-4 bg-gray-100 hover:bg-gray-200 transition-colors">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Seleções</p>
+                <p class="text-2xl font-black text-black">
                   {{ getFinalSelection(selectedEntry).length }}
                 </p>
               </div>
             </div>
-            <div class="p-4 border-t border-gray-200 text-sm text-gray-500">
-              <p><strong>Usuário ID:</strong> {{ selectedEntry.userId }}</p>
+            <div class="p-4 text-sm text-black font-medium">
+              <p><strong class="uppercase text-xs text-gray-500 tracking-wider">Usuário ID:</strong> {{ selectedEntry.userId }}</p>
               <p>
-                <strong>Início da Sessão:</strong> {{ formatTimestamp(selectedEntry.sessionStart) }}
+                <strong class="uppercase text-xs text-gray-500 tracking-wider">Início da Sessão:</strong> {{ formatTimestamp(selectedEntry.sessionStart) }}
               </p>
-              <p><strong>ID da Sessão:</strong> {{ selectedEntry.id }}</p>
+              <p><strong class="uppercase text-xs text-gray-500 tracking-wider">ID da Sessão:</strong> {{ selectedEntry.id }}</p>
             </div>
           </div>
 
           <!-- Card: Seleções (Grupos, Combos, Final) -->
-          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-4">
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
             <!-- Group Selections -->
-            <div class="bg-white outline outline-black overflow-hidden">
-              <div class="p-4 border-b border-gray-200">
-                <h3 class="font-semibold text-gray-700">Cliques em Grupos</h3>
+            <div class="bg-gray-100 border-2 border-black shadow-[4px_4px_0_0_#000] overflow-hidden flex flex-col">
+              <div class="p-4 border-b-2 border-black bg-gray-200">
+                <h3 class="font-bold text-black uppercase tracking-wider">Cliques em Grupos</h3>
               </div>
-              <ul class="p-4 space-y-1 text-sm">
-                <li v-for="(count, group) in getGroupSelections(selectedEntry)" :key="group" class="flex justify-between">
-                  <span>{{ group }}:</span> <span class="font-medium">{{ count }}</span>
+              <ul class="flex-grow p-4 space-y-2 text-sm">
+                <li v-for="(count, group) in getGroupSelections(selectedEntry)" :key="group" class="flex justify-between items-center border-b border-dashed border-gray-300 pb-1">
+                  <span class="font-medium">{{ group }}</span> <span class="font-bold bg-black text-white px-2 py-0.5 text-xs">{{ count }}</span>
                 </li>
-                <li v-if="Object.keys(getGroupSelections(selectedEntry)).length === 0" class="text-gray-400 italic">
+                <li v-if="Object.keys(getGroupSelections(selectedEntry)).length === 0" class="text-gray-500 font-medium uppercase tracking-widest text-xs">
                   Nenhum
                 </li>
               </ul>
             </div>
             <!-- Combo Selections -->
-            <div class="bg-white outline outline-black overflow-hidden">
-              <div class="p-4 border-b border-gray-200">
-                <h3 class="font-semibold text-gray-700">Cliques em Combos</h3>
+            <div class="bg-gray-100 border-2 border-black shadow-[4px_4px_0_0_#000] overflow-hidden flex flex-col">
+              <div class="p-4 border-b-2 border-black bg-gray-200">
+                <h3 class="font-bold text-black uppercase tracking-wider">Cliques em Combos</h3>
               </div>
-              <ul class="p-4 space-y-1 text-sm max-h-48 overflow-y-auto">
-                <li v-for="(count, combo) in getComboSelections(selectedEntry)" :key="combo" class="flex justify-between">
-                  <span>{{ combo }}:</span> <span class="font-medium">{{ count }}</span>
+              <ul class="flex-grow p-4 space-y-2 text-sm max-h-48 overflow-y-auto">
+                <li v-for="(count, combo) in getComboSelections(selectedEntry)" :key="combo" class="flex justify-between items-center border-b border-dashed border-gray-300 pb-1">
+                  <span class="font-medium">{{ combo }}</span> <span class="font-bold bg-black text-white px-2 py-0.5 text-xs">{{ count }}</span>
                 </li>
-                <li v-if="Object.keys(getComboSelections(selectedEntry)).length === 0" class="text-gray-400 italic">
+                <li v-if="Object.keys(getComboSelections(selectedEntry)).length === 0" class="text-gray-500 font-medium uppercase tracking-widest text-xs">
                   Nenhum
                 </li>
               </ul>
             </div>
             <!-- Final Selection -->
-            <div class="bg-white outline outline-black overflow-hidden">
-              <div class="p-4 border-b border-gray-200">
-                <h3 class="font-semibold text-gray-700">Seleção Final</h3>
+            <div class="bg-gray-100 border-2 border-black shadow-[4px_4px_0_0_#000] overflow-hidden flex flex-col">
+              <div class="p-4 border-b-2 border-black bg-gray-200">
+                <h3 class="font-bold text-black uppercase tracking-wider">Seleção Final</h3>
               </div>
-              <ul class="p-4 space-y-1 text-sm">
-                <li v-for="item in getFinalSelection(selectedEntry)" :key="item">{{ item }}</li>
-                <li v-if="getFinalSelection(selectedEntry).length === 0" class="text-gray-400 italic">
+              <ul class="flex-grow p-4 space-y-2 text-sm">
+                <li v-for="item in getFinalSelection(selectedEntry)" :key="item" class="font-medium border-l-4 border-black pl-2 py-0.5 bg-gray-200">
+                  {{ item }}
+                </li>
+                <li v-if="getFinalSelection(selectedEntry).length === 0" class="text-gray-500 font-medium uppercase tracking-widest text-xs">
                   Nenhuma
                 </li>
               </ul>

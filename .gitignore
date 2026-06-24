@@ -27,6 +27,8 @@ out/
 build
 dist
 
+.agents/
+.idea/
 
 # Debug
 npm-debug.log*

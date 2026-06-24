@@ -58,7 +58,7 @@ const roleClass = (role: string) => {
     <table class="w-full text-sm text-left text-gray-600">
       <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-300">
         <tr>
-          <th class="p-4 w-12">
+          <th class="p-4 w-12 whitespace-nowrap">
             <input
               :checked="isAllSelected"
               :indeterminate="isSomeSelected"
@@ -68,12 +68,12 @@ const roleClass = (role: string) => {
               @change="toggleAll"
             />
           </th>
-          <th class="py-3 px-6 font-semibold">ID</th>
-          <th class="py-3 px-6 font-semibold">Username</th>
-          <th class="py-3 px-6 font-semibold">Name</th>
-          <th class="py-3 px-6 font-semibold">Email</th>
-          <th class="py-3 px-6 font-semibold">Role</th>
-          <th class="py-3 px-6 text-right font-semibold">Actions</th>
+          <th class="py-3 px-6 font-semibold whitespace-nowrap">ID</th>
+          <th class="py-3 px-6 font-semibold whitespace-nowrap">Username</th>
+          <th class="py-3 px-6 font-semibold whitespace-nowrap">Name</th>
+          <th class="py-3 px-6 font-semibold whitespace-nowrap">Email</th>
+          <th class="py-3 px-6 font-semibold whitespace-nowrap">Role</th>
+          <th class="py-3 px-6 text-right font-semibold whitespace-nowrap">Actions</th>
         </tr>
       </thead>
       <tbody v-if="users.length">
@@ -83,7 +83,7 @@ const roleClass = (role: string) => {
           :class="{ 'bg-blue-50': selectedUsers.has(user.id) }"
           class="bg-gray-100 border-b border-gray-300 hover:bg-gray-100 transition-colors"
         >
-          <td class="p-4">
+          <td class="p-4 whitespace-nowrap">
             <input
               :aria-label="`Select ${user.username}`"
               :checked="selectedUsers.has(user.id)"
@@ -92,11 +92,11 @@ const roleClass = (role: string) => {
               @change="toggleUser(user.id)"
             />
           </td>
-          <td class="py-4 px-6 font-medium text-gray-900">{{ user.id }}</td>
-          <td class="py-4 px-6 font-medium text-gray-900">{{ user.username }}</td>
-          <td class="py-4 px-6">{{ user.name }} {{ user.lastName }}</td>
-          <td class="py-4 px-6">{{ user.email }}</td>
-          <td class="py-4 px-6">
+          <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap">{{ user.id }}</td>
+          <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap">{{ user.username }}</td>
+          <td class="py-4 px-6 whitespace-nowrap">{{ user.name }} {{ user.lastName }}</td>
+          <td class="py-4 px-6 whitespace-nowrap">{{ user.email }}</td>
+          <td class="py-4 px-6 whitespace-nowrap">
             <span
               :class="roleClass(user.role)"
               class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium capitalize"
@@ -104,7 +104,7 @@ const roleClass = (role: string) => {
               {{ user.role }}
             </span>
           </td>
-          <td class="py-4 px-6">
+          <td class="py-4 px-6 whitespace-nowrap">
             <div class="flex justify-end items-center gap-1">
               <!-- Edit User -->
               <button

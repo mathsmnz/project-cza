@@ -110,20 +110,20 @@ const copyLink = async (link: string) => {
     <table class="w-full text-sm text-left text-gray-600">
       <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-300">
         <tr>
-          <th class="p-4 w-12">
+          <th class="p-4 w-12 whitespace-nowrap">
             <input
               type="checkbox"
               :checked="isAllSelected"
               :indeterminate="isSomeSelected"
               @change="toggleAll"
-              class="w-4 h-4 text-blue-600 bg-gray-200 border-gray-400 focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              class="w-4 h-4 text-blue-600 bg-gray-200 border-gray-400 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
               aria-label="Select all recovery requests"
             />
           </th>
-          <th class="py-3 px-6 font-semibold">Email</th>
-          <th class="py-3 px-6 font-semibold">Status</th>
-          <th class="py-3 px-6 font-semibold">Recovery Link</th>
-          <th class="py-3 px-6 text-right font-semibold">Actions</th>
+          <th class="py-3 px-6 font-semibold whitespace-nowrap">Email</th>
+          <th class="py-3 px-6 font-semibold whitespace-nowrap">Status</th>
+          <th class="py-3 px-6 font-semibold whitespace-nowrap">Recovery Link</th>
+          <th class="py-3 px-6 text-right font-semibold whitespace-nowrap">Actions</th>
         </tr>
       </thead>
       <tbody v-if="requests.length">
@@ -133,17 +133,17 @@ const copyLink = async (link: string) => {
           class="bg-gray-100 border-b border-gray-200 hover:bg-gray-50 transition-colors"
           :class="{ 'bg-blue-50': selectedRequests.has(request.email) }"
         >
-          <td class="p-4">
+          <td class="p-4 whitespace-nowrap">
             <input
               type="checkbox"
               :checked="selectedRequests.has(request.email)"
               @change="toggleRequest(request.email)"
-              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-2 focus:ring-blue-500 cursor-pointer"
-              :aria-label="`Select ${request.email}`"
+              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              :aria-label="`Select request for ${request.email}`"
             />
           </td>
-          <td class="py-4 px-6 font-medium text-gray-900">{{ request.email }}</td>
-          <td class="py-4 px-6">
+          <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap">{{ request.email }}</td>
+          <td class="py-4 px-6 whitespace-nowrap">
             <span
               class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium capitalize"
               :class="recoveryStatus(request.status)"
@@ -151,14 +151,14 @@ const copyLink = async (link: string) => {
               {{ request.status }}
             </span>
           </td>
-          <td class="py-4 px-6">
+          <td class="py-4 px-6 whitespace-nowrap">
             <div class="flex items-center gap-2 max-w-xs">
               <span class="truncate text-gray-600 text-xs font-mono">
                 {{ request.token }}
               </span>
               <button
                 @click="copyLink(request.token)"
-                class="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0"
+                class="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
                 title="Copy link"
                 aria-label="Copy recovery link"
               >
@@ -176,7 +176,7 @@ const copyLink = async (link: string) => {
               </button>
             </div>
           </td>
-          <td class="py-4 px-6">
+          <td class="py-4 px-6 whitespace-nowrap">
             <div class="flex justify-end items-center gap-1">
               <!-- Resend Recovery Link -->
               <button

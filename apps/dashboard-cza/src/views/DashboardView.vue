@@ -25,6 +25,12 @@ const currentTitle = computed(() => {
   return String(title).toLowerCase()
 })
 
+const isSidebarOpen = ref(false)
+
+const toggleSidebar = () => {
+  isSidebarOpen.value = !isSidebarOpen.value
+}
+
 const { projectsPage: projectsPage } = storeToRefs(adminProjectStore)
 const { usersPage: usersPage } = storeToRefs(adminUserStore)
 
@@ -105,22 +111,35 @@ const handleSearch = (query: string) => {
 </script>
 
 <template>
-  <div class="flex h-full w-screen bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+  <div class="flex h-full w-screen bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden relative">
+    
+    <!-- Mobile overlay -->
+    <div 
+      v-if="isSidebarOpen" 
+      @click="isSidebarOpen = false" 
+      class="fixed inset-0 bg-black/50 z-40 md:hidden"
+    ></div>
+
     <!-- Sidebar -->
-    <DashboardSidebar />
+    <div :class="[
+      'fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0',
+      isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+    ]">
+      <DashboardSidebar class="h-full" @close="isSidebarOpen = false" />
+    </div>
 
     <!-- Main Content Area -->
     <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Header -->
       <DashboardHeader
-        v-if="currentTitle !== 'overview'"
         :title="currentTitle"
         @create-user="openUserCreation"
         @create-project="openProjectCreation"
         @search="handleSearch"
+        @toggle-sidebar="toggleSidebar"
       />
 
-      <main class="flex-1 overflow-auto p-8">
+      <main class="flex-1 overflow-auto p-4 md:p-8">
         <div class="max-w-7xl mx-auto flex flex-col space-y-6">
           <header class="flex items-center justify-between border-b border-gray-300 pb-4">
             <h1 class="text-3xl font-bold text-gray-900 uppercase tracking-wide">

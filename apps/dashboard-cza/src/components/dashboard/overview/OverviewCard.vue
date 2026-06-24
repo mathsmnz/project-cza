@@ -137,12 +137,12 @@ watch(stats, async () => {
       <div
         v-for="i in 3"
         :key="i"
-        class="bg-white border-2 border-black p-6 animate-pulse"
+        class="bg-gray-100 border-2 border-black p-6 animate-pulse"
       >
         <div class="h-4 bg-gray-200 w-24 mb-4"></div>
         <div class="h-8 bg-gray-200 w-16"></div>
       </div>
-      <div class="bg-white border-2 border-black p-6 animate-pulse col-span-1 md:col-span-2 lg:col-span-4">
+      <div class="bg-gray-100 border-2 border-black p-6 animate-pulse col-span-1 md:col-span-2 lg:col-span-4">
         <div class="h-6 bg-gray-200 w-32 mb-4"></div>
         <div class="h-48 bg-gray-200"></div>
       </div>
@@ -159,7 +159,7 @@ watch(stats, async () => {
     <!-- Stats Display -->
     <div v-else-if="stats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <!-- Projects Card -->
-      <div class="bg-white border-2 border-black p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+      <div class="bg-gray-100 border-2 border-black p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
         <div class="flex items-center justify-between mb-2">
           <h3 class="text-sm font-bold text-black uppercase tracking-wider">Projects</h3>
           <div class="p-2 bg-black text-white border-2 border-black">
@@ -173,10 +173,10 @@ watch(stats, async () => {
       </div>
 
       <!-- Users Card -->
-      <div class="bg-white border-2 border-black p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+      <div class="bg-gray-100 border-2 border-black p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
         <div class="flex items-center justify-between mb-2">
           <h3 class="text-sm font-bold text-black uppercase tracking-wider">Users</h3>
-          <div class="p-2 bg-white text-black border-2 border-black">
+          <div class="p-2 bg-gray-100 text-black border-2 border-black">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
@@ -187,7 +187,7 @@ watch(stats, async () => {
       </div>
 
       <!-- Files Card -->
-      <div class="bg-white border-2 border-black p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+      <div class="bg-gray-100 border-2 border-black p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
         <div class="flex items-center justify-between mb-2">
           <h3 class="text-sm font-bold text-black uppercase tracking-wider">Files</h3>
           <div class="p-2 bg-black text-white border-2 border-black">
@@ -201,13 +201,13 @@ watch(stats, async () => {
       </div>
 
       <!-- Disk Usage Card -->
-      <div class="bg-white border-2 border-black p-6 col-span-1 md:col-span-2 lg:col-span-4">
-        <div class="flex items-center justify-between mb-6 pb-4 border-b-2 border-black">
-          <div class="flex items-center space-x-4">
+      <div class="bg-gray-100 border-2 border-black p-6 col-span-1 md:col-span-2 lg:col-span-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b-2 border-black">
+          <div class="flex items-center gap-4">
             <h3 class="text-xl font-bold text-black uppercase tracking-wider">Storage Overview</h3>
             <button 
               @click="loadStats(true, true)"
-              class="p-2 border-2 border-black text-black hover:bg-black hover:text-white transition-colors"
+              class="p-2 border-2 border-black text-black hover:bg-black hover:text-white transition-colors flex-shrink-0"
               title="Refresh stats"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -216,7 +216,7 @@ watch(stats, async () => {
             </button>
           </div>
           <span
-            class="px-4 py-1.5 border-2 border-black text-sm font-bold uppercase tracking-wide"
+            class="w-max px-4 py-1.5 border-2 border-black text-sm font-bold uppercase tracking-wide"
             :class="[
               diskUsagePercentage >= 90 ? 'bg-red-600 text-white' : 'bg-black text-white'
             ]"
@@ -228,7 +228,7 @@ watch(stats, async () => {
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
           <!-- Chart Section -->
           <div class="lg:col-span-1 flex flex-col items-center">
-            <div class="relative h-56 w-56 border-2 border-black p-4 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <div class="relative h-56 w-56 border-2 border-black p-4 bg-gray-100 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
               <canvas ref="diskChartRef"></canvas>
               <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 <span class="text-4xl font-bold" :class="diskUsageColor">
@@ -242,14 +242,14 @@ watch(stats, async () => {
           <!-- Stats Section -->
           <div class="lg:col-span-2 space-y-4">
             <!-- Used Space -->
-            <div class="bg-white border-2 border-black p-4 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-shadow">
+            <div class="bg-gray-100 border-2 border-black p-4 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-shadow">
               <div class="flex justify-between items-baseline mb-3">
                 <span class="text-sm font-bold text-black uppercase tracking-wider">Used Space</span>
                 <span class="text-xl font-bold" :class="diskUsageColor">
                   {{ formatBytes(stats.spaceOnDisk) }}
                 </span>
               </div>
-              <div class="w-full bg-white border-2 border-black h-4 overflow-hidden">
+              <div class="w-full bg-gray-100 border-2 border-black h-4 overflow-hidden">
                 <div
                   :class="diskUsageBarColor"
                   class="h-full transition-all duration-500"
@@ -259,7 +259,7 @@ watch(stats, async () => {
             </div>
 
             <!-- Free Space -->
-            <div class="bg-white border-2 border-black p-4 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-shadow">
+            <div class="bg-gray-100 border-2 border-black p-4 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-shadow">
               <div class="flex justify-between items-baseline mb-2">
                 <span class="text-sm font-bold text-black uppercase tracking-wider">Free Space</span>
                 <span class="text-xl font-bold text-black">
@@ -272,7 +272,7 @@ watch(stats, async () => {
             </div>
 
             <!-- Total Capacity -->
-            <div class="bg-white border-2 border-black p-4 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-shadow">
+            <div class="bg-gray-100 border-2 border-black p-4 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-shadow">
               <div class="flex justify-between items-baseline">
                 <span class="text-sm font-bold text-black uppercase tracking-wider">Total Capacity</span>
                 <span class="text-xl font-bold text-black">
@@ -286,7 +286,7 @@ watch(stats, async () => {
         <!-- Warning Alert -->
         <div
           v-if="diskUsagePercentage >= 90"
-          class="mt-6 bg-white border-2 border-red-600 p-4 shadow-[4px_4px_0px_0px_rgba(220,38,38,1)]"
+          class="mt-6 bg-gray-100 border-2 border-red-600 p-4 shadow-[4px_4px_0px_0px_rgba(220,38,38,1)]"
         >
           <div class="flex items-start">
             <svg class="w-6 h-6 text-red-600 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -300,7 +300,7 @@ watch(stats, async () => {
         </div>
         <div
           v-else-if="diskUsagePercentage >= 75"
-          class="mt-6 bg-white border-2 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+          class="mt-6 bg-gray-100 border-2 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
         >
           <div class="flex items-start">
             <svg class="w-6 h-6 text-black mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
