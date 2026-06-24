@@ -760,6 +760,14 @@ export function useEditorModel() {
     await world.camera.controls.setLookAt(12, 6, 8, 0, 0, -10, true)
   }
 
+  function calculateModelArea(): number {
+    if (!model || !model.boundingBox) return 0
+    const size = new THREE.Vector3()
+    model.boundingBox.getSize(size)
+    // Calcula a área da base (footprint) do módulo em m² assumindo modelo em metros (X * Z)
+    return parseFloat((size.x * size.z).toFixed(2))
+  }
+
   return {
     getPlans: () => reactivePlansList,
     getToggleableElements: () => toggleableElements,
@@ -777,5 +785,6 @@ export function useEditorModel() {
     toggleProjection,
     fitToScreen,
     resetCamera,
+    calculateModelArea,
   }
 }

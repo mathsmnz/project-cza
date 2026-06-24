@@ -177,6 +177,18 @@ export interface ProjectResponse {
   /** A brief description of the project. */
   description: string
 
+  /** The base cost of the project (Casa Base) */
+  baseCost?: number
+
+  /** The base area of the project (Casa Base) */
+  baseArea?: number
+
+  /** The base capacity of residents for the project (Casa Base) */
+  baseResidents?: number
+
+  /** The reference to the base IFC file */
+  baseIfcFileId?: string
+
   /** The timestamp when the project was created, in ISO format. */
   createdAt: string
 }
@@ -250,12 +262,23 @@ export interface Group {
   combos: Combo[]
 }
 
+export interface KbrsConstraints {
+  requiresSpaceFront?: boolean
+  requiresSpaceSide?: boolean
+  requiresSpaceBack?: boolean
+  requiresVehicle?: boolean
+  minResidentsCount?: number
+}
+
 export interface Selection {
   id: string
   label: string
   description: string
   relatedCombos: string[]
   relatedGroups: string[]
+  area?: number
+  cost?: number
+  constraints?: KbrsConstraints
 }
 
 export interface CustomizationSchema {
@@ -341,6 +364,8 @@ export interface FileResponse {
   createdAt: string
 }
 
+export type TelemetryStatus = 'PROFILE_STARTED' | 'CUSTOMIZING' | 'VALIDATED'
+
 /**
  * Represents telemetry data collected from a user session.
  * Mapped from the backend entity TelemetryData.
@@ -351,6 +376,12 @@ export interface TelemetryData {
 
   /** The identifier for the user who generated the data. */
   userId: string
+
+  /** The unique identifier for the user session. */
+  sessionId: string
+
+  /** The status of the user session. */
+  status: TelemetryStatus
 
   /** The timestamp when the user session began. Stored as UTC ISO string. */
   sessionStart: string
@@ -373,6 +404,12 @@ export interface TelemetryData {
   /** A list of the final selections made by the user. */
   finalSelection: string[]
 
+  /** A list of selections that the user chose but later removed before validation. */
+  abandonedSelections: string[]
+
+  /** A map representing the initial restrictions/seed profile. */
+  problemSpace: Record<string, string>
+
   /** The total number of times the form was reset. */
   formResets: number
 
@@ -392,6 +429,18 @@ export interface CreateTelemetryRequest {
   userId: string
 
   /**
+   * The unique identifier for the user session.
+   * @validation @NotBlank
+   */
+  sessionId: string
+
+  /**
+   * The status of the session.
+   * @validation @NotNull
+   */
+  status: TelemetryStatus
+
+  /**
    * The timestamp when the session started (ISO 8601 string).
    * @validation @NotNull
    */
@@ -408,6 +457,12 @@ export interface CreateTelemetryRequest {
 
   /** A list of the final selections made by the user. */
   finalSelection: string[]
+
+  /** A list of selections that the user chose but later removed before validation. */
+  abandonedSelections: string[]
+
+  /** A map representing the initial restrictions/seed profile. */
+  problemSpace: Record<string, string>
 
   /** The total number of times the form was reset. */
   formResets: number

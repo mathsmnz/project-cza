@@ -26,6 +26,7 @@ export function useEditorController(container: Ref<HTMLDivElement | null>) {
     toggleProjection,
     fitToScreen,
     resetCamera,
+    calculateModelArea,
   } = useEditorModel()
 
   const plans = getPlans()
@@ -210,5 +211,6 @@ export function useEditorController(container: Ref<HTMLDivElement | null>) {
     toggleProjection,
     fitToScreen,
     resetCamera,
+    calculateModelArea,
   }
 }

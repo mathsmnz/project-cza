@@ -204,6 +204,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'close'): void
+  (e: 'area-calculated', area: number): void
 }>()
 
 const viewerContainer = ref<HTMLDivElement | null>(null)
@@ -221,6 +222,7 @@ const {
   toggleProjection,
   fitToScreen,
   resetCamera,
+  calculateModelArea,
 } = useEditorController(viewerContainer)
 
 const isOrtho = ref(false)
@@ -318,6 +320,12 @@ async function loadIfcFile() {
     const buffer = await loadFromFile()
     loadedIfc.value = buffer
     console.log(buffer)
+    
+    // Calculate and emit the area
+    const calculatedArea = calculateModelArea()
+    console.log(`Calculated area: ${calculatedArea} m²`)
+    emit('area-calculated', calculatedArea)
+
     showToast('Arquivo IFC carregado com sucesso.', 'success')
   } catch (error) {
     console.log(error)

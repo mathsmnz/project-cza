@@ -17,6 +17,8 @@ import type {
   UpdateUserRequest,
   UserCreationRequest,
   UserResponse,
+  TagResponse,
+  CreateTagRequest,
 } from '@/types/types.ts'
 import { useAuthStore } from '@/stores/auth'
 
@@ -640,6 +642,29 @@ export const setProjectSelections = async (
 }
 
 /**
+ * Updates the base model settings for a project.
+ *
+ * @param projectId The ID of the project.
+ * @param payload The base model data (baseCost, baseArea, baseIfcFileId).
+ * @returns The updated project details.
+ */
+export const updateProjectBaseModel = async (
+  projectId: string,
+  payload: { baseCost: number; baseArea: number; baseResidents: number; baseIfcFileId: string },
+): Promise<ProjectResponse> => {
+  try {
+    const response = await api.put<ProjectResponse>(
+      `/api/projects/v1/${projectId}/base-model`,
+      payload,
+    )
+    return response.data
+  } catch (err) {
+    console.error(`Failed to update base model for project ${projectId}:`, err)
+    throw err
+  }
+}
+
+/**
  * Fetches the customization schema (selections) for a specific project by its ID.
  *
  * If the project does not have a customization schema or the project is not found (HTTP 404),
@@ -804,5 +829,28 @@ export const fetchProtectedFileUrl = async (
   return URL.createObjectURL(blob)
 }
 
+export const fetchGlobalTags = async (): Promise<TagResponse[]> => {
+  const response = await api.get<TagResponse[]>('/api/tags/global')
+  return response.data
+}
+
+export const fetchProjectTags = async (projectId: string): Promise<TagResponse[]> => {
+  const response = await api.get<TagResponse[]>(`/api/tags/project/${projectId}`)
+  return response.data
+}
+
+export const fetchAllTagsForProject = async (projectId: string): Promise<TagResponse[]> => {
+  const response = await api.get<TagResponse[]>(`/api/tags/all/${projectId}`)
+  return response.data
+}
+
+export const createTag = async (request: CreateTagRequest): Promise<TagResponse> => {
+  const response = await api.post<TagResponse>('/api/tags', request)
+  return response.data
+}
+
+export const deleteTag = async (tagId: string): Promise<void> => {
+  await api.delete(`/api/tags/${tagId}`)
+}
 
 export default api

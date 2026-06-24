@@ -54,6 +54,44 @@
                 placeholder="Ex: Acabamentos Premium"
               />
             </div>
+
+            <!-- Tags Input -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Atribuir Tags Estruturadas
+              </label>
+              
+              <div v-if="isLoadingTags" class="text-xs text-gray-500 py-2">Carregando tags...</div>
+              
+              <div v-else-if="availableTags.length === 0" class="text-xs text-gray-500 py-2 italic">
+                Nenhuma tag cadastrada neste projeto. Acesse 'Gerenciar Tags' no painel principal.
+              </div>
+              
+              <div v-else class="space-y-3 max-h-40 overflow-y-auto border border-gray-200 p-3 bg-gray-50">
+                <div v-for="tag in availableTags" :key="tag.id" class="flex items-center">
+                  <input
+                    :id="'tag-' + tag.id"
+                    type="checkbox"
+                    :value="tag.id"
+                    v-model="selectedTags"
+                    class="h-4 w-4 text-black focus:ring-2 focus:ring-black border-gray-300 mr-2 rounded"
+                  />
+                  <label :for="'tag-' + tag.id" class="text-sm text-gray-700 flex-1 flex items-center justify-between cursor-pointer">
+                    <span class="font-mono font-medium">{{ tag.name }}</span>
+                    <span 
+                      class="px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-full ml-2"
+                      :class="{
+                        'bg-blue-100 text-blue-800': tag.category === 'CONSTRAINT',
+                        'bg-pink-100 text-pink-800': tag.category === 'AESTHETIC',
+                        'bg-green-100 text-green-800': tag.category === 'FUNCTIONAL'
+                      }"
+                    >
+                      {{ tag.category }}
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Footer Actions -->
@@ -79,7 +117,9 @@
 </template>
 
 <script lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { fetchAllTagsForProject } from '@/api/axios'
+import type { TagResponse } from '@/types/types'
 
 export default {
   props: {
@@ -87,18 +127,43 @@ export default {
       type: Object,
       required: true,
     },
+    projectId: {
+      type: String,
+      required: true,
+    }
   },
   setup(props, { emit }) {
     // Create a reactive copy of the input group to avoid direct mutation
     const groupData = ref({ ...props.group })
+    
+    const selectedTags = ref([...(props.group.tags || [])])
+    const availableTags = ref<TagResponse[]>([])
+    const isLoadingTags = ref(false)
+
+    onMounted(async () => {
+      if (props.projectId) {
+        try {
+          isLoadingTags.value = true
+          availableTags.value = await fetchAllTagsForProject(props.projectId)
+        } catch (e) {
+          console.error('Failed to fetch tags', e)
+        } finally {
+          isLoadingTags.value = false
+        }
+      }
+    })
 
     // Method to save changes and emit updated data
     const saveChanges = () => {
+      groupData.value.tags = selectedTags.value
       emit('save', groupData.value)
     }
 
     return {
       groupData,
+      selectedTags,
+      availableTags,
+      isLoadingTags,
       saveChanges,
     }
   },

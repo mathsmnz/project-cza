@@ -71,6 +71,27 @@
             </button>
 
             <button
+              @click="openBaseModelEditor"
+              class="inline-flex items-center px-4 py-2 border-2 border-black text-sm font-semibold text-black bg-white hover:bg-gray-100 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Configurar Casa Base
+            </button>
+
+            <button
+              @click="showTagsManager = true"
+              class="inline-flex items-center px-4 py-2 border-2 border-black text-sm font-semibold text-white bg-blue-800 hover:bg-blue-300 hover:text-black transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+              Gerenciar Tags
+            </button>
+
+            <button
               @click="uploadSelection"
               class="inline-flex items-center px-4 py-2 border-2 border-black text-sm font-semibold text-white bg-black hover:bg-white hover:text-black transition-colors"
             >
@@ -126,14 +147,25 @@
       v-if="editingSelection"
       :selection="editingSelection"
       :available-combos="data"
+      :project-id="currentProject?.id ?? ''"
       @save="saveSelection"
       @cancel="cancelEdit"
     />
     <group-editor
       v-if="editingGroup"
       :group="editingGroup"
+      :project-id="currentProject?.id ?? ''"
       @save="saveGroup"
       @cancel="cancelEdit"
+    />
+    <BaseModelEditor
+      v-if="showBaseModelEditor"
+      :base-cost="currentProject?.baseCost ?? null"
+      :base-area="baseModelArea"
+      :base-residents="currentProject?.baseResidents ?? null"
+      :base-ifc-file-id="'base.ifc'"
+      @save="saveBaseModel"
+      @cancel="showBaseModelEditor = false"
     />
     <combo-editor
       v-if="editingCombo"
@@ -155,6 +187,13 @@
       :ifc-file="currentFile"
       :has-file="hasFile"
       @close="showViewer = false"
+      @area-calculated="handleAreaCalculated"
+    />
+    <TagsManager
+      v-if="showTagsManager"
+      :project-id="currentProject?.id ?? ''"
+      @close="showTagsManager = false"
+      @toast="showToast"
     />
   </div>
 </template>
@@ -164,6 +203,8 @@ import { onMounted, reactive, ref, watch } from 'vue'
 import GroupEditor from '@/components/editor/modals/GroupEditor.vue'
 import ComboEditor from '@/components/editor/modals/ComboEditor.vue'
 import SelectionEditor from '@/components/editor/modals/SelectionEditor.vue'
+import BaseModelEditor from '@/components/editor/modals/BaseModelEditor.vue'
+import TagsManager from '@/components/editor/modals/TagsManager.vue'
 import ToastNotification from '@/components/ToastNotification.vue'
 import IfcEditor from '@/components/editor/modals/IfcEditor.vue'
 import GroupsCard from '@/components/editor/GroupsCard.vue'
@@ -172,7 +213,7 @@ import type { Combo, CustomizationSchema, Group, Selection } from '@/types/types
 import { generateUniqueId } from '@/util/util.ts'
 import { useProjectsStore } from '@/stores/projects.ts'
 import { storeToRefs } from 'pinia'
-import { downloadProjectFile, setProjectSelections } from '@/api/axios.ts'
+import { downloadProjectFile, setProjectSelections, updateProjectBaseModel } from '@/api/axios.ts'
 import PlantsCard from '@/components/editor/PlantsCard.vue'
 
 export default {
@@ -183,6 +224,8 @@ export default {
     GroupEditor,
     ComboEditor,
     SelectionEditor,
+    BaseModelEditor,
+    TagsManager,
     ToastNotification,
     IfcEditor,
   },
@@ -211,6 +254,7 @@ export default {
     const showViewer = ref(false)
 
     const viewerMode = ref<string>('base-card')
+    const showTagsManager = ref(false)
 
     watch(currentProject, async () => {
       await checkBaseFile()
@@ -218,6 +262,9 @@ export default {
 
     onMounted(async () => {
       await checkBaseFile()
+      if (currentProject.value?.baseArea != null) {
+        baseModelArea.value = currentProject.value.baseArea
+      }
     })
 
     const checkBaseFile = async () => {
@@ -343,6 +390,21 @@ export default {
       fileInput.click()
     }
 
+    const handleAreaCalculated = (area: number) => {
+      console.log(`Received calculated area: ${area} for file: ${currentFile.value}`)
+      if (currentFile.value === 'base.ifc') {
+        baseModelArea.value = area
+        showToast(`Área extraída: ${area}m² atribuída à Casa Base.`, 'success')
+      } else if (currentFile.value) {
+        // currentFile.value is the selection ID (e.g. '0', '1', unique hash)
+        const index = selections.value.findIndex(s => s.id === currentFile.value)
+        if (index !== -1 && selections.value[index]) {
+          selections.value[index].area = area
+          showToast(`Área extraída: ${area}m² atribuída à planta.`, 'success')
+        }
+      }
+    }
+
     const selectGroup = (group: Group | null) => {
       selectedGroup.value = group
       console.log('Selected group:', selectedGroup.value)
@@ -440,30 +502,6 @@ export default {
       editingGroup.value = { ...group }
     }
 
-    // Save edited group
-    const saveGroup = (updatedGroup: Group) => {
-      const index = data.value.findIndex((group) => group.id === updatedGroup.id)
-      if (index !== -1) {
-        data.value[index] = { ...updatedGroup }
-        console.log('Saved group:', updatedGroup)
-      }
-      editingGroup.value = null
-    }
-
-    const addSelection = () => {
-      const newSelection: Selection = {
-        id: selections.value.length.toString(), // This will be replaced on first save
-        label: 'Nova Planta ' + (selections.value.length + 1),
-        description: '',
-        relatedCombos: [],
-        relatedGroups: [],
-      }
-
-      // Add the selection object to the selections array
-      selections.value.push(newSelection)
-      console.log('Added selection:', newSelection)
-    }
-
     // Save an edited selection.
     const saveSelection = async (updatedSelection: Selection) => {
       const index = selections.value.findIndex((sel) => sel.id === updatedSelection.id)
@@ -487,6 +525,56 @@ export default {
       }
 
       editingSelection.value = null
+    }
+
+    const showBaseModelEditor = ref(false)
+    const baseModelArea = ref<number | null>(null)
+
+    const openBaseModelEditor = () => {
+      showBaseModelEditor.value = true
+    }
+
+    const saveBaseModel = async (payload: {
+      baseCost: number
+      baseArea: number
+      baseResidents: number
+      baseIfcFileId: string
+    }) => {
+      if (!currentProject.value) return
+      try {
+        const updatedProject = await updateProjectBaseModel(currentProject.value.id, payload)
+        currentProject.value.baseCost = updatedProject.baseCost
+        currentProject.value.baseArea = updatedProject.baseArea
+        currentProject.value.baseResidents = updatedProject.baseResidents
+        currentProject.value.baseIfcFileId = updatedProject.baseIfcFileId
+        showToast('Casa base configurada com sucesso.', 'success')
+        showBaseModelEditor.value = false
+      } catch (err) {
+        showToast('Erro ao atualizar a Casa Base', 'error')
+      }
+    }
+
+    const saveGroup = (updatedGroup: Group) => {
+      const index = data.value.findIndex((group) => group.id === updatedGroup.id)
+      if (index !== -1) {
+        data.value[index] = { ...updatedGroup }
+        console.log('Saved group:', updatedGroup)
+      }
+      editingGroup.value = null
+    }
+
+    const addSelection = () => {
+      const newSelection: Selection = {
+        id: selections.value.length.toString(), // This will be replaced on first save
+        label: 'Nova Planta ' + (selections.value.length + 1),
+        description: '',
+        relatedCombos: [],
+        relatedGroups: [],
+      }
+
+      // Add the selection object to the selections array
+      selections.value.push(newSelection)
+      console.log('Added selection:', newSelection)
     }
 
     const editSelection = (selection: Selection) => {
@@ -584,6 +672,13 @@ export default {
       hideToast,
       setBaseFile,
       viewerMode,
+      handleAreaCalculated,
+      showTagsManager,
+      showToast,
+      showBaseModelEditor,
+      baseModelArea,
+      openBaseModelEditor,
+      saveBaseModel,
     }
   },
 }

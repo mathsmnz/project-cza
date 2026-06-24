@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth.ts'
 import LoginView from '@/views/LoginView.vue'
 import PreflightView from '@/views/PreflightView.vue'
 import OptionsView from '@/views/OptionsView.vue'
+import ValidationView from '@/views/ValidationView.vue'
 import EditorView from '@/views/EditorView.vue'
 
 const router = createRouter({
@@ -15,6 +16,7 @@ const router = createRouter({
     { path: '/login', name: 'login', component: LoginView },
     { path: '/preflight', name: 'preflight', component: PreflightView, meta: { requiresAuth: true }, },
     { path: '/options', name: 'options', component: OptionsView, meta: { requiresAuth: true } },
+    { path: '/validation', name: 'validation', component: ValidationView, meta: { requiresAuth: true } },
     { path: '/editor', name: 'editor', component: EditorView, meta: { requiresAuth: true } },
   ],
 })

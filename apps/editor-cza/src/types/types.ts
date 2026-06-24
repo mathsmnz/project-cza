@@ -177,6 +177,18 @@ export interface ProjectResponse {
   /** A brief description of the project. */
   description: string
 
+  /** The base cost of the project (Casa Base) */
+  baseCost?: number
+
+  /** The base area of the project (Casa Base) */
+  baseArea?: number
+
+  /** The base capacity of residents for the project (Casa Base) */
+  baseResidents?: number
+
+  /** The reference to the base IFC file */
+  baseIfcFileId?: string
+
   /** The timestamp when the project was created, in ISO format. */
   createdAt: string
 }
@@ -248,6 +260,15 @@ export interface Group {
   id: string
   label: string
   combos: Combo[]
+  tags?: string[]
+}
+
+export interface KbrsConstraints {
+  requiresSpaceFront?: boolean
+  requiresSpaceSide?: boolean
+  requiresSpaceBack?: boolean
+  requiresVehicle?: boolean
+  minResidentsCount?: number
 }
 
 export interface Selection {
@@ -256,6 +277,10 @@ export interface Selection {
   description: string
   relatedCombos: string[]
   relatedGroups: string[]
+  tags?: string[]
+  cost?: number
+  area?: number
+  constraints?: KbrsConstraints
 }
 
 export interface CustomizationSchema {
@@ -341,6 +366,20 @@ export interface FileResponse {
   createdAt: string
 }
 
+export type TagCategory = 'CONSTRAINT' | 'AESTHETIC' | 'FUNCTIONAL'
+export type TagScope = 'GLOBAL' | 'PROJECT_SPECIFIC'
 
+export interface TagResponse {
+  id: string
+  name: string
+  category: TagCategory
+  scope: TagScope
+  projectId: string | null
+}
 
-
+export interface CreateTagRequest {
+  name: string
+  category: TagCategory
+  scope: TagScope
+  projectId?: string
+}

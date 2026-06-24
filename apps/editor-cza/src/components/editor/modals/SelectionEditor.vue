@@ -70,6 +70,151 @@
               ></textarea>
             </div>
 
+            <!-- Exigências KBRS -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Exigências KBRS (Hard Constraints)
+              </label>
+              
+              <div class="space-y-3 border border-gray-200 p-3 bg-gray-50 text-sm">
+                <div class="flex items-center">
+                  <input
+                    id="req-space-front"
+                    type="checkbox"
+                    v-model="constraints.requiresSpaceFront"
+                    class="h-4 w-4 text-black focus:ring-2 focus:ring-black border-gray-300 mr-2 rounded"
+                  />
+                  <label for="req-space-front" class="text-gray-700 cursor-pointer">
+                    Exige espaço frontal no terreno
+                  </label>
+                </div>
+                
+                <div class="flex items-center">
+                  <input
+                    id="req-space-side"
+                    type="checkbox"
+                    v-model="constraints.requiresSpaceSide"
+                    class="h-4 w-4 text-black focus:ring-2 focus:ring-black border-gray-300 mr-2 rounded"
+                  />
+                  <label for="req-space-side" class="text-gray-700 cursor-pointer">
+                    Exige espaço lateral no terreno
+                  </label>
+                </div>
+
+                <div class="flex items-center">
+                  <input
+                    id="req-space-back"
+                    type="checkbox"
+                    v-model="constraints.requiresSpaceBack"
+                    class="h-4 w-4 text-black focus:ring-2 focus:ring-black border-gray-300 mr-2 rounded"
+                  />
+                  <label for="req-space-back" class="text-gray-700 cursor-pointer">
+                    Exige espaço nos fundos do terreno
+                  </label>
+                </div>
+
+                <div class="flex items-center">
+                  <input
+                    id="req-vehicle"
+                    type="checkbox"
+                    v-model="constraints.requiresVehicle"
+                    class="h-4 w-4 text-black focus:ring-2 focus:ring-black border-gray-300 mr-2 rounded"
+                  />
+                  <label for="req-vehicle" class="text-gray-700 cursor-pointer">
+                    Exige acesso a veículo (Garagem)
+                  </label>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                  <label for="min-residents" class="block text-gray-700 mb-1">
+                    Número mínimo de moradores atendidos
+                  </label>
+                  <input
+                    id="min-residents"
+                    type="number"
+                    min="0"
+                    v-model.number="constraints.minResidentsCount"
+                    class="block w-full border-gray-300 border py-2 px-3 focus:outline-none focus:ring-2 focus:ring-black sm:text-sm bg-white"
+                    placeholder="Ex: 2"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Tags (CBR) -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Atribuir Tags Estruturadas (CBR)
+              </label>
+              <div class="space-y-4 max-h-60 overflow-y-auto border border-gray-200 p-4 bg-gray-50">
+                <div v-if="loadingTags" class="text-sm text-gray-500">Carregando tags...</div>
+                <div v-else-if="availableTags.length === 0" class="text-sm text-gray-500">Nenhuma tag encontrada no sistema.</div>
+                
+                <div v-else class="space-y-2">
+                  <div v-for="tag in availableTags" :key="tag.id" class="flex items-center">
+                    <input
+                      :id="'tag-' + tag.id"
+                      type="checkbox"
+                      :value="tag.id"
+                      v-model="selectedTags"
+                      class="h-4 w-4 text-black focus:ring-2 focus:ring-black border-gray-300 mr-2 rounded"
+                    />
+                    <label :for="'tag-' + tag.id" class="text-sm text-gray-700 cursor-pointer flex-1">
+                      {{ tag.name }}
+                      <span class="ml-2 text-xs font-mono text-gray-500 bg-gray-200 px-1 rounded">
+                        {{ tag.category }}
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cost and Area -->
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label for="area" class="block text-sm font-medium text-gray-700 mb-1">
+                  Área (m²)
+                </label>
+                <input
+                  id="area"
+                  type="number"
+                  step="0.01"
+                  v-model.number="plantData.area"
+                  class="block w-full border-gray-300 border py-2 px-3 focus:outline-none focus:ring-2 focus:ring-black sm:text-sm bg-white"
+                  placeholder="Calculado"
+                  title="Área extraída automaticamente pelo IFC ou inserida manualmente"
+                />
+              </div>
+              <div>
+                <label for="costPerSqm" class="block text-sm font-medium text-gray-700 mb-1">
+                  Custo / m² (R$)
+                </label>
+                <input
+                  id="costPerSqm"
+                  type="number"
+                  step="0.01"
+                  v-model.number="costPerSqm"
+                  class="block w-full border-gray-300 border py-2 px-3 focus:outline-none focus:ring-2 focus:ring-black sm:text-sm"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label for="cost" class="block text-sm font-medium text-gray-700 mb-1">
+                  Custo Total (R$)
+                </label>
+                <input
+                  id="cost"
+                  type="number"
+                  step="0.01"
+                  v-model.number="plantData.cost"
+                  class="block w-full border-gray-300 border py-2 px-3 focus:outline-none focus:ring-2 focus:ring-black sm:text-sm bg-gray-50"
+                  placeholder="0.00"
+                  readonly
+                />
+              </div>
+            </div>
+
             <!-- ID Field (Readonly + Copy) -->
             <div>
               <label for="plantId" class="block text-sm font-medium text-gray-700 mb-1">
@@ -177,6 +322,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch, onMounted } from 'vue'
+import type { KbrsConstraints } from '@/types/types'
 
 // Define props
 const props = defineProps<{
@@ -188,8 +334,13 @@ const props = defineProps<{
     relatedGroups: string[]
     groupIds?: string[]
     comboIds?: string[]
+    cost?: number
+    area?: number
+    constraints?: KbrsConstraints
+    tags?: string[]
   }
   availableCombos: any[]
+  projectId: string
 }>()
 
 // Define emits
@@ -205,11 +356,28 @@ const plantData = reactive({
   description: props.selection.description || '',
   relatedCombos: props.selection.relatedCombos || [],
   relatedGroups: props.selection.relatedGroups || [],
+  cost: props.selection.cost || 0,
+  area: props.selection.area || 0,
 })
 
-// State for selected groups and combos
+const constraints = reactive<KbrsConstraints>({
+  requiresSpaceFront: props.selection.constraints?.requiresSpaceFront || false,
+  requiresSpaceSide: props.selection.constraints?.requiresSpaceSide || false,
+  requiresSpaceBack: props.selection.constraints?.requiresSpaceBack || false,
+  requiresVehicle: props.selection.constraints?.requiresVehicle || false,
+  minResidentsCount: props.selection.constraints?.minResidentsCount || 0,
+})
+
 const selectedGroups = ref([...(props.selection.groupIds || [])])
 const selectedCombos = ref([...(props.selection.comboIds || [])])
+const selectedTags = ref<string[]>([...(props.selection.tags || [])])
+const availableTags = ref<any[]>([])
+const loadingTags = ref(false)
+const costPerSqm = ref<number>(
+  plantData.area && plantData.area > 0 && plantData.cost 
+    ? Number((plantData.cost / plantData.area).toFixed(2)) 
+    : 0
+)
 
 // Watch props to update selected values
 watch(
@@ -221,16 +389,36 @@ watch(
   { immediate: true },
 )
 
-// Save method
+watch(
+  () => [costPerSqm.value, plantData.area],
+  ([newCost, newArea]) => {
+    if (newCost !== undefined && newArea !== undefined) {
+      plantData.cost = Number((newCost * newArea).toFixed(2))
+    }
+  }
+)
+
 const saveChanges = () => {
   plantData.relatedCombos = selectedCombos.value
   plantData.relatedGroups = selectedGroups.value
 
-  emit('save', { ...plantData })
+  emit('save', { ...plantData, constraints: { ...constraints }, tags: selectedTags.value })
 }
 
-onMounted(() => {
+import { fetchAllTagsForProject } from '@/api/axios'
+
+onMounted(async () => {
   console.log('Available Combos:', props.availableCombos)
+  
+  loadingTags.value = true
+  try {
+    const response = await fetchAllTagsForProject(props.projectId)
+    availableTags.value = response || []
+  } catch (error) {
+    console.error('Failed to load tags', error)
+  } finally {
+    loadingTags.value = false
+  }
 })
 
 // Copy to clipboard
