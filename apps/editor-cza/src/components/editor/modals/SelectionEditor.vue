@@ -16,7 +16,7 @@
         <form @submit.prevent="saveChanges">
           <!-- Header -->
           <div class="flex items-center justify-between p-4 border-b border-gray-200">
-            <h2 class="text-xl font-bold text-gray-800">Editar Planta</h2>
+            <h2 class="text-xl font-bold text-gray-800">Editar Planta - {{plantData.label}} </h2>
             <button
               type="button"
               @click="$emit('cancel', undefined)"
@@ -75,7 +75,7 @@
               <label class="block text-sm font-medium text-gray-700 mb-2">
                 Exigências KBRS (Hard Constraints)
               </label>
-              
+
               <div class="space-y-3 border border-gray-200 p-3 bg-gray-50 text-sm">
                 <div class="flex items-center">
                   <input
@@ -88,7 +88,7 @@
                     Exige espaço frontal no terreno
                   </label>
                 </div>
-                
+
                 <div class="flex items-center">
                   <input
                     id="req-space-side"
@@ -149,7 +149,7 @@
               <div class="space-y-4 max-h-60 overflow-y-auto border border-gray-200 p-4 bg-gray-50">
                 <div v-if="loadingTags" class="text-sm text-gray-500">Carregando tags...</div>
                 <div v-else-if="availableTags.length === 0" class="text-sm text-gray-500">Nenhuma tag encontrada no sistema.</div>
-                
+
                 <div v-else class="space-y-2">
                   <div v-for="tag in availableTags" :key="tag.id" class="flex items-center">
                     <input
@@ -259,8 +259,19 @@
               </label>
               <div class="space-y-4 max-h-60 overflow-y-auto border border-gray-200 p-4 bg-gray-50">
                 <div v-for="group in availableCombos" :key="group.id">
-                  <!-- Group Label -->
-                  <span class="font-semibold text-gray-700 block mb-2">{{ group.label }}</span>
+                  <!-- Group Label and Checkbox -->
+                  <div class="flex items-center mb-2">
+                    <input
+                      :id="'group-' + group.id"
+                      type="checkbox"
+                      :value="group.id"
+                      v-model="selectedGroups"
+                      class="h-4 w-4 text-black focus:ring-2 focus:ring-black border-gray-300 mr-2 rounded"
+                    />
+                    <label :for="'group-' + group.id" class="font-semibold text-gray-700 cursor-pointer">
+                      {{ group.label }}
+                    </label>
+                  </div>
 
                   <!-- Combos for Group -->
                   <div class="pl-4 space-y-2">
@@ -374,17 +385,32 @@ const selectedTags = ref<string[]>([...(props.selection.tags || [])])
 const availableTags = ref<any[]>([])
 const loadingTags = ref(false)
 const costPerSqm = ref<number>(
-  plantData.area && plantData.area > 0 && plantData.cost 
-    ? Number((plantData.cost / plantData.area).toFixed(2)) 
+  plantData.area && plantData.area > 0 && plantData.cost
+    ? Number((plantData.cost / plantData.area).toFixed(2))
     : 0
 )
 
 // Watch props to update selected values
 watch(
-  () => [props.selection.relatedGroups, props.selection.relatedCombos],
-  ([newGroups, newCombos]) => {
-    selectedGroups.value = newGroups || []
-    selectedCombos.value = newCombos || []
+  () => [props.selection.relatedGroups, props.selection.relatedCombos, props.availableCombos],
+  ([newGroups, newCombos, availableCombos]) => {
+    const groups = newGroups ? [...(newGroups as string[])] : []
+    const combos = newCombos ? [...(newCombos as string[])] : []
+
+    if (combos.length > 0 && availableCombos && Array.isArray(availableCombos)) {
+      const requiredGroups = availableCombos
+        .filter(group => group.combos.some((c: any) => combos.includes(c.associated)))
+        .map(g => g.id)
+
+      requiredGroups.forEach(gId => {
+        if (!groups.includes(gId)) {
+          groups.push(gId)
+        }
+      })
+    }
+
+    selectedGroups.value = groups
+    selectedCombos.value = combos
   },
   { immediate: true },
 )
@@ -398,6 +424,22 @@ watch(
   }
 )
 
+watch(selectedCombos, (newCombos, oldCombos) => {
+  if (!oldCombos) return
+  const addedCombos = newCombos.filter(c => !oldCombos.includes(c))
+  if (addedCombos.length > 0) {
+    const groupIdsToAdd = props.availableCombos
+      .filter(group => group.combos.some((c: any) => addedCombos.includes(c.associated)))
+      .map(g => g.id)
+
+    groupIdsToAdd.forEach(gId => {
+      if (!selectedGroups.value.includes(gId)) {
+        selectedGroups.value.push(gId)
+      }
+    })
+  }
+})
+
 const saveChanges = () => {
   plantData.relatedCombos = selectedCombos.value
   plantData.relatedGroups = selectedGroups.value
@@ -409,7 +451,7 @@ import { fetchAllTagsForProject } from '@/api/axios'
 
 onMounted(async () => {
   console.log('Available Combos:', props.availableCombos)
-  
+
   loadingTags.value = true
   try {
     const response = await fetchAllTagsForProject(props.projectId)
