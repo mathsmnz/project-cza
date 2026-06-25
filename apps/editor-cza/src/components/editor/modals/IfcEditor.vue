@@ -42,6 +42,17 @@
         <!-- Viewer container -->
         <div ref="viewerContainer" class="w-full h-full pt-16 pb-20"></div>
 
+        <!-- Loading overlay -->
+        <div v-if="!isEditorReady" class="absolute inset-0 z-40 flex items-center justify-center bg-white/70 backdrop-blur-sm transition-opacity duration-300">
+          <div class="flex flex-col items-center">
+            <svg class="animate-spin h-10 w-10 text-black mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-sm font-semibold text-gray-700 animate-pulse">Carregando ambiente 3D...</span>
+          </div>
+        </div>
+
         <!-- Toolbar over Gizmo -->
         <div v-if="canToggleElements" class="absolute right-6 top-[240px] z-50 flex flex-col space-y-2">
           <!-- Reset Camera (Home) -->
@@ -216,6 +227,7 @@ const loadedIfc = ref<ArrayBuffer | null>(null)
 const {
   plans,
   toggleableElements,
+  isEditorReady,
   setupEditor,
   loadFromFile,
   selectPlan,
@@ -417,7 +429,7 @@ onMounted(async () => {
     : null
 
   // Try to load the associated IFC from the server if we have both project and file
-  if (ifcFileName && props.projectId) {
+  if (props.hasFile && ifcFileName && props.projectId) {
     try {
       const fileUrl = await fetchProtectedFileUrl(props.projectId, ifcFileName)
       autoLoadedUrl.value = fileUrl
