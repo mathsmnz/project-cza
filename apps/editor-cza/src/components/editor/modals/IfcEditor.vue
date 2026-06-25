@@ -17,7 +17,10 @@
         <div
           class="absolute top-0 left-0 right-0 flex items-center justify-between p-4 bg-white border-b border-gray-200 z-50"
         >
-          <h2 class="text-xl font-bold text-gray-800">Visualizador IFC</h2>
+          <h2 class="text-xl font-bold text-gray-800">
+            Visualizador IFC
+            <span v-if="displayName" class="text-gray-400 font-normal"> — {{ displayName }}</span>
+          </h2>
           <button @click="handleClose" class="text-gray-400 hover:text-gray-600 transition-colors">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -192,7 +195,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch, reactive } from 'vue'
 import { useEditorController } from '@/editor/editorController.ts'
-import { uploadProjectFile } from '@/api/axios.ts'
+import { uploadProjectFile, fetchProtectedFileUrl } from '@/api/axios.ts'
 import ToastNotification from '@/components/ToastNotification.vue'
 
 const props = defineProps<{
@@ -200,6 +203,7 @@ const props = defineProps<{
   ifcFile: string | null
   projectId: string | null
   hasFile: boolean
+  displayName?: string
 }>()
 
 const emit = defineEmits<{
@@ -249,6 +253,7 @@ const handleLevelChange = () => {
 const hideElements = ref<boolean>(false)
 const selectedHiddenElementIds = ref<number[]>([])
 const canToggleElements = computed(() => Boolean(loadedIfc.value || props.hasFile))
+const autoLoadedUrl = ref<string | null>(null)
 
 const toastState = reactive({
   show: false,
@@ -311,6 +316,10 @@ watch(
 )
 
 function handleClose() {
+  if (autoLoadedUrl.value) {
+    URL.revokeObjectURL(autoLoadedUrl.value)
+    autoLoadedUrl.value = null
+  }
   disposeEditor()
   emit('close')
 }
@@ -401,6 +410,34 @@ async function captureImage() {
 }
 
 onMounted(async () => {
+  // Derive the server filename: 'base.ifc' already has the extension,
+  // selection IDs don't — append '.ifc' if missing
+  const ifcFileName = props.ifcFile
+    ? (props.ifcFile.endsWith('.ifc') ? props.ifcFile : `${props.ifcFile}.ifc`)
+    : null
+
+  // Try to load the associated IFC from the server if we have both project and file
+  if (ifcFileName && props.projectId) {
+    try {
+      const fileUrl = await fetchProtectedFileUrl(props.projectId, ifcFileName)
+      autoLoadedUrl.value = fileUrl
+      await setupEditor({ fileName: ifcFileName, fileSource: fileUrl })
+      loadedIfc.value = await (await fetch(fileUrl)).arrayBuffer()
+
+      // Calculate and emit area from the loaded model
+      const calculatedArea = calculateModelArea()
+      if (calculatedArea > 0) {
+        emit('area-calculated', calculatedArea)
+      }
+
+      console.log(`Auto-loaded IFC: ${ifcFileName}`)
+      return
+    } catch (e) {
+      console.log(`No existing IFC found for "${ifcFileName}", opening empty editor.`)
+    }
+  }
+
+  // Fallback: empty scene
   await setupEditor({ fileName: 'base' })
 })
 </script>

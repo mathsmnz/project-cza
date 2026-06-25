@@ -186,6 +186,7 @@
       :project-id="currentProject?.id ?? null"
       :ifc-file="currentFile"
       :has-file="hasFile"
+      :display-name="viewerDisplayName"
       @close="showViewer = false"
       @area-calculated="handleAreaCalculated"
     />
@@ -252,6 +253,7 @@ export default {
 
     const currentFile = ref<string | null>(null)
     const showViewer = ref(false)
+    const viewerDisplayName = ref<string>('')
 
     const viewerMode = ref<string>('base-card')
     const showTagsManager = ref(false)
@@ -288,6 +290,7 @@ export default {
 
     const setBaseFile = async () => {
       currentFile.value = 'base.ifc'
+      viewerDisplayName.value = 'Casa Base'
       showViewer.value = true
     }
 
@@ -359,6 +362,8 @@ export default {
       console.log(id)
       showViewer.value = true
       currentFile.value = id
+      const sel = selections.value.find(s => s.id === id)
+      viewerDisplayName.value = sel?.label ?? id
     }
 
     const renameFile = (id: string) => {
@@ -672,6 +677,7 @@ export default {
       hideToast,
       setBaseFile,
       viewerMode,
+      viewerDisplayName,
       handleAreaCalculated,
       showTagsManager,
       showToast,

@@ -26,13 +26,15 @@ const ifcLoader = components.get(OBC.IfcLoader)
 const highlighter = components.get(OBCF.Highlighter)
 let culler: OBC.MeshCullerRenderer
 
+let world: OBC.SimpleWorld<
+  OBC.SimpleScene,
+  OBC.OrthoPerspectiveCamera,
+  OBCF.PostproductionRenderer
+> | null = null
+let grid: OBC.SimpleGrid | null = null
+let disposeGizmo: (() => void) | null = null
+
 export function useEditorModel() {
-  let grid: OBC.SimpleGrid
-  let world: OBC.SimpleWorld<
-    OBC.SimpleScene,
-    OBC.OrthoPerspectiveCamera,
-    OBCF.PostproductionRenderer
-  >
   let model: FragmentsGroup
   let modelName = ''
   const classifier = components.get(OBC.Classifier)
@@ -42,28 +44,39 @@ export function useEditorModel() {
   const isFileReady = ref(false)
 
   async function _setupWorld(container: HTMLElement) {
-    const worlds = _getWorld()
-    world = worlds.create<
-      OBC.SimpleScene,
-      OBC.OrthoPerspectiveCamera,
-      OBCF.PostproductionRenderer
-    >()
+    if (!world) {
+      const worlds = _getWorld()
+      world = worlds.create<
+        OBC.SimpleScene,
+        OBC.OrthoPerspectiveCamera,
+        OBCF.PostproductionRenderer
+      >()
 
-    world.scene = new OBC.SimpleScene(components)
-    world.renderer = new OBCF.PostproductionRenderer(components, container)
-    world.camera = new OBC.OrthoPerspectiveCamera(components)
+      world.scene = new OBC.SimpleScene(components)
+      world.renderer = new OBCF.PostproductionRenderer(components, container)
+      world.camera = new OBC.OrthoPerspectiveCamera(components)
 
-    world.renderer.postproduction.enabled = true
+      world.renderer.postproduction.enabled = true
 
-    components.init()
+      components.init()
 
-    await world.camera.controls.setLookAt(12, 6, 8, 0, 0, -10)
+      await world.camera.controls.setLookAt(12, 6, 8, 0, 0, -10)
 
-    world.scene.setup()
-    world.scene.three.background = new THREE.Color(0xffffff)
+      world.scene.setup()
+      world.scene.three.background = new THREE.Color(0xffffff)
 
-    // === Overlay Gizmo ===
-    setupGizmo(world)
+      // === Overlay Gizmo ===
+      disposeGizmo = setupGizmo(world)
+    } else {
+      // Re-attach existing renderer to the new modal's container
+      const canvas = world.renderer.three.domElement
+      if (canvas.parentElement !== container) {
+        container.appendChild(canvas)
+        if (world.renderer.resize) {
+          world.renderer.resize()
+        }
+      }
+    }
   }
 
   async function setupFragments() {
@@ -722,7 +735,15 @@ export function useEditorModel() {
   }
 
   function dispose() {
-    world.camera.dispose()
+    _cleanupScene()
+
+    if (world && world.renderer && world.renderer.three.domElement.parentElement) {
+      world.renderer.three.domElement.parentElement.removeChild(world.renderer.three.domElement)
+    }
+
+    isFileReady.value = false
+    reactivePlansList.value = []
+    toggleableElements.value = []
   }
 
   async function toggleProjection(isOrtho: boolean) {

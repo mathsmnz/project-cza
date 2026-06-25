@@ -23,7 +23,7 @@ const faceState = {
   faceIndex: -1,
 }
 
-export function setupGizmo(world: SimpleWorld) {
+export function setupGizmo(world: SimpleWorld): () => void {
   const overlayScene = new THREE.Scene()
   const overlayCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10)
   overlayCam.position.z = 3
@@ -258,10 +258,16 @@ export function setupGizmo(world: SimpleWorld) {
       renderer.setViewport(0, 0, canvasSize.x, canvasSize.y)
       renderer.autoClear = true
     })
+
+    return () => {
+      disposeHighlighting()
+      window.removeEventListener('resize', updateCanvasPosition)
+    }
   } else {
     console.warn(
       'THREE.js world object, renderer, or camera not found. Cannot set up gizmo rendering or highlighting.',
     )
+    return () => {}
   }
 }
 
