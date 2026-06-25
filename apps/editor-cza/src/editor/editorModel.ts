@@ -243,6 +243,7 @@ export function useEditorModel() {
   }
 
   function setupGrid(world: OBC.SimpleWorld) {
+    if (grid) return
     if (world && world.renderer) {
       const grids = _getGrids()
       grid = grids.create(world)
