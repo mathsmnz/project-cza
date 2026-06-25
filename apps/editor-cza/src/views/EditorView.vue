@@ -423,6 +423,7 @@ export default {
       }
       data.value.push(newGroup)
       console.log('Added new group:', newGroup)
+      showToast('Grupo adicionado!', 'success')
     }
 
     const deleteGroup = () => {
@@ -430,6 +431,7 @@ export default {
         data.value = data.value.filter((group) => group.id !== selectedGroup.value?.id)
         console.log('Deleted group:', selectedGroup.value)
         selectedGroup.value = null
+        showToast('Grupo removido!', 'success')
       }
     }
 
@@ -445,6 +447,7 @@ export default {
 
         selectedGroup.value.combos.push(newCombo)
         console.log('Added new combo:', newCombo)
+        showToast('Opção adicionada!', 'success')
       }
     }
 
@@ -452,6 +455,7 @@ export default {
       if (selectedGroup.value) {
         const deletedCombo = selectedGroup.value.combos.splice(index, 1)
         console.log('Deleted combo:', deletedCombo)
+        showToast('Opção removida!', 'success')
       }
     }
 
@@ -479,6 +483,7 @@ export default {
         )
         editingCombo.value = null
         selectedIndex.value = null
+        showToast('Erro ao salvar a opção.', 'error')
         return
       }
 
@@ -493,6 +498,7 @@ export default {
 
       editingCombo.value = null
       selectedIndex.value = null
+      showToast('Opção salva com sucesso!', 'success')
     }
 
     const cancelEdit = () => {
@@ -507,7 +513,6 @@ export default {
       editingGroup.value = { ...group }
     }
 
-    // Save an edited selection.
     const saveSelection = async (updatedSelection: Selection) => {
       const index = selections.value.findIndex((sel) => sel.id === updatedSelection.id)
 
@@ -525,8 +530,10 @@ export default {
 
         selections.value[index] = { ...updatedSelection }
         console.log('Updated selection:', updatedSelection)
+        showToast('(' + updatedSelection.label + ')' + ' - Planta salva com sucesso!', 'success')
       } else {
         console.error('Could not find selection to update:', updatedSelection)
+        showToast('Erro ao salvar a planta.', 'error')
       }
 
       editingSelection.value = null
@@ -564,6 +571,9 @@ export default {
       if (index !== -1) {
         data.value[index] = { ...updatedGroup }
         console.log('Saved group:', updatedGroup)
+        showToast('Grupo salvo com sucesso!', 'success')
+      } else {
+        showToast('Erro ao salvar o grupo.', 'error')
       }
       editingGroup.value = null
     }
@@ -580,6 +590,7 @@ export default {
       // Add the selection object to the selections array
       selections.value.push(newSelection)
       console.log('Added selection:', newSelection)
+      showToast('Nova planta adicionada!', 'success')
     }
 
     const editSelection = (selection: Selection) => {
@@ -590,6 +601,7 @@ export default {
     const deleteSelection = (index: number) => {
       const deletedSelection = selections.value.splice(index, 1)
       console.log('deleted:', deletedSelection)
+      showToast('Planta removida!', 'success')
     }
 
     const uploadBaseFile = async (): Promise<void> => {}
