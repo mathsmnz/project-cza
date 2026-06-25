@@ -73,44 +73,36 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProjectsStore } from '@/stores/projects'
 import { useTelemetryStore } from '@/stores/telemetry'
+import { useDataStore } from '@/stores/data'
 import { fetchProtectedFileUrl } from '@/api/axios'
 
 const router = useRouter()
 const projectStore = useProjectsStore()
 const telemetryStore = useTelemetryStore()
+const dataStore = useDataStore()
 
 const imagePath = ref<string>('')
 const totalArea = ref<number>(0)
 const totalCost = ref<number>(0)
 
 const calculateTotals = () => {
-  let area = 0
-  let cost = 0
+  const displayId = dataStore.selectionId
   
-  if (projectStore.currentProjectCustomization) {
-    const allSelections = projectStore.currentProjectCustomization.selections
-    
-    // Sum area and cost from chosen selections in telemetry
-    telemetryStore.finalSelection.forEach(selectionId => {
-      // If the selection ID matches something in our customization schema, we could extract area and cost.
-      // However, the exact ID used in finalSelection might be the Combo key or Group key.
-      // Wait, let's assume the customization schema has area and cost in selections.
-      // We will need to map this carefully based on what is in telemetryStore.finalSelection.
-      // Since it's a Proof of Concept, let's look for matching names or IDs.
-      const match = allSelections.find(s => s.id === selectionId || s.label === selectionId)
-      if (match) {
-        area += match.area || 0
-        cost += match.cost || 0
-      }
-    })
+  if (projectStore.currentProjectCustomization && displayId) {
+    const match = projectStore.currentProjectCustomization.selections.find(s => s.id === displayId)
+    if (match) {
+      totalArea.value = match.area || 0
+      totalCost.value = match.cost || 0
+      return
+    }
   }
   
-  totalArea.value = area
-  totalCost.value = cost
+  totalArea.value = 0
+  totalCost.value = 0
 }
 
 onMounted(async () => {
@@ -119,12 +111,12 @@ onMounted(async () => {
     return
   }
 
-  // Calculate area and cost
+  // Calculate area and cost based on the exact Selection ID
   calculateTotals()
 
-  // Load Image (same logic as OptionsView, using displayId)
+  // Load Image using the hash ID from dataStore
   try {
-    const displayId = telemetryStore.finalSelection.sort().join(',')
+    const displayId = dataStore.selectionId
     if (!displayId) {
       imagePath.value = await fetchProtectedFileUrl(projectStore.currentProject.id, 'base.png')
     } else {
@@ -141,13 +133,14 @@ onBeforeUnmount(() => {
   }
 })
 
-const formatSelectionName = (id: string) => {
-  // Try to find the label
+const formatSelectionName = (comboId: string) => {
   if (projectStore.currentProjectCustomization) {
-    const match = projectStore.currentProjectCustomization.selections.find(s => s.id === id)
-    if (match) return match.label
+    for (const group of projectStore.currentProjectCustomization.groups) {
+      const combo = group.combos.find(c => c.associated === comboId)
+      if (combo) return combo.label
+    }
   }
-  return id
+  return comboId
 }
 
 const goBack = () => {
