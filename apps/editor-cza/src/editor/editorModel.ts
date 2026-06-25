@@ -33,6 +33,7 @@ let world: OBC.SimpleWorld<
 > | null = null
 let grid: OBC.SimpleGrid | null = null
 let disposeGizmo: (() => void) | null = null
+let isHighlighterSetup = false
 
 export function useEditorModel() {
   let model: FragmentsGroup
@@ -73,9 +74,19 @@ export function useEditorModel() {
       const canvas = world.renderer.three.domElement
       if (canvas.parentElement !== container) {
         container.appendChild(canvas)
-        if (world.renderer.resize) {
-          world.renderer.resize()
+        
+        const renderer = world.renderer as any
+        if (renderer.container !== undefined) {
+          renderer.container = container
         }
+        
+        // Force resize now and observe
+        if (renderer.resize) renderer.resize()
+        
+        const ro = new ResizeObserver(() => {
+          if (renderer.resize) renderer.resize()
+        })
+        ro.observe(container)
       }
     }
   }
@@ -156,6 +167,7 @@ export function useEditorModel() {
           resolve(bufferArray)
         } catch (error) {
           console.error('Failed to load IFC file:', error)
+          isFileReady.value = true
           reject(error)
         }
       }
@@ -223,12 +235,17 @@ export function useEditorModel() {
   async function _initializeCommonFeatures(): Promise<void> {
     if (!world) return
 
-    highlighter.setup({ world })
-    highlighter.zoomToSelection = true
+    if (!isHighlighterSetup) {
+      highlighter.setup({ world })
+      highlighter.zoomToSelection = true
+      isHighlighterSetup = true
+    }
 
-    await _planManager()
-    await _setupStyling()
-    await refreshToggleableElements()
+    if (model) {
+      await _planManager()
+      await _setupStyling()
+      await refreshToggleableElements()
+    }
   }
 
   function _cleanupScene() {
@@ -335,7 +352,12 @@ export function useEditorModel() {
     })
 
     // Create the base edge style
-    edges.styles.create('base', new Set(), world, baseLine, baseFill, baseOutline)
+    if (!edges.styles.list.base) {
+      edges.styles.create('base', new Set(), world, baseLine, baseFill, baseOutline)
+    } else {
+      edges.styles.list.base.meshes.clear()
+      edges.styles.list.base.fragments = {}
+    }
 
     // Assign items to the base style
     for (const fragID in modelItems) {
@@ -357,7 +379,12 @@ export function useEditorModel() {
       transparent: true,
     })
 
-    edges.styles.create('thick', new Set(), world, blackLine, grayFill, blackOutline)
+    if (!edges.styles.list.thick) {
+      edges.styles.create('thick', new Set(), world, blackLine, grayFill, blackOutline)
+    } else {
+      edges.styles.list.thick.meshes.clear()
+      edges.styles.list.thick.fragments = {}
+    }
 
     const frag = fragments
 
@@ -371,7 +398,12 @@ export function useEditorModel() {
       }
     }
 
-    edges.styles.create('thin', new Set(), world)
+    if (!edges.styles.list.thin) {
+      edges.styles.create('thin', new Set(), world)
+    } else {
+      edges.styles.list.thin.meshes.clear()
+      edges.styles.list.thin.fragments = {}
+    }
 
     for (const fragID in thinItems) {
       const foundFrag = frag.list.get(fragID)
