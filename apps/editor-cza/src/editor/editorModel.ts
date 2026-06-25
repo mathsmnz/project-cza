@@ -69,6 +69,7 @@ export function useEditorModel() {
       disposeGizmo = setupGizmo(world)
     } else {
       // Re-attach existing renderer to the new modal's container
+      if (!world.renderer) return
       const canvas = world.renderer.three.domElement
       if (canvas.parentElement !== container) {
         container.appendChild(canvas)
@@ -231,7 +232,7 @@ export function useEditorModel() {
   }
 
   function _cleanupScene() {
-    if (model) {
+    if (model && world) {
       world.scene.three.remove(model)
       model.dispose()
     }
@@ -250,15 +251,17 @@ export function useEditorModel() {
       grid.config.color.setHex(0x000000)
 
       // Cast to correct renderer type
-      const renderer = world.renderer
+      const renderer = world.renderer as any
 
       // Only access if postproduction exists
-      // @ts-expect-error the field will be generated during runtime
-      renderer.postproduction?.customEffects.excludedMeshes.push(grid.three)
+      if (renderer.postproduction?.customEffects?.excludedMeshes) {
+        renderer.postproduction.customEffects.excludedMeshes.push(grid.three)
+      }
     }
   }
 
   async function _planManager() {
+    if (!world) return
     plans.world = world
     await plans.generate(model)
 
@@ -278,7 +281,7 @@ export function useEditorModel() {
   }
 
   const activatePlan = (plan: { id: string }) => {
-    if (!world.renderer) {
+    if (!world || !world.renderer) {
       return
     }
 
@@ -291,7 +294,7 @@ export function useEditorModel() {
   }
 
   const exitPlanView = () => {
-    if (!world.renderer) {
+    if (!world || !world.renderer) {
       return
     }
     world.renderer.postproduction.customEffects.minGloss = 0.0
@@ -305,6 +308,7 @@ export function useEditorModel() {
   }
 
   async function _setupStyling() {
+    if (!world) return
     const edges = components.get(OBCF.ClipEdges)
 
     classifier.byModel(model.uuid, model)
@@ -491,8 +495,8 @@ export function useEditorModel() {
             if (Array.isArray(mesh.material)) {
               mesh.material = mesh.material.map(m => {
                 const newMat = m.clone()
-                if ('color' in newMat) { // @ts-ignore
-                  newMat.color.set(colorHex)
+                if ('color' in newMat) {
+                  (newMat as any).color.set(colorHex)
                 }
                 return newMat
               })
@@ -634,6 +638,7 @@ export function useEditorModel() {
   }
   // Função que ajusta o zoom no plano antes da captura
   const _fitToPlanView = async (offset = 0.2, isCapture = false) => {
+    if (!world) return
     const boundingBox = model.boundingBox
     const center = new THREE.Vector3()
     boundingBox.getCenter(center)
@@ -677,6 +682,7 @@ export function useEditorModel() {
   }
 
   function _setupBoundingBox(modelToFit: FragmentsGroup) {
+    if (!world) return
     const fragmentBox = components.get(OBC.BoundingBoxer)
 
     if (modelToFit) {
@@ -703,8 +709,8 @@ export function useEditorModel() {
       modelToFit.boundingBox = boundingBox
 
       // Calcular a distância ideal da câmera para enquadrar o modelo
-      // @ts-expect-error the field will be generated during runtime
-      const fov = world.camera.three.fov * (Math.PI / 180) // Converter FOV para radianos
+      const camera = world.camera.three as any
+      const fov = (camera.fov || 60) * (Math.PI / 180) // Converter FOV para radianos
       const maxDim = Math.max(size.x, size.y, size.z)
       let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2))
 
@@ -716,10 +722,10 @@ export function useEditorModel() {
 
       // Ajustar os controles da câmera
       if (world.camera.controls) {
-        // @ts-expect-error the field will be generated during runtime
-        world.camera.controls.target = [center.x, center.y, center.z]
-        // @ts-expect-error the field will be generated during runtime
-        world.camera.controls.position = [center.x, center.y, cameraZ]
+        const controls = world.camera.controls as any
+        if (typeof controls.setLookAt === 'function') {
+          controls.setLookAt(center.x, center.y, cameraZ, center.x, center.y, center.z, false)
+        }
       }
 
       fragmentBox.reset() // Limpar o BoundingBoxer após o uso
@@ -747,6 +753,7 @@ export function useEditorModel() {
   }
 
   async function toggleProjection(isOrtho: boolean) {
+    if (!world) return
     if (world.camera) {
       const projection = isOrtho ? 'Orthographic' : 'Perspective'
       world.camera.projection.set(projection)
@@ -778,6 +785,7 @@ export function useEditorModel() {
   }
 
   async function resetCamera() {
+    if (!world) return
     await world.camera.controls.setLookAt(12, 6, 8, 0, 0, -10, true)
   }
 
