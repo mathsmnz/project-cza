@@ -114,10 +114,8 @@ const rotateImage = (): void => {
 
   if (!img.complete || img.naturalWidth === 0) return
 
-  // Clear invalid combination flag for non-fallback images
-  if (!imagePath.value.includes('base.png')) {
-    isInvalidCombination.value = false
-  }
+  // Clear invalid combination flag whenever a valid image loads
+  isInvalidCombination.value = false
 
   const shouldRotate = isMdOrLarger.value
   canvasEl.width = shouldRotate ? img.naturalHeight : img.naturalWidth
@@ -141,6 +139,8 @@ watch(selectedInfo, (newVal: string[]) => {
     dataStore.computeSelectionId(sortedCombos.join(',')).then((uniqueId: string) => {
       displayId.value = uniqueId
     })
+  } else {
+    displayId.value = ''
   }
 })
 
