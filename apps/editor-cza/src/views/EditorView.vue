@@ -187,7 +187,7 @@
       :ifc-file="currentFile"
       :has-file="hasFile"
       :display-name="viewerDisplayName"
-      @close="showViewer = false"
+      @close="handleViewerClose"
       @area-calculated="handleAreaCalculated"
     />
     <TagsManager
@@ -214,7 +214,7 @@ import type { Combo, CustomizationSchema, Group, Selection } from '@/types/types
 import { generateUniqueId } from '@/util/util.ts'
 import { useProjectsStore } from '@/stores/projects.ts'
 import { storeToRefs } from 'pinia'
-import { downloadProjectFile, setProjectSelections, updateProjectBaseModel } from '@/api/axios.ts'
+import { downloadProjectFile, setProjectSelections, updateProjectBaseModel, fetchProjectSelections } from '@/api/axios.ts'
 import PlantsCard from '@/components/editor/PlantsCard.vue'
 
 export default {
@@ -257,6 +257,26 @@ export default {
 
     const viewerMode = ref<string>('base-card')
     const showTagsManager = ref(false)
+
+    const handleViewerClose = async () => {
+      showViewer.value = false
+      if (currentProject.value) {
+        try {
+          const customizations = await fetchProjectSelections(currentProject.value.id)
+          if (customizations && customizations.selections) {
+            for (const localSel of selections.value) {
+              const remoteSel = customizations.selections.find(s => s.id === localSel.id)
+              if (remoteSel) {
+                localSel.hasImage = remoteSel.hasImage
+                localSel.hasIfc = remoteSel.hasIfc
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch customizations for updating file states', error)
+        }
+      }
+    }
 
     watch(currentProject, async () => {
       await checkBaseFile()
@@ -682,6 +702,7 @@ export default {
       saveSelection,
       currentFile,
       showViewer,
+      handleViewerClose,
       hasFile,
       deleteSelection,
       renameFile,

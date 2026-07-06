@@ -74,15 +74,15 @@ export function useEditorModel() {
       const canvas = world.renderer.three.domElement
       if (canvas.parentElement !== container) {
         container.appendChild(canvas)
-        
+
         const renderer = world.renderer as any
         if (renderer.container !== undefined) {
           renderer.container = container
         }
-        
+
         // Force resize now and observe
         if (renderer.resize) renderer.resize()
-        
+
         const ro = new ResizeObserver(() => {
           if (renderer.resize) renderer.resize()
         })
@@ -564,19 +564,14 @@ export function useEditorModel() {
 
       const camera = world.camera.three as any
       const isOrtho = camera.isOrthographicCamera
-      let origLeft, origRight, origTop, origBottom, origAspect
+      let origLeft, origRight, origTop, origBottom, origZoom, origAspect
 
       if (isOrtho) {
         origLeft = camera.left
         origRight = camera.right
         origTop = camera.top
         origBottom = camera.bottom
-
-        const renderAspect = width / height
-        const frustumHeight = camera.top - camera.bottom
-        camera.left = -(frustumHeight * renderAspect) / 2
-        camera.right = (frustumHeight * renderAspect) / 2
-        camera.updateProjectionMatrix()
+        origZoom = camera.zoom
       } else {
         origAspect = camera.aspect
         camera.aspect = width / height
@@ -587,6 +582,12 @@ export function useEditorModel() {
 
       // Wait exactly one animation frame to ensure the scene has settled
       await new Promise(resolve => requestAnimationFrame(resolve))
+
+      // Tighten the ortho frustum exactly to the model bounds so every
+      // permutation of the same house gets an identical, minimal framing
+      if (isOrtho) {
+        _tightenOrthoFrustum(width / height)
+      }
 
       // Use a RenderTarget to capture high-res without resizing the DOM canvas
       const renderTarget = new THREE.WebGLRenderTarget(width, height, { samples: 4 })
@@ -609,6 +610,7 @@ export function useEditorModel() {
         camera.right = origRight
         camera.top = origTop
         camera.bottom = origBottom
+        camera.zoom = origZoom
         camera.updateProjectionMatrix()
       } else if (origAspect) {
         camera.aspect = origAspect
@@ -669,36 +671,77 @@ export function useEditorModel() {
       if (grid) grid.visible = true
     }
   }
+  // Ajusta o frustum ortográfico exatamente aos limites do modelo, mantendo o
+  // aspecto da imagem — o enquadramento depende só da bounding box, então todas
+  // as permutações da mesma casa saem alinhadas pixel a pixel
+  const _tightenOrthoFrustum = (renderAspect: number, margin = 0.03) => {
+    if (!world) return
+    const camera = world.camera.three as any
+    if (!camera.isOrthographicCamera) return
+
+    camera.updateMatrixWorld(true)
+    const toCameraSpace = new THREE.Matrix4().copy(camera.matrixWorld).invert()
+    const bbox = model.boundingBox
+
+    let minX = Infinity
+    let maxX = -Infinity
+    let minY = Infinity
+    let maxY = -Infinity
+    const corner = new THREE.Vector3()
+    for (let i = 0; i < 8; i++) {
+      corner
+        .set(
+          i & 1 ? bbox.max.x : bbox.min.x,
+          i & 2 ? bbox.max.y : bbox.min.y,
+          i & 4 ? bbox.max.z : bbox.min.z,
+        )
+        .applyMatrix4(toCameraSpace)
+      minX = Math.min(minX, corner.x)
+      maxX = Math.max(maxX, corner.x)
+      minY = Math.min(minY, corner.y)
+      maxY = Math.max(maxY, corner.y)
+    }
+
+    const centerX = (minX + maxX) / 2
+    const centerY = (minY + maxY) / 2
+    let halfWidth = ((maxX - minX) / 2) * (1 + margin)
+    let halfHeight = ((maxY - minY) / 2) * (1 + margin)
+
+    // Expand the smaller dimension to match the output aspect ratio
+    if (halfWidth / halfHeight > renderAspect) {
+      halfHeight = halfWidth / renderAspect
+    } else {
+      halfWidth = halfHeight * renderAspect
+    }
+
+    camera.left = centerX - halfWidth
+    camera.right = centerX + halfWidth
+    camera.top = centerY + halfHeight
+    camera.bottom = centerY - halfHeight
+    camera.zoom = 1
+    camera.updateProjectionMatrix()
+  }
+
   // Função que ajusta o zoom no plano antes da captura
   const _fitToPlanView = async (offset = 0.2, isCapture = false) => {
     if (!world) return
     const boundingBox = model.boundingBox
-    const center = new THREE.Vector3()
-    boundingBox.getCenter(center)
+    const sceneCenter = new THREE.Vector3()
+    boundingBox.getCenter(sceneCenter)
 
     const size = new THREE.Vector3()
     boundingBox.getSize(size)
-
-    const maxDim = Math.max(size.x, size.y, size.z)
 
     const sidebarWidth = isCapture ? 0 : (document.getElementById('menuLateral')?.offsetWidth || 0)
     const viewportWidth = isCapture ? window.innerWidth : (window.innerWidth - sidebarWidth)
     const scaleFactor = isCapture ? 1 : (viewportWidth / window.innerWidth)
 
-    const box = new THREE.Box3(
-      new THREE.Vector3(-maxDim, -maxDim, -maxDim),
-      new THREE.Vector3(maxDim, maxDim, maxDim),
-    )
-    const sceneSize = new THREE.Vector3()
-    box.getSize(sceneSize)
-    const sceneCenter = new THREE.Vector3()
-    box.getCenter(sceneCenter)
-
     // Calculate offset for centering considering sidebar width
-    const xOffset = isCapture ? 0 : ((sidebarWidth / window.innerWidth) * sceneSize.x)
+    const xOffset = isCapture ? 0 : ((sidebarWidth / window.innerWidth) * size.x)
     sceneCenter.x += xOffset / 2.0 // Shift center to compensate for sidebar
 
-    const radius = Math.max(sceneSize.x, sceneSize.y, sceneSize.z) * offset * scaleFactor
+    // Sphere that encloses the model's actual bounding box, centered on the model
+    const radius = (size.length() / 2) * (1 + offset) * scaleFactor
     const sphere = new THREE.Sphere(sceneCenter, radius)
 
     const controls = world.camera.controls as any

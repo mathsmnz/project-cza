@@ -281,6 +281,8 @@ export interface Selection {
   cost?: number
   area?: number
   constraints?: KbrsConstraints
+  hasImage?: boolean
+  hasIfc?: boolean
 }
 
 export interface CustomizationSchema {

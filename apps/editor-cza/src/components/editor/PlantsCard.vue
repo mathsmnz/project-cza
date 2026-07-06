@@ -46,17 +46,45 @@ const emit = defineEmits<{
         :key="selection.id"
         class="group p-3 border-2 border-gray-300 hover:border-black flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 transition-colors"
       >
-        <span class="font-semibold text-gray-900">{{ selection.label }}</span>
+        <div class="flex items-center gap-3">
+          <span class="font-semibold text-gray-900">{{ selection.label }}</span>
+          <div class="flex items-center gap-1">
+            <!-- Image Icon -->
+            <svg
+              :class="selection.hasImage ? 'text-green-600' : 'text-gray-300'"
+              :title="selection.hasImage ? 'Imagem gerada' : 'Sem imagem'"
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <!-- IFC Icon -->
+            <svg
+              :class="selection.hasIfc ? 'text-green-600' : 'text-gray-300'"
+              :title="selection.hasIfc ? 'IFC associado' : 'Sem IFC'"
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+          </div>
+        </div>
         <div class="flex items-center gap-2 shrink-0">
           <button
             @click="emit('editIfc', selection.id)"
-            title="Associate Plant"
+            title="Associate/Edit Files"
             :class="[
-    'px-3 py-1.5 text-xs font-bold uppercase transition-colors inline-flex items-center',
-    hasBaseFile
-      ? 'border-2 border-green-500 text-green-700 bg-green-50 hover:bg-green-100'
-      : 'opacity-50 pointer-events-none border-2 border-gray-500 text-gray-500 bg-gray-100'
-  ]"
+              'px-3 py-1.5 text-xs font-bold uppercase transition-colors inline-flex items-center',
+              !hasBaseFile
+                ? 'opacity-50 pointer-events-none border-2 border-gray-500 text-gray-500 bg-gray-100'
+                : (selection.hasIfc && selection.hasImage)
+                  ? 'border-2 border-green-600 text-green-800 bg-green-100 hover:bg-green-200'
+                  : 'border-2 border-black text-black bg-white hover:bg-black hover:text-white'
+            ]"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -72,7 +100,7 @@ const emit = defineEmits<{
                 d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
               />
             </svg>
-            Associar IFC
+            {{ (selection.hasIfc && selection.hasImage) ? 'Editar Arquivos' : 'Associar Arquivos' }}
           </button>
           <button
             @click="emit('editSelection', selection)"
