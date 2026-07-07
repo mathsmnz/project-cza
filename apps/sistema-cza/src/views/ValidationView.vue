@@ -27,33 +27,23 @@
             <div class="bg-gray-50 p-6 border-2 border-black">
               <h2 class="text-2xl font-bold mb-4 border-b border-gray-300 pb-2">Resumo Financeiro</h2>
 
-              <!-- Base cost row -->
-              <div class="flex justify-between items-baseline mb-2">
-                <span class="text-sm text-gray-500 uppercase font-bold tracking-wider">Casa Base</span>
-                <span class="text-lg font-semibold text-gray-600">
-                  R$ {{ baseCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
-                </span>
-              </div>
+              <div class="grid grid-cols-2 gap-6">
+                <!-- Delta: the headline number -->
+                <div>
+                  <p class="text-sm uppercase font-bold tracking-wider mb-1"
+                     :class="costDelta > 0 ? 'text-red-500' : costDelta < 0 ? 'text-green-600' : 'text-gray-500'">
+                    {{ costDelta > 0 ? 'Acréscimo' : costDelta < 0 ? 'Economia' : 'Sem alteração' }}
+                  </p>
+                  <p class="text-3xl font-bold"
+                     :class="costDelta > 0 ? 'text-red-500' : costDelta < 0 ? 'text-green-600' : 'text-gray-400'">
+                    {{ costDelta > 0 ? '+' : '' }}R$ {{ costDelta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+                  </p>
+                </div>
 
-              <!-- Delta row -->
-              <div class="flex justify-between items-baseline mb-4">
-                <span class="text-sm uppercase font-bold tracking-wider" :class="costDelta >= 0 ? 'text-red-500' : 'text-green-600'">Modificações</span>
-                <span class="text-lg font-semibold" :class="costDelta >= 0 ? 'text-red-500' : 'text-green-600'">
-                  {{ costDelta >= 0 ? '+' : '' }}R$ {{ costDelta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
-                </span>
-              </div>
-
-              <!-- Divider -->
-              <div class="border-t border-gray-300 pt-4">
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <p class="text-sm text-gray-600 uppercase font-bold tracking-wider">Custo Total</p>
-                    <p class="text-3xl font-bold text-gray-900 mt-1">R$ {{ totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</p>
-                  </div>
-                  <div>
-                    <p class="text-sm text-gray-600 uppercase font-bold tracking-wider">Área Total</p>
-                    <p class="text-3xl font-bold text-gray-900 mt-1">{{ totalArea.toFixed(2) }} m²</p>
-                  </div>
+                <!-- Area -->
+                <div>
+                  <p class="text-sm text-gray-600 uppercase font-bold tracking-wider mb-1">Área Total</p>
+                  <p class="text-3xl font-bold text-gray-900">{{ totalArea.toFixed(2) }} m²</p>
                 </div>
               </div>
             </div>
