@@ -1,12 +1,15 @@
 <template>
-  <div class="h-full w-full overflow-auto bg-white">
-    <div class="grid min-h-screen h-full grid-rows-5 md:grid-rows-none md:grid-cols-5">
-      <!-- Left Panel (Image) -->
+  <!-- On mobile: outer div scrolls. On desktop: overflow is hidden, panels manage their own scroll -->
+  <div class="h-full w-full overflow-y-auto md:overflow-hidden bg-white">
+    <div class="flex flex-col md:grid md:h-screen md:grid-cols-5">
+
+      <!-- Left Panel (Image): sticky on mobile so it persists while scrolling options -->
       <div
-        class="border-b-2 border-black h-48 md:w-full md:h-dvh md:border-r-2 md:border-b-0 flex justify-center items-center row-span-1 md:col-span-2 p-2"
+        class="sticky top-0 z-10 md:static aspect-[4/3] md:aspect-auto md:h-screen border-b-2 border-black md:border-b-0 md:border-r-2 flex justify-center items-center md:col-span-2 p-2 bg-white"
       >
-        <div class="relative w-full h-full flex items-center justify-center">
-          <!-- Hidden image to load and draw -->
+        <div class="relative w-full h-full flex items-center justify-center overflow-hidden">
+
+          <!-- Hidden image used to draw on canvas -->
           <img
             ref="rawImage"
             alt="casa"
@@ -15,27 +18,46 @@
             @load="rotateImage"
             class="hidden"
           />
-          <canvas ref="canvas" class="max-w-full max-h-full"></canvas>
 
-          <!-- Overlay message on invalid image -->
+          <!-- Skeleton shimmer shown while image is fetching/loading -->
           <div
-            v-if="isInvalidCombination"
-            class="absolute inset-0 bg-black opacity-60 flex items-center justify-center text-white text-center p-4 text-lg font-semibold z-10"
+            v-if="isLoading"
+            class="absolute inset-0 flex items-center justify-center"
           >
-            Nenhuma combinação selecionada ou inválida. Experimente outras opções.
+            <div class="w-full h-full bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-shimmer rounded"></div>
+          </div>
+
+          <!-- Canvas -->
+          <canvas
+            ref="canvas"
+            class="w-full h-full object-contain"
+            :class="isLoading ? 'opacity-0' : 'opacity-100'"
+          ></canvas>
+
+          <!-- Invalid combination state: icon + two-line message (readable at any size) -->
+          <div
+            v-if="isInvalidCombination && !isLoading"
+            class="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white text-center p-4 z-10 gap-2"
+          >
+            <svg class="w-8 h-8 md:w-12 md:h-12 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+            </svg>
+            <p class="text-sm md:text-lg font-semibold leading-snug">Combinação inválida</p>
+            <p class="text-xs md:text-sm opacity-70">Experimente outras opções.</p>
           </div>
         </div>
       </div>
 
-      <!-- Right Panel (Options) -->
-      <div class="row-span-4 md:col-span-3">
+      <!-- Right Panel (Options): scrollable on desktop, flows naturally on mobile -->
+      <div class="md:col-span-3 md:h-screen md:overflow-y-auto">
         <OptionSelector
           :optionsData="option"
           :selectionsData="selections"
           v-model="selectedInfo"
-          class="md:h-full md:w-full"
+          class="h-full w-full"
         />
       </div>
+
     </div>
   </div>
 </template>
@@ -55,12 +77,12 @@ const rawImage = ref<HTMLImageElement | null>(null)
 const canvas = ref<HTMLCanvasElement | null>(null)
 const isMdOrLarger = ref<boolean>(window.matchMedia('(min-width: 768px)').matches)
 const isInvalidCombination = ref<boolean>(false)
+const isLoading = ref<boolean>(false)
 
 const projectStore = useProjectsStore()
 const { currentProjectCustomization, currentProject } = storeToRefs(projectStore)
 
 const dataStore = useDataStore()
-
 const telemetryStore = useTelemetryStore()
 
 const option = computed(() => currentProjectCustomization.value?.groups ?? [])
@@ -68,6 +90,20 @@ const selections = computed(() => currentProjectCustomization.value?.selections 
 
 const imagePath = ref<string>('')
 
+// ─── Debounce helper ──────────────────────────────────────────────────────────
+// Prevents resize events from firing rotateImage dozens of times while the
+// mobile browser's address bar animates in/out during scroll.
+function debounce<T extends (...args: unknown[]) => void>(fn: T, delay: number): T {
+  let timer: ReturnType<typeof setTimeout>
+  return ((...args: unknown[]) => {
+    clearTimeout(timer)
+    timer = setTimeout(() => fn(...args), delay)
+  }) as T
+}
+
+// ─── Image path watcher ───────────────────────────────────────────────────────
+// Whenever the project or the selected combo hash changes, fetch a new image
+// URL and enter the loading state so the skeleton is shown.
 watch([currentProject, displayId], async ([project, displayIdValue]) => {
   if (imagePath.value) {
     URL.revokeObjectURL(imagePath.value)
@@ -76,6 +112,10 @@ watch([currentProject, displayId], async ([project, displayIdValue]) => {
     imagePath.value = ''
     return
   }
+
+  isLoading.value = true
+  isInvalidCombination.value = false
+
   try {
     if (!displayIdValue) {
       imagePath.value = await fetchProtectedFileUrl(project.id, `base.png`)
@@ -84,42 +124,30 @@ watch([currentProject, displayId], async ([project, displayIdValue]) => {
     }
   } catch (error) {
     console.error('Failed to load image for OptionsView:', error)
+    isLoading.value = false
+    isInvalidCombination.value = true
   }
 }, { immediate: true })
 
-onBeforeUnmount(() => {
-  if (imagePath.value) {
-    URL.revokeObjectURL(imagePath.value)
-  }
-})
-
-const handleResize = (): void => {
-  isMdOrLarger.value = window.matchMedia('(min-width: 768px)').matches
-  rotateImage()
-}
-
-const handleImageError = (): void => {
-  isInvalidCombination.value = true
-  console.log('NO VALID COMBINATION FOUND')
-}
-
+// ─── Canvas draw ─────────────────────────────────────────────────────────────
 const rotateImage = (): void => {
   const img = rawImage.value
   const canvasEl = canvas.value
-
   if (!img || !canvasEl) return
+  if (!img.complete || img.naturalWidth === 0) return
+
+  isInvalidCombination.value = false
 
   const ctx = canvasEl.getContext('2d')
   if (!ctx) return
 
-  if (!img.complete || img.naturalWidth === 0) return
-
-  // Clear invalid combination flag whenever a valid image loads
-  isInvalidCombination.value = false
-
   const shouldRotate = isMdOrLarger.value
-  canvasEl.width = shouldRotate ? img.naturalHeight : img.naturalWidth
-  canvasEl.height = shouldRotate ? img.naturalWidth : img.naturalHeight
+  canvasEl.width  = shouldRotate ? img.naturalHeight : img.naturalWidth
+  canvasEl.height = shouldRotate ? img.naturalWidth  : img.naturalHeight
+
+  // High-quality downscaling on small screens
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = 'high'
 
   if (shouldRotate) {
     ctx.save()
@@ -130,9 +158,23 @@ const rotateImage = (): void => {
   } else {
     ctx.drawImage(img, 0, 0)
   }
+
+  isLoading.value = false
 }
 
-// Watch for selected info changes
+const handleImageError = (): void => {
+  isInvalidCombination.value = true
+  isLoading.value = false
+  console.log('NO VALID COMBINATION FOUND')
+}
+
+// Debounced so mobile browser viewport jitter during scroll doesn't flood redraws
+const handleResize = debounce((): void => {
+  isMdOrLarger.value = window.matchMedia('(min-width: 768px)').matches
+  rotateImage()
+}, 150)
+
+// ─── Selection watcher ───────────────────────────────────────────────────────
 watch(selectedInfo, (newVal: string[]) => {
   if (newVal.length !== 0) {
     const sortedCombos = [...newVal].sort()
@@ -152,9 +194,21 @@ onMounted(() => {
 onBeforeUnmount(() => {
   telemetryStore.submitSession()
   window.removeEventListener('resize', handleResize)
+  if (imagePath.value) {
+    URL.revokeObjectURL(imagePath.value)
+  }
 })
 </script>
 
 <style scoped>
-/* Add custom styles here if needed */
+/* Shimmer animation for the skeleton loader */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.animate-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
 </style>

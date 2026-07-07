@@ -39,6 +39,11 @@
               </div>
             </div>
 
+            <div v-if="selectionDescription" class="bg-gray-50 p-6 border-2 border-black">
+              <h2 class="text-xl font-bold mb-4 border-b border-gray-300 pb-2">Descrição do Projeto</h2>
+              <p class="text-gray-800 whitespace-pre-line">{{ selectionDescription }}</p>
+            </div>
+
             <div class="bg-gray-50 p-6 border-2 border-black">
               <h2 class="text-xl font-bold mb-4 border-b border-gray-300 pb-2">Módulos Selecionados</h2>
               <ul class="list-disc pl-5 space-y-2">
@@ -88,6 +93,7 @@ const dataStore = useDataStore()
 const imagePath = ref<string>('')
 const totalArea = ref<number>(0)
 const totalCost = ref<number>(0)
+const selectionDescription = ref<string>('')
 
 const calculateTotals = () => {
   const displayId = dataStore.selectionId
@@ -97,12 +103,14 @@ const calculateTotals = () => {
     if (match) {
       totalArea.value = match.area || 0
       totalCost.value = match.cost || 0
+      selectionDescription.value = match.description || ''
       return
     }
   }
   
   totalArea.value = 0
   totalCost.value = 0
+  selectionDescription.value = ''
 }
 
 onMounted(async () => {
