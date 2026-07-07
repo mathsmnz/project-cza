@@ -66,10 +66,26 @@
               </p>
             </div>
 
+            <!-- Base Value -->
+            <div>
+              <label for="baseValue" class="block text-sm font-medium text-gray-700 mb-1">
+                Valor Base (R$ / m²)
+              </label>
+              <input
+                id="baseValue"
+                type="number"
+                step="0.01"
+                v-model.number="localBaseValue"
+                class="block w-full border-gray-300 border py-2 px-3 focus:outline-none focus:ring-2 focus:ring-black sm:text-sm"
+                placeholder="Ex: 1500.00"
+                required
+              />
+            </div>
+
             <!-- Base Cost -->
             <div>
               <label for="baseCost" class="block text-sm font-medium text-gray-700 mb-1">
-                Custo Base (R$)
+                Custo Total da Casa Base (R$)
               </label>
               <input
                 id="baseCost"
@@ -127,19 +143,30 @@ import { ref, watch } from 'vue'
 
 const props = defineProps<{
   baseCost: number | null
+  baseValue: number | null
   baseArea: number | null
   baseResidents: number | null
   baseIfcFileId: string
 }>()
 
 const emit = defineEmits<{
-  (e: 'save', payload: { baseCost: number; baseArea: number; baseResidents: number; baseIfcFileId: string }): void
+  (e: 'save', payload: { baseCost: number; baseValue: number; baseArea: number; baseResidents: number; baseIfcFileId: string }): void
   (e: 'cancel'): void
 }>()
 
 const localCost = ref<number | null>(props.baseCost)
+const localBaseValue = ref<number | null>(props.baseValue)
 const localArea = ref<number | null>(props.baseArea)
 const localResidents = ref<number | null>(props.baseResidents)
+
+watch(
+  [localBaseValue, localArea],
+  ([newVal, newArea]) => {
+    if (newVal != null && newArea != null) {
+      localCost.value = parseFloat((newVal * newArea).toFixed(2))
+    }
+  }
+)
 
 watch(
   () => props.baseArea,
@@ -153,6 +180,7 @@ watch(
 const saveChanges = () => {
   emit('save', {
     baseCost: localCost.value ?? 0,
+    baseValue: localBaseValue.value ?? 0,
     baseArea: localArea.value ?? 0,
     baseResidents: localResidents.value ?? 0,
     baseIfcFileId: props.baseIfcFileId,

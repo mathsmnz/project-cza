@@ -180,6 +180,9 @@ export interface ProjectResponse {
   /** The base cost of the project (Casa Base) */
   baseCost?: number
 
+  /** The base value of the project (Valór Base / m²) */
+  baseValue?: number
+
   /** The base area of the project (Casa Base) */
   baseArea?: number
 

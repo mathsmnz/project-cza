@@ -148,6 +148,7 @@
       :selection="editingSelection"
       :available-combos="data"
       :project-id="currentProject?.id ?? ''"
+      :base-value="currentProject?.baseValue ?? 0"
       @save="saveSelection"
       @cancel="cancelEdit"
     />
@@ -161,6 +162,7 @@
     <BaseModelEditor
       v-if="showBaseModelEditor"
       :base-cost="currentProject?.baseCost ?? null"
+      :base-value="currentProject?.baseValue ?? null"
       :base-area="baseModelArea"
       :base-residents="currentProject?.baseResidents ?? null"
       :base-ifc-file-id="'base.ifc'"
@@ -568,6 +570,7 @@ export default {
 
     const saveBaseModel = async (payload: {
       baseCost: number
+      baseValue: number
       baseArea: number
       baseResidents: number
       baseIfcFileId: string
@@ -576,6 +579,7 @@ export default {
       try {
         const updatedProject = await updateProjectBaseModel(currentProject.value.id, payload)
         currentProject.value.baseCost = updatedProject.baseCost
+        currentProject.value.baseValue = updatedProject.baseValue
         currentProject.value.baseArea = updatedProject.baseArea
         currentProject.value.baseResidents = updatedProject.baseResidents
         currentProject.value.baseIfcFileId = updatedProject.baseIfcFileId

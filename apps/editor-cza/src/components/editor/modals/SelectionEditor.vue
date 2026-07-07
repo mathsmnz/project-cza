@@ -186,19 +186,7 @@
                   title="Área extraída automaticamente pelo IFC ou inserida manualmente"
                 />
               </div>
-              <div>
-                <label for="costPerSqm" class="block text-sm font-medium text-gray-700 mb-1">
-                  Custo / m² (R$)
-                </label>
-                <input
-                  id="costPerSqm"
-                  type="number"
-                  step="0.01"
-                  v-model.number="costPerSqm"
-                  class="block w-full border-gray-300 border py-2 px-3 focus:outline-none focus:ring-2 focus:ring-black sm:text-sm"
-                  placeholder="0.00"
-                />
-              </div>
+
               <div>
                 <label for="cost" class="block text-sm font-medium text-gray-700 mb-1">
                   Custo Total (R$)
@@ -352,6 +340,7 @@ const props = defineProps<{
   }
   availableCombos: any[]
   projectId: string
+  baseValue: number
 }>()
 
 // Define emits
@@ -384,10 +373,13 @@ const selectedCombos = ref([...(props.selection.comboIds || [])])
 const selectedTags = ref<string[]>([...(props.selection.tags || [])])
 const availableTags = ref<any[]>([])
 const loadingTags = ref(false)
-const costPerSqm = ref<number>(
-  plantData.area && plantData.area > 0 && plantData.cost
-    ? Number((plantData.cost / plantData.area).toFixed(2))
-    : 0
+
+watch(
+  () => plantData.area,
+  (newArea) => {
+    plantData.cost = Number(((newArea || 0) * props.baseValue).toFixed(2))
+  },
+  { immediate: true }
 )
 
 // Watch props to update selected values
@@ -413,15 +405,6 @@ watch(
     selectedCombos.value = combos
   },
   { immediate: true },
-)
-
-watch(
-  () => [costPerSqm.value, plantData.area],
-  ([newCost, newArea]) => {
-    if (newCost !== undefined && newArea !== undefined) {
-      plantData.cost = Number((newCost * newArea).toFixed(2))
-    }
-  }
 )
 
 watch(selectedCombos, (newCombos, oldCombos) => {

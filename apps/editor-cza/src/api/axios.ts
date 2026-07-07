@@ -645,12 +645,12 @@ export const setProjectSelections = async (
  * Updates the base model settings for a project.
  *
  * @param projectId The ID of the project.
- * @param payload The base model data (baseCost, baseArea, baseIfcFileId).
+ * @param payload The base model data (baseCost, baseValue, baseArea, baseIfcFileId).
  * @returns The updated project details.
  */
 export const updateProjectBaseModel = async (
   projectId: string,
-  payload: { baseCost: number; baseArea: number; baseResidents: number; baseIfcFileId: string },
+  payload: { baseCost: number; baseValue: number; baseArea: number; baseResidents: number; baseIfcFileId: string },
 ): Promise<ProjectResponse> => {
   try {
     const response = await api.put<ProjectResponse>(
