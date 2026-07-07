@@ -26,15 +26,34 @@
           <div class="space-y-6">
             <div class="bg-gray-50 p-6 border-2 border-black">
               <h2 class="text-2xl font-bold mb-4 border-b border-gray-300 pb-2">Resumo Financeiro</h2>
-              
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <p class="text-sm text-gray-600 uppercase font-bold tracking-wider">Custo Estimado</p>
-                  <p class="text-3xl font-bold text-gray-900 mt-1">R$ {{ totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-600 uppercase font-bold tracking-wider">Área Total</p>
-                  <p class="text-3xl font-bold text-gray-900 mt-1">{{ totalArea.toFixed(2) }} m²</p>
+
+              <!-- Base cost row -->
+              <div class="flex justify-between items-baseline mb-2">
+                <span class="text-sm text-gray-500 uppercase font-bold tracking-wider">Casa Base</span>
+                <span class="text-lg font-semibold text-gray-600">
+                  R$ {{ baseCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+                </span>
+              </div>
+
+              <!-- Delta row -->
+              <div class="flex justify-between items-baseline mb-4">
+                <span class="text-sm uppercase font-bold tracking-wider" :class="costDelta >= 0 ? 'text-red-500' : 'text-green-600'">Modificações</span>
+                <span class="text-lg font-semibold" :class="costDelta >= 0 ? 'text-red-500' : 'text-green-600'">
+                  {{ costDelta >= 0 ? '+' : '' }}R$ {{ costDelta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
+                </span>
+              </div>
+
+              <!-- Divider -->
+              <div class="border-t border-gray-300 pt-4">
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <p class="text-sm text-gray-600 uppercase font-bold tracking-wider">Custo Total</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1">R$ {{ totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-600 uppercase font-bold tracking-wider">Área Total</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1">{{ totalArea.toFixed(2) }} m²</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -93,23 +112,29 @@ const dataStore = useDataStore()
 const imagePath = ref<string>('')
 const totalArea = ref<number>(0)
 const totalCost = ref<number>(0)
+const baseCost = ref<number>(0)
+const costDelta = ref<number>(0)
 const selectionDescription = ref<string>('')
 
 const calculateTotals = () => {
   const displayId = dataStore.selectionId
-  
+  const base = projectStore.currentProject?.baseCost ?? 0
+  baseCost.value = base
+
   if (projectStore.currentProjectCustomization && displayId) {
     const match = projectStore.currentProjectCustomization.selections.find(s => s.id === displayId)
     if (match) {
       totalArea.value = match.area || 0
       totalCost.value = match.cost || 0
+      costDelta.value = (match.cost || 0) - base
       selectionDescription.value = match.description || ''
       return
     }
   }
-  
+
   totalArea.value = 0
-  totalCost.value = 0
+  totalCost.value = base
+  costDelta.value = 0
   selectionDescription.value = ''
 }
 
