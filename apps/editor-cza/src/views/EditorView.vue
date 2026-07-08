@@ -239,6 +239,7 @@ export default {
     const editingCombo = ref<Combo | null>(null)
     const selections = ref<Selection[]>([])
     const editingSelection = ref<Selection | null>(null)
+    const editingSelectionOriginalId = ref<string | null>(null)
     const selectedIndex = ref<number | null>(null)
     const toastState = reactive({
       show: false,
@@ -536,7 +537,9 @@ export default {
     }
 
     const saveSelection = async (updatedSelection: Selection) => {
-      const index = selections.value.findIndex((sel) => sel.id === updatedSelection.id)
+      // Use the original ID (before any regeneration on open) to locate the entry.
+      const lookupId = editingSelectionOriginalId.value ?? updatedSelection.id
+      const index = selections.value.findIndex((sel) => sel.id === lookupId)
 
       if (index !== -1) {
         if (updatedSelection.relatedCombos.length > 0) {
@@ -561,6 +564,7 @@ export default {
       }
 
       editingSelection.value = null
+      editingSelectionOriginalId.value = null
     }
 
     const showBaseModelEditor = ref(false)
@@ -622,6 +626,10 @@ export default {
     const editSelection = async (selection: Selection) => {
       console.log('Editing:', selection)
       const copy: Selection = JSON.parse(JSON.stringify(selection))
+
+      // Remember the original ID so saveSelection can find this entry in the
+      // selections array even after the ID is regenerated below.
+      editingSelectionOriginalId.value = selection.id
 
       // Regenerate the ID from the current sorted combos before opening the modal.
       // This corrects any selection whose ID was saved with a non-canonical combo order,
