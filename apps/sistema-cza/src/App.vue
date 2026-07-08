@@ -14,7 +14,7 @@ onMounted(() => {
       <NavBar />
     </header>
 
-    <main class="overflow-hidden h-full">
+    <main class="overflow-hidden flex-1">
       <RouterView />
     </main>
   </div>
