@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
 import { createTelemetry } from '@/api/axios.ts'
+import { useProjectsStore } from '@/stores/projects'
+import { useRecommendationStore } from '@/stores/recommendation'
 import type { CreateTelemetryRequest, TelemetryStatus } from '@/types/types.ts'
 import type { AxiosError } from 'axios'
 
@@ -148,6 +150,55 @@ export const useTelemetryStore = defineStore('telemetry', {
 
       const elapsedTime = Date.now() - this.startTime
 
+      const projectsStore = useProjectsStore()
+      const recommendationStore = useRecommendationStore()
+      
+      const allSelections = projectsStore.currentProjectCustomization?.selections || []
+      
+      // Helper function to extract tags from a selection
+      const extractTags = (selection: any, tagSet: Set<string>) => {
+        if (selection.tags) {
+          selection.tags.forEach((t: string) => tagSet.add(t))
+        }
+      }
+
+      const extractConstraints = (selection: any, constraintSet: Set<string>) => {
+        if (selection.cost) constraintSet.add(`cost:${selection.cost}`)
+        if (selection.area) constraintSet.add(`area:${selection.area}`)
+        
+        if (selection.constraints) {
+          const c = selection.constraints
+          if (c.requiresSpaceFront !== undefined) constraintSet.add(`requiresSpaceFront:${c.requiresSpaceFront}`)
+          if (c.requiresSpaceSide !== undefined) constraintSet.add(`requiresSpaceSide:${c.requiresSpaceSide}`)
+          if (c.requiresSpaceBack !== undefined) constraintSet.add(`requiresSpaceBack:${c.requiresSpaceBack}`)
+          if (c.requiresVehicle !== undefined) constraintSet.add(`requiresVehicle:${c.requiresVehicle}`)
+          if (c.maxBudgetCost !== undefined) constraintSet.add(`maxBudgetCost:${c.maxBudgetCost}`)
+          if (c.minAreaLimit !== undefined) constraintSet.add(`minAreaLimit:${c.minAreaLimit}`)
+          if (c.minResidentsCount !== undefined) constraintSet.add(`minResidentsCount:${c.minResidentsCount}`)
+        }
+      }
+
+      // Calculate activeTags & Constraints (from activeSelectionIds)
+      const activeIds = recommendationStore.activeSelectionIds
+      const activeTags = new Set<string>()
+      const activeConstraints = new Set<string>()
+      allSelections.forEach((s: any) => {
+        if (activeIds.includes(s.id)) {
+          extractTags(s, activeTags)
+          extractConstraints(s, activeConstraints)
+        }
+      })
+      
+      // Calculate abandonedTags & Constraints
+      const abandonedTags = new Set<string>()
+      const abandonedConstraints = new Set<string>()
+      allSelections.forEach((s: any) => {
+        if (this.abandonedSelections.includes(s.id)) {
+          extractTags(s, abandonedTags)
+          extractConstraints(s, abandonedConstraints)
+        }
+      })
+
       const payload: CreateTelemetryRequest = {
         userId: this.userId,
         sessionId: this.sessionId,
@@ -158,6 +209,10 @@ export const useTelemetryStore = defineStore('telemetry', {
         formSubmissions: this.formSubmissions,
         finalSelection: this.finalSelection,
         abandonedSelections: this.abandonedSelections,
+        activeTags: Array.from(activeTags),
+        abandonedTags: Array.from(abandonedTags),
+        activeConstraints: Array.from(activeConstraints),
+        abandonedConstraints: Array.from(abandonedConstraints),
         problemSpace: this.problemSpace,
         formResets: this.formResets,
         elapsedTime: elapsedTime,

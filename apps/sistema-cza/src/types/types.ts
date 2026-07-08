@@ -276,8 +276,9 @@ export interface Selection {
   description: string
   relatedCombos: string[]
   relatedGroups: string[]
-  area?: number
+  tags?: string[]
   cost?: number
+  area?: number
   constraints?: KbrsConstraints
 }
 
@@ -405,7 +406,12 @@ export interface TelemetryData {
   finalSelection: string[]
 
   /** A list of selections that the user chose but later removed before validation. */
+  /** A list of selections that the user chose but later removed before validation. */
   abandonedSelections: string[]
+
+  activeTags: string[]
+
+  abandonedTags: string[]
 
   /** A map representing the initial restrictions/seed profile. */
   problemSpace: Record<string, string>
@@ -459,7 +465,16 @@ export interface CreateTelemetryRequest {
   finalSelection: string[]
 
   /** A list of selections that the user chose but later removed before validation. */
+  /** A list of selections that the user chose but later removed before validation. */
   abandonedSelections: string[]
+
+  activeTags: string[]
+
+  abandonedTags: string[]
+
+  activeConstraints: string[]
+
+  abandonedConstraints: string[]
 
   /** A map representing the initial restrictions/seed profile. */
   problemSpace: Record<string, string>

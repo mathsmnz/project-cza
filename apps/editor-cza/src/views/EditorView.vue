@@ -138,6 +138,7 @@
             @edit-selection="editSelection"
             @delete-selection="deleteSelection"
             @edit-ifc="editIfc"
+            @upload-image="handleUploadImage"
           />
         </div>
       </div>
@@ -216,7 +217,7 @@ import type { Combo, CustomizationSchema, Group, Selection } from '@/types/types
 import { generateUniqueId } from '@/util/util.ts'
 import { useProjectsStore } from '@/stores/projects.ts'
 import { storeToRefs } from 'pinia'
-import { downloadProjectFile, setProjectSelections, updateProjectBaseModel, fetchProjectSelections } from '@/api/axios.ts'
+import { downloadProjectFile, setProjectSelections, updateProjectBaseModel, fetchProjectSelections, uploadProjectFile } from '@/api/axios.ts'
 import PlantsCard from '@/components/editor/PlantsCard.vue'
 
 export default {
@@ -415,6 +416,38 @@ export default {
         }
       }
 
+      fileInput.click()
+    }
+
+    const handleUploadImage = (id: string) => {
+      const fileInput = document.createElement('input')
+      fileInput.type = 'file'
+      fileInput.accept = 'image/png, image/jpeg'
+      fileInput.onchange = async (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0]
+        if (!file) return
+
+        try {
+          if (!currentProject.value?.id) {
+            showToast('Projeto não encontrado', 'error')
+            return
+          }
+          
+          showToast('Enviando imagem...', 'success')
+
+          const newFile = new File([file], `${id}.png`, { type: 'image/png' })
+          await uploadProjectFile(newFile, currentProject.value.id)
+
+          const index = selections.value.findIndex(s => s.id === id)
+          if (index !== -1 && selections.value[index]) {
+            selections.value[index].hasImage = true
+          }
+
+          showToast('Imagem enviada com sucesso!', 'success')
+        } catch (error) {
+          showToast('Erro ao enviar imagem', 'error')
+        }
+      }
       fileInput.click()
     }
 
@@ -708,6 +741,7 @@ export default {
       editingCombo,
       loadFile,
       uploadSelection,
+      handleUploadImage,
       saveFile,
       selectGroup: selectGroup,
       addGroup,
