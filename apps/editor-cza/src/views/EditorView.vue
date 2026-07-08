@@ -542,8 +542,10 @@ export default {
         if (updatedSelection.relatedCombos.length > 0) {
           console.log('Generating ID for combos:', updatedSelection.relatedCombos)
 
-          // Generate unique hash for combo IDs
-          const uniqueId = await generateUniqueId(updatedSelection.relatedCombos)
+          // Sort before hashing so the ID is deterministic regardless of check order,
+          // matching the same canonical format used in sistema-cza (OptionsView).
+          const sortedCombos = [...updatedSelection.relatedCombos].sort()
+          const uniqueId = await generateUniqueId(sortedCombos)
           console.log('Generated unique ID:', uniqueId)
 
           // Update the selection ID
@@ -617,9 +619,19 @@ export default {
       showToast('Nova planta adicionada!', 'success')
     }
 
-    const editSelection = (selection: Selection) => {
+    const editSelection = async (selection: Selection) => {
       console.log('Editing:', selection)
-      editingSelection.value = JSON.parse(JSON.stringify(selection))
+      const copy: Selection = JSON.parse(JSON.stringify(selection))
+
+      // Regenerate the ID from the current sorted combos before opening the modal.
+      // This corrects any selection whose ID was saved with a non-canonical combo order,
+      // ensuring it matches the hash that sistema-cza would compute for the same combos.
+      if (copy.relatedCombos && copy.relatedCombos.length > 0) {
+        const sortedCombos = [...copy.relatedCombos].sort()
+        copy.id = await generateUniqueId(sortedCombos)
+      }
+
+      editingSelection.value = copy
     }
 
     const deleteSelection = (index: number) => {
