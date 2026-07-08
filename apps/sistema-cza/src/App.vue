@@ -9,12 +9,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col grow h-screen w-screen font-montserrat">
+  <div class="grid grid-rows-[auto_1fr] h-screen w-screen font-montserrat overflow-hidden">
     <header>
       <NavBar />
     </header>
 
-    <main class="overflow-hidden flex-1">
+    <main class="overflow-hidden min-h-0 h-full w-full">
       <RouterView />
     </main>
   </div>

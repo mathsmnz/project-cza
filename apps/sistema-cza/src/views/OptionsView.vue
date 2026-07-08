@@ -1,11 +1,11 @@
 <template>
   <!-- On mobile: outer div scrolls. On desktop: overflow is hidden, panels manage their own scroll -->
   <div class="h-full w-full overflow-y-auto md:overflow-hidden bg-white">
-    <div class="flex flex-col md:grid md:h-full md:grid-cols-5">
+    <div class="flex flex-col md:grid md:h-full md:grid-rows-1 md:grid-cols-5">
 
       <!-- Left Panel (Image): sticky on mobile so it persists while scrolling options -->
       <div
-        class="sticky top-0 z-10 md:static aspect-[4/3] md:aspect-auto md:h-full border-b-2 border-black md:border-b-0 md:border-r-2 flex justify-center items-center md:col-span-2 p-2 bg-white"
+        class="sticky top-0 z-10 md:static aspect-[4/3] md:aspect-auto md:h-full md:min-h-0 border-b-2 border-black md:border-b-0 md:border-r-2 flex justify-center items-center md:col-span-2 p-2 bg-white"
       >
         <div class="relative w-full h-full flex items-center justify-center overflow-hidden">
 
@@ -49,7 +49,7 @@
       </div>
 
       <!-- Right Panel (Options): scrollable on desktop, flows naturally on mobile -->
-      <div class="md:col-span-3 md:h-full md:overflow-hidden">
+      <div class="md:col-span-3 md:h-full md:overflow-y-auto md:min-h-0">
         <OptionSelector
           :optionsData="option"
           :selectionsData="selections"

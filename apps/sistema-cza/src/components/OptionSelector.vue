@@ -1,6 +1,6 @@
 <template>
-  <div class="h-full flex flex-col border-black">
-    <div class="shrink-0 p-6 border-b border-b-black text-center">
+  <div class="flex flex-col border-black">
+    <div class="sticky top-0 z-10 bg-white shrink-0 p-6 border-b border-b-black text-center">
       <h1 class="text-2xl font-bold text-gray-800">Escolha o Tipo de Mudança</h1>
       <p class="mt-1 text-sm text-gray-600">
         Será possível alterar sua escolha mais tarde na opção
@@ -10,7 +10,7 @@
 
 
     <!-- Options Section -->
-    <div class="flex-1 overflow-y-auto min-h-0 p-6 space-y-4 bg-white">
+    <div class="p-6 space-y-4 bg-white">
       <div
         v-for="(option, index) in options"
         :key="index"
@@ -66,7 +66,7 @@
 
     <!-- Actions Footer -->
     <div
-      class="shrink-0 flex items-center justify-end space-x-3 p-4 bg-gray-50 border-t border-gray-200"
+      class="sticky bottom-0 z-10 shrink-0 flex items-center justify-end space-x-3 p-4 bg-gray-50 border-t border-gray-200"
     >
       <button
         @click="submitForm"
