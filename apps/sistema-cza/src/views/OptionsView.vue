@@ -5,7 +5,7 @@
 
       <!-- Left Panel (Image): sticky on mobile so it persists while scrolling options -->
       <div
-        class="sticky top-0 z-10 md:static aspect-[4/3] md:aspect-auto md:h-full md:min-h-0 border-b-2 border-black md:border-b-0 md:border-r-2 flex justify-center items-center md:col-span-2 p-2 bg-white"
+        class="sticky top-0 z-10 md:static aspect-[16/9] md:aspect-auto md:h-full md:min-h-0 border-b-2 border-black md:border-b-0 md:border-r-2 flex justify-center items-center md:col-span-2 p-2 bg-white"
       >
         <div class="relative w-full h-full flex items-center justify-center overflow-hidden">
 
@@ -45,6 +45,19 @@
             <p class="text-sm md:text-lg font-semibold leading-snug">Combinação inválida</p>
             <p class="text-xs md:text-sm opacity-70">Experimente outras opções.</p>
           </div>
+
+          <!-- Fullscreen expand button (mobile only) -->
+          <button
+            v-if="!isLoading && !isInvalidCombination"
+            @click="showFullscreen = true"
+            class="absolute bottom-3 right-3 z-10 md:hidden flex items-center gap-1.5 px-3 py-2 rounded-lg bg-black/50 backdrop-blur-sm text-white text-xs font-medium active:bg-black/70 transition-colors"
+            aria-label="Ampliar imagem"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9m11.25-5.25v4.5m0-4.5h-4.5m4.5 0L15 9m-11.25 11.25v-4.5m0 4.5h4.5m-4.5 0L9 15m11.25 5.25v-4.5m0 4.5h-4.5m4.5 0L15 15" />
+            </svg>
+            Ampliar
+          </button>
         </div>
       </div>
 
@@ -58,6 +71,13 @@
         />
       </div>
 
+      <!-- Fullscreen image viewer (mobile) -->
+      <ImageFullscreenViewer
+        :visible="showFullscreen"
+        :src="imagePath"
+        @close="showFullscreen = false"
+      />
+
     </div>
   </div>
 </template>
@@ -65,6 +85,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import OptionSelector from '@/components/OptionSelector.vue'
+import ImageFullscreenViewer from '@/components/ImageFullscreenViewer.vue'
 import { useProjectsStore } from '@/stores/projects.ts'
 import { storeToRefs } from 'pinia'
 import { useDataStore } from '@/stores/data.ts'
@@ -78,6 +99,7 @@ const canvas = ref<HTMLCanvasElement | null>(null)
 const isMdOrLarger = ref<boolean>(window.matchMedia('(min-width: 768px)').matches)
 const isInvalidCombination = ref<boolean>(false)
 const isLoading = ref<boolean>(false)
+const showFullscreen = ref<boolean>(false)
 
 const projectStore = useProjectsStore()
 const { currentProjectCustomization, currentProject } = storeToRefs(projectStore)
