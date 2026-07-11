@@ -131,12 +131,12 @@ function onTouchStart(e: TouchEvent) {
   if (e.touches.length === 2) {
     e.preventDefault()
     isGesturing.value = true
-    pinchStartDist = touchDist(e.touches[0], e.touches[1])
+    pinchStartDist = touchDist(e.touches[0]!, e.touches[1]!)
     pinchStartScale = scale.value
   } else if (e.touches.length === 1) {
     isGesturing.value = true
-    panStartX = e.touches[0].clientX
-    panStartY = e.touches[0].clientY
+    panStartX = e.touches[0]!.clientX
+    panStartY = e.touches[0]!.clientY
     startTX = translateX.value
     startTY = translateY.value
   }
@@ -145,12 +145,12 @@ function onTouchStart(e: TouchEvent) {
 function onTouchMove(e: TouchEvent) {
   if (e.touches.length === 2) {
     e.preventDefault()
-    const d = touchDist(e.touches[0], e.touches[1])
+    const d = touchDist(e.touches[0]!, e.touches[1]!)
     scale.value = clamp(pinchStartScale * (d / pinchStartDist))
   } else if (e.touches.length === 1 && scale.value > 1) {
     e.preventDefault()
-    translateX.value = startTX + (e.touches[0].clientX - panStartX)
-    translateY.value = startTY + (e.touches[0].clientY - panStartY)
+    translateX.value = startTX + (e.touches[0]!.clientX - panStartX)
+    translateY.value = startTY + (e.touches[0]!.clientY - panStartY)
   }
 }
 
@@ -160,9 +160,9 @@ function onTouchEnd(e: TouchEvent) {
 
     // Double-tap detection
     const now = Date.now()
-    const touch = e.changedTouches[0]
-    const tapX = touch?.clientX ?? 0
-    const tapY = touch?.clientY ?? 0
+    const touch = e.changedTouches[0]!
+    const tapX = touch.clientX
+    const tapY = touch.clientY
 
     if (now - lastTapTime < 300 && Math.hypot(tapX - lastTapX, tapY - lastTapY) < 30) {
       onDoubleTap(tapX, tapY)
