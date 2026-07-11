@@ -43,6 +43,7 @@ export function useEditorModel() {
   const reactivePlansList = ref<OBCF.PlanView[]>([])
   const toggleableElements = ref<ToggleableIfcElement[]>([])
   const isFileReady = ref(false)
+  let debugBoxHelper: THREE.Box3Helper | null = null
 
   async function _setupWorld(container: HTMLElement) {
     if (!world) {
@@ -98,6 +99,10 @@ export function useEditorModel() {
       WEBIFC.IFCTENDONANCHOR,
       WEBIFC.IFCREINFORCINGBAR,
       WEBIFC.IFCREINFORCINGELEMENT,
+      WEBIFC.IFCSPACE,
+      WEBIFC.IFCSITE,
+      WEBIFC.IFCGRID,
+      WEBIFC.IFCANNOTATION
     ]
 
     for (const cat of excludedCats) {
@@ -238,6 +243,30 @@ export function useEditorModel() {
     if (!isHighlighterSetup) {
       highlighter.setup({ world })
       highlighter.zoomToSelection = true
+
+      highlighter.events['select']?.onHighlight.add(async (selection) => {
+        if (!model) return
+        for (const fragId in selection) {
+          const itemIds = selection[fragId]
+          if (!itemIds) continue
+          for (const id of itemIds) {
+            try {
+              const entityName = await OBC.IfcPropertiesUtils.getEntityName(model, id)
+              const props = await model.getProperties(id)
+              const entityType = props && props.type ? OBC.IfcCategoryMap[props.type] || 'UnknownType' : 'UnknownType'
+
+              if (entityName && entityName.name) {
+                console.log(`[Click] Element: ${entityName.name} (Type: ${entityType}, ExpressID: ${id})`)
+              } else {
+                console.log(`[Click] Element ExpressID: ${id} (Type: ${entityType}, No Name Found)`)
+              }
+            } catch (e) {
+              console.warn(`[Click] Could not retrieve properties for ID ${id}`, e)
+            }
+          }
+        }
+      })
+
       isHighlighterSetup = true
     }
 
@@ -308,6 +337,12 @@ export function useEditorModel() {
     world.scene.three.background = new THREE.Color('white')
     const plansComponent = world.components.get(OBCF.Plans)
     plansComponent.goTo(plan.id)
+
+    if (!debugBoxHelper && model?.boundingBox) {
+      debugBoxHelper = new THREE.Box3Helper(model.boundingBox, new THREE.Color(0xff0000))
+        ; (debugBoxHelper.material as THREE.LineBasicMaterial).depthTest = false
+      world.scene.three.add(debugBoxHelper)
+    }
     //culler.needsUpdate = true
   }
 
@@ -322,6 +357,12 @@ export function useEditorModel() {
     world.scene.three.background = new THREE.Color('white')
     const plansComponent = world.components.get(OBCF.Plans)
     plansComponent.exitPlanView()
+
+    if (debugBoxHelper) {
+      world.scene.three.remove(debugBoxHelper)
+      debugBoxHelper.dispose()
+      debugBoxHelper = null
+    }
     //culler.needsUpdate = true
   }
 
@@ -753,8 +794,6 @@ export function useEditorModel() {
 
     await controls.fitToSphere(sphere, false)
 
-    // Garante que a câmera está olhando para o modelo
-    world.camera.three.lookAt(sceneCenter)
   }
 
   function _setupBoundingBox(modelToFit: FragmentsGroup) {
@@ -762,7 +801,38 @@ export function useEditorModel() {
     const fragmentBox = components.get(OBC.BoundingBoxer)
 
     if (modelToFit) {
-      fragmentBox.add(modelToFit)
+      fragmentBox.reset()
+
+      // Force classification so we can filter by architectural categories
+      const classifier = components.get(OBC.Classifier)
+      classifier.byModel(modelToFit.uuid, modelToFit)
+      classifier.byEntity(modelToFit)
+
+      // Only include physical building elements in the bounding box calculation
+      const coreEntities = [
+        'IFCWALL', 'IFCWALLSTANDARDCASE', 'IFCSLAB', 'IFCCOLUMN',
+        'IFCBEAM', 'IFCROOF', 'IFCWINDOW', 'IFCDOOR', 'IFCSTAIR',
+        'IFCRAILING', 'IFCFOOTING', 'IFCPLATE', 'IFCMEMBER', 'IFCCOVERING'
+      ]
+
+      const coreItems = classifier.find({ entities: coreEntities })
+      let hasCoreItems = false
+      for (const fragId in coreItems) {
+        if ((coreItems[fragId]?.size || 0) > 0) hasCoreItems = true
+      }
+
+      if (hasCoreItems) {
+        // Add only the core architectural elements to the bounding box
+        try {
+          fragmentBox.addFragmentIdMap(coreItems)
+        } catch (e) {
+          console.warn('Fallback to model bounding box', e)
+          fragmentBox.add(modelToFit)
+        }
+      } else {
+        // Fallback if the model has no standard architectural elements
+        fragmentBox.add(modelToFit)
+      }
 
       // Obter o mesh da caixa delimitadora
       const bboxMesh = fragmentBox.getMesh()
@@ -865,12 +935,112 @@ export function useEditorModel() {
     await world.camera.controls.setLookAt(12, 6, 8, 0, 0, -10, true)
   }
 
-  function calculateModelArea(): number {
-    if (!model || !model.boundingBox) return 0
+  async function calculateModelArea(visibleOnly = false): Promise<number> {
+    if (!model) return 0
+
+    // --- Approach 1: Bounding Box (Fallback) ---
     const size = new THREE.Vector3()
-    model.boundingBox.getSize(size)
-    // Calcula a área da base (footprint) do módulo em m² assumindo modelo em metros (X * Z)
-    return parseFloat((size.x * size.z).toFixed(2))
+    if (model.boundingBox) {
+      model.boundingBox.getSize(size)
+    }
+    const bboxArea = parseFloat((size.x * size.z).toFixed(2))
+
+    console.log("--- Calculating Area Alternatives ---")
+    console.log(`[Method Bbox] Bounding Box Footprint (X*Z): ${bboxArea} m²`)
+
+    // --- Approach 2: IFC Embedded Quantities ---
+    let totalIfcArea = 0
+    try {
+      const qsets = await model.getAllPropertiesOfType(WEBIFC.IFCELEMENTQUANTITY)
+      if (qsets) {
+        for (const qsetId in qsets) {
+          const qset = qsets[qsetId]
+          if (qset && qset.Quantities) {
+            for (const q of qset.Quantities) {
+              if (q.value) {
+                const quantity = await model.getProperties(q.value)
+                if (quantity && quantity.type === WEBIFC.IFCQUANTITYAREA) {
+                  const areaValueKey = Object.keys(quantity).find(k => k.endsWith('Value'))
+                  if (areaValueKey && quantity[areaValueKey] !== undefined) {
+                    totalIfcArea += quantity[areaValueKey].value
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      console.log(`[Method Embedded] IFC Embedded Quantities Area: ${totalIfcArea.toFixed(2)} m²`)
+    } catch (e) {
+      console.warn("Could not get IFC embedded area:", e)
+    }
+
+    // --- Approach 3: Mesh Top Surface Area of Slabs (Primary) ---
+    let totalSlabArea = 0
+    try {
+      const slabs = await model.getAllPropertiesOfType(WEBIFC.IFCSLAB)
+      if (slabs) {
+        const slabIds = Object.keys(slabs).map(Number)
+
+        const p1 = new THREE.Vector3()
+        const p2 = new THREE.Vector3()
+        const p3 = new THREE.Vector3()
+        const tempMatrix = new THREE.Matrix4()
+        const cb = new THREE.Vector3()
+        const ab = new THREE.Vector3()
+
+        for (const frag of model.items) {
+          const mesh = frag.mesh
+          const pos = mesh.geometry.attributes.position?.array
+          const index = mesh.geometry.index
+
+          if (!index || !pos) continue
+
+          const fragmentSlabIds = Array.from(frag.ids as Iterable<number>).filter(id => slabIds.includes(id))
+
+          for (const id of fragmentSlabIds) {
+            if (visibleOnly && frag.hiddenItems && frag.hiddenItems.has(id)) {
+              continue
+            }
+            
+            const instances = frag.getInstancesIDs(id)
+            if (!instances) continue
+
+            for (const instance of instances) {
+              mesh.getMatrixAt(instance, tempMatrix)
+
+              for (let i = 0; i < index.array.length; i += 3) {
+                const i1 = index.array[i]! * 3
+                const i2 = index.array[i + 1]! * 3
+                const i3 = index.array[i + 2]! * 3
+
+                p1.set(pos[i1]!, pos[i1 + 1]!, pos[i1 + 2]!).applyMatrix4(tempMatrix)
+                p2.set(pos[i2]!, pos[i2 + 1]!, pos[i2 + 2]!).applyMatrix4(tempMatrix)
+                p3.set(pos[i3]!, pos[i3 + 1]!, pos[i3 + 2]!).applyMatrix4(tempMatrix)
+
+                cb.subVectors(p3, p2)
+                ab.subVectors(p1, p2)
+                cb.cross(ab)
+
+                const area = cb.length() / 2.0
+                cb.normalize()
+
+                // If normal points mostly up (Y axis) and is mostly on the ground, add the area
+                if (cb.y > 0.9 && p1.y < 0.1) {
+                  totalSlabArea += area
+                }
+              }
+            }
+          }
+        }
+      }
+      console.log(`[Method Slabs] Mesh Top Surface Area (IfcSlab): ${totalSlabArea.toFixed(2)} m²`)
+    } catch (e) {
+      console.warn("Could not get surface area:", e)
+    }
+
+    const finalSlabArea = parseFloat(totalSlabArea.toFixed(2))
+    return finalSlabArea > 0 ? finalSlabArea : bboxArea
   }
 
   return {

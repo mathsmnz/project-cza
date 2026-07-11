@@ -171,6 +171,13 @@
           <!-- Buttons -->
           <div class="flex space-x-4">
             <button
+              v-if="hideElements"
+              @click="recalculateVisibleArea"
+              class="bg-white text-gray-700 py-2 px-4 hover:bg-green-400 focus:outline-none border border-green-500 font-semibold transition-colors"
+            >
+              Recalcular Área
+            </button>
+            <button
               @click="loadIfcFile()"
               class="bg-white text-gray-700 py-2 px-4 hover:bg-gray-100 focus:outline-none border border-gray-300 font-semibold transition-colors"
             >
@@ -253,6 +260,12 @@ const handleToggleOrtho = () => {
     resetPlanView()
     resetCamera()
   }
+}
+
+const recalculateVisibleArea = async () => {
+  const calculatedArea = await calculateModelArea(true)
+  emit('area-calculated', calculatedArea)
+  showToast(`Área recalculada: ${calculatedArea} m²`, 'success')
 }
 
 const selectedLevelId = ref<string>('')
@@ -343,7 +356,7 @@ async function loadIfcFile() {
     console.log(buffer)
     
     // Calculate and emit the area
-    const calculatedArea = calculateModelArea()
+    const calculatedArea = await calculateModelArea()
     console.log(`Calculated area: ${calculatedArea} m²`)
     emit('area-calculated', calculatedArea)
 
@@ -437,7 +450,7 @@ onMounted(async () => {
       loadedIfc.value = await (await fetch(fileUrl)).arrayBuffer()
 
       // Calculate and emit area from the loaded model
-      const calculatedArea = calculateModelArea()
+      const calculatedArea = await calculateModelArea()
       if (calculatedArea > 0) {
         emit('area-calculated', calculatedArea)
       }
