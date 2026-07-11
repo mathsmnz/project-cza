@@ -16,6 +16,19 @@
           </svg>
           <p>Gerando visualização...</p>
         </div>
+
+        <!-- Fullscreen expand button (mobile only) -->
+        <button
+          v-if="imagePath"
+          @click="showFullscreen = true"
+          class="absolute bottom-3 right-3 z-10 md:hidden flex items-center gap-1.5 px-3 py-2 rounded-lg bg-black/50 backdrop-blur-sm text-white text-xs font-medium active:bg-black/70 transition-colors"
+          aria-label="Ampliar imagem"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9m11.25-5.25v4.5m0-4.5h-4.5m4.5 0L15 9m-11.25 11.25v-4.5m0 4.5h4.5m-4.5 0L9 15m11.25 5.25v-4.5m0 4.5h-4.5m4.5 0L15 15" />
+          </svg>
+          Ampliar
+        </button>
       </div>
 
       <!-- Right side: Info and actions -->
@@ -83,6 +96,13 @@
         </div>
       </div>
     </div>
+
+    <!-- Fullscreen image viewer (mobile) -->
+    <ImageFullscreenViewer
+      :visible="showFullscreen"
+      :src="imagePath"
+      @close="showFullscreen = false"
+    />
   </main>
 </template>
 
@@ -93,12 +113,14 @@ import { useProjectsStore } from '@/stores/projects'
 import { useTelemetryStore } from '@/stores/telemetry'
 import { useDataStore } from '@/stores/data'
 import { fetchProtectedFileUrl } from '@/api/axios'
+import ImageFullscreenViewer from '@/components/ImageFullscreenViewer.vue'
 
 const router = useRouter()
 const projectStore = useProjectsStore()
 const telemetryStore = useTelemetryStore()
 const dataStore = useDataStore()
 
+const showFullscreen = ref(false)
 const imagePath = ref<string>('')
 const totalArea = ref<number>(0)
 const totalCost = ref<number>(0)
