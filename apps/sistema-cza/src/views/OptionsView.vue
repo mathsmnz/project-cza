@@ -5,7 +5,8 @@
 
       <!-- Left Panel (Image): sticky on mobile so it persists while scrolling options -->
       <div
-        class="sticky top-0 z-10 md:static aspect-[16/9] md:aspect-auto md:h-full md:min-h-0 border-b-2 border-black md:border-b-0 md:border-r-2 flex justify-center items-center md:col-span-2 p-2 bg-white"
+        ref="imagePanelRef"
+        class="aspect-[16/9] md:aspect-auto md:h-full md:min-h-0 border-b-2 border-black md:border-b-0 md:border-r-2 flex justify-center items-center md:col-span-2 p-2 bg-white"
       >
         <div class="relative w-full h-full flex items-center justify-center overflow-hidden">
 
@@ -78,12 +79,26 @@
         @close="showFullscreen = false"
       />
 
+      <!-- Floating "Ver planta" pill (appears when image scrolls out of view, mobile only) -->
+      <Transition name="fab-slide">
+        <button
+          v-if="!isMdOrLarger && isImageOutOfView && !showFullscreen"
+          class="fixed bottom-24 right-4 z-30 flex items-center gap-2 pl-3.5 pr-4 py-2.5 rounded-full bg-gray-900/80 backdrop-blur-md text-white text-sm font-medium shadow-lg active:bg-gray-900 transition-colors"
+          @click="showFullscreen = true"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+          </svg>
+          Ver planta
+        </button>
+      </Transition>
+
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import OptionSelector from '@/components/OptionSelector.vue'
 import ImageFullscreenViewer from '@/components/ImageFullscreenViewer.vue'
 import { useProjectsStore } from '@/stores/projects.ts'
@@ -100,6 +115,9 @@ const isMdOrLarger = ref<boolean>(window.matchMedia('(min-width: 768px)').matche
 const isInvalidCombination = ref<boolean>(false)
 const isLoading = ref<boolean>(false)
 const showFullscreen = ref<boolean>(false)
+const imagePanelRef = ref<HTMLElement | null>(null)
+const isImageOutOfView = ref(false)
+let imageObserver: IntersectionObserver | null = null
 
 const projectStore = useProjectsStore()
 const { currentProjectCustomization, currentProject } = storeToRefs(projectStore)
@@ -211,11 +229,29 @@ watch(selectedInfo, (newVal: string[]) => {
 onMounted(() => {
   telemetryStore.initSession()
   window.addEventListener('resize', handleResize)
+
+  // Watch for image panel going out of view to show floating pill (mobile)
+  nextTick(() => {
+    if (imagePanelRef.value) {
+      imageObserver = new IntersectionObserver(
+        ([entry]) => {
+          if (!isMdOrLarger.value && entry) {
+            isImageOutOfView.value = !entry.isIntersecting
+          } else {
+            isImageOutOfView.value = false
+          }
+        },
+        { threshold: 0.1 }
+      )
+      imageObserver.observe(imagePanelRef.value)
+    }
+  })
 })
 
 onBeforeUnmount(() => {
   telemetryStore.submitSession()
   window.removeEventListener('resize', handleResize)
+  imageObserver?.disconnect()
   if (imagePath.value) {
     URL.revokeObjectURL(imagePath.value)
   }
@@ -232,5 +268,16 @@ onBeforeUnmount(() => {
 .animate-shimmer {
   background-size: 200% 100%;
   animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* Floating pill slide-in transition */
+.fab-slide-enter-active,
+.fab-slide-leave-active {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.fab-slide-enter-from,
+.fab-slide-leave-to {
+  transform: translateY(1rem);
+  opacity: 0;
 }
 </style>
