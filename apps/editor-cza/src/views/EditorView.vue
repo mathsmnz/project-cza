@@ -71,6 +71,27 @@
             </button>
 
             <button
+              @click="handleUploadBaseImage"
+              class="inline-flex items-center px-4 py-2 border-2 border-black text-sm font-semibold text-white bg-green-800 hover:bg-green-300 hover:text-black transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                />
+              </svg>
+              Upload Imagem Base
+            </button>
+
+            <button
               @click="openBaseModelEditor"
               class="inline-flex items-center px-4 py-2 border-2 border-black text-sm font-semibold text-black bg-white hover:bg-gray-100 transition-colors"
             >
@@ -451,6 +472,33 @@ export default {
       fileInput.click()
     }
 
+    const handleUploadBaseImage = () => {
+      const fileInput = document.createElement('input')
+      fileInput.type = 'file'
+      fileInput.accept = 'image/png, image/jpeg'
+      fileInput.onchange = async (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0]
+        if (!file) return
+
+        try {
+          if (!currentProject.value?.id) {
+            showToast('Projeto não encontrado', 'error')
+            return
+          }
+
+          showToast('Enviando imagem base...', 'success')
+
+          const newFile = new File([file], 'base.png', { type: 'image/png' })
+          await uploadProjectFile(newFile, currentProject.value.id)
+
+          showToast('Imagem base enviada com sucesso!', 'success')
+        } catch (error) {
+          showToast('Erro ao enviar imagem base', 'error')
+        }
+      }
+      fileInput.click()
+    }
+
     const handleAreaCalculated = (area: number) => {
       console.log(`Received calculated area: ${area} for file: ${currentFile.value}`)
       if (currentFile.value === 'base.ifc') {
@@ -742,6 +790,7 @@ export default {
       loadFile,
       uploadSelection,
       handleUploadImage,
+      handleUploadBaseImage,
       saveFile,
       selectGroup: selectGroup,
       addGroup,
