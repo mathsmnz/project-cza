@@ -110,14 +110,21 @@ const calculateTotals = () => {
   const displayId = dataStore.selectionId
   const base = projectStore.currentProject?.baseCost ?? 0
   baseCost.value = base
+  console.log("Base Cost: ", baseCost.value)
+  console.log("Display ID: ", displayId)
 
   if (projectStore.currentProjectCustomization && displayId) {
     const match = projectStore.currentProjectCustomization.selections.find(s => s.id === displayId)
+    console.log("Match: ", match)
     if (match) {
       totalArea.value = match.area || 0
       totalCost.value = match.cost || 0
+      console.log("Total Cost: ", totalCost.value)
       costDelta.value = (match.cost || 0) - base
       selectionDescription.value = match.description || ''
+      console.log("Cost Delta: ", costDelta.value)
+      console.log("Description: ", selectionDescription.value)
+      console.log("Area: ", totalArea.value)
       return
     }
   }
