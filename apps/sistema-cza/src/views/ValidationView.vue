@@ -1,8 +1,8 @@
 <template>
-  <main class="h-screen w-full flex bg-white">
-    <div class="w-full h-full flex flex-col md:flex-row">
+  <main class="h-screen w-full bg-white overflow-y-auto md:overflow-hidden">
+    <div class="w-full flex flex-col md:flex-row md:h-full">
       <!-- Left side: Image of the house -->
-      <div class="w-full md:w-1/2 h-64 md:h-full relative border-b-2 md:border-b-0 md:border-r-2 border-black flex items-center justify-center bg-gray-50">
+      <div ref="imagePanelRef" class="w-full md:w-1/2 h-64 shrink-0 md:h-full relative border-b-2 md:border-b-0 md:border-r-2 border-black flex items-center justify-center bg-gray-50">
         <img
           v-if="imagePath"
           :src="imagePath"
@@ -32,7 +32,7 @@
       </div>
 
       <!-- Right side: Info and actions -->
-      <div class="w-full md:w-1/2 flex items-center justify-start p-8 md:p-16 overflow-y-auto">
+      <div class="w-full md:w-1/2 flex items-center justify-start p-8 md:p-16 md:overflow-y-auto">
         <div class="max-w-2xl w-full">
           <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Validação do Projeto</h1>
           
@@ -103,11 +103,25 @@
       :src="imagePath"
       @close="showFullscreen = false"
     />
+
+    <!-- Floating "Ver planta" pill (appears when image scrolls out of view, mobile only) -->
+    <Transition name="fab-slide">
+      <button
+        v-if="!isMdOrLarger && isImageOutOfView && !showFullscreen"
+        class="fixed bottom-24 right-4 z-30 flex items-center gap-2 pl-3.5 pr-4 py-2.5 rounded-full bg-gray-900/80 backdrop-blur-md text-white text-sm font-medium shadow-lg active:bg-gray-900 transition-colors"
+        @click="showFullscreen = true"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+        </svg>
+        Ver planta
+      </button>
+    </Transition>
   </main>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProjectsStore } from '@/stores/projects'
 import { useTelemetryStore } from '@/stores/telemetry'
@@ -127,6 +141,23 @@ const totalCost = ref<number>(0)
 const baseCost = ref<number>(0)
 const costDelta = ref<number>(0)
 const selectionDescription = ref<string>('')
+
+const isMdOrLarger = ref<boolean>(window.matchMedia('(min-width: 768px)').matches)
+const isImageOutOfView = ref(false)
+const imagePanelRef = ref<HTMLElement | null>(null)
+let imageObserver: IntersectionObserver | null = null
+
+function debounce<T extends (...args: unknown[]) => void>(fn: T, delay: number): T {
+  let timer: ReturnType<typeof setTimeout>
+  return ((...args: unknown[]) => {
+    clearTimeout(timer)
+    timer = setTimeout(() => fn(...args), delay)
+  }) as T
+}
+
+const handleResize = debounce((): void => {
+  isMdOrLarger.value = window.matchMedia('(min-width: 768px)').matches
+}, 150)
 
 const calculateTotals = () => {
   const displayId = dataStore.selectionId
@@ -158,6 +189,24 @@ const calculateTotals = () => {
 }
 
 onMounted(async () => {
+  window.addEventListener('resize', handleResize)
+
+  nextTick(() => {
+    if (imagePanelRef.value) {
+      imageObserver = new IntersectionObserver(
+        ([entry]) => {
+          if (!isMdOrLarger.value && entry) {
+            isImageOutOfView.value = !entry.isIntersecting
+          } else {
+            isImageOutOfView.value = false
+          }
+        },
+        { threshold: 0.1 }
+      )
+      imageObserver.observe(imagePanelRef.value)
+    }
+  })
+
   if (!projectStore.currentProject) {
     router.push('/preflight')
     return
@@ -180,6 +229,12 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+  if (imageObserver && imagePanelRef.value) {
+    imageObserver.unobserve(imagePanelRef.value)
+    imageObserver.disconnect()
+  }
+
   if (imagePath.value && imagePath.value.startsWith('blob:')) {
     URL.revokeObjectURL(imagePath.value)
   }
